@@ -58,7 +58,7 @@ private data class RetoUi(
 fun RetosScreen(
     onNavigate: (String) -> Unit
 ) {
-    val categorias = listOf("Todos", "Organización y datos", "Redacción y textos", "Cocina y recetas")
+    val categorias = listOf("Todos", "Organización y datos", "Redacción y textos", "Cocina y repostería", "Costura y confección", "Cuidado personal y cosmética natural", "Digitalización y apoyo administrativo", "Oficios y reparaciones del hogar", "Educación y asesorías", "Cuidado y asistencia", "Eventos y banquetes")
     var seleccion by remember { mutableIntStateOf(0) }
 
     // Pon aquí tus fotos: imagen = R.drawable.reto_excel, etc.
@@ -108,14 +108,14 @@ fun RetosScreen(
                         text = "Retos disponibles hoy",
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 26.sp,
+                        fontSize = 35.sp,
                         color = MkTitulo
                     )
                     Text(
                         text = "${retos.size} nuevos",
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Normal,
-                        fontSize = 12.sp,
+                        fontSize = 18.sp,
                         color = MkGris,
                         modifier = Modifier.padding(bottom = 5.dp)
                     )
@@ -144,7 +144,7 @@ fun RetosScreen(
                                 text = categorias[i],
                                 fontFamily = OutfitFont,
                                 fontWeight = FontWeight.Normal,
-                                fontSize = 11.5.sp,
+                                fontSize = 15.sp,
                                 color = if (activo) Color.White else Color.Black
                             )
                         }
@@ -187,10 +187,10 @@ private fun RetoCard(
                     text = reto.titulo,
                     fontFamily = OutfitFont,
                     fontWeight = FontWeight.Medium,
-                    fontSize = 16.sp,
-                    lineHeight = 20.sp,
+                    fontSize = 25.sp,
+                    lineHeight = 30.sp,
                     color = Color.Black,
-                    modifier = Modifier.width(147.dp)
+                    modifier = Modifier.width(250.dp)
                 )
                 Text(
                     text = reto.precio,
@@ -201,21 +201,21 @@ private fun RetoCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(1.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Etiqueta de categoría
             Box(
                 modifier = Modifier
-                    .height(13.dp)
+                    .wrapContentHeight()
                     .clip(CircleShape)
                     .background(reto.etiquetaFondo)
-                    .padding(horizontal = 7.dp),
+                    .padding(horizontal = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = reto.etiqueta,
                     fontFamily = OutfitFont,
-                    fontSize = 8.sp,
+                    fontSize = 15.sp,
                     lineHeight = 10.sp,
                     color = reto.etiquetaTexto
                 )
@@ -258,45 +258,45 @@ private fun RetoCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(41.dp)
+                    .wrapContentHeight()
                     .clip(RoundedCornerShape(7.dp))
                     .background(MkSkillFondo)
                     .padding(start = 6.dp),
                 verticalArrangement = Arrangement.Center
             ) {
                 Row(
-                    modifier = Modifier.height(15.dp),
+                    modifier = Modifier.wrapContentHeight(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.AccountTree,
                         contentDescription = null,
                         tint = MkGris,
-                        modifier = Modifier.size(9.dp)
+                        modifier = Modifier.size(15.dp)
                     )
                     Spacer(modifier = Modifier.width(2.dp))
                     Text(
                         text = "Habilidad: ${reto.habilidad}",
                         fontFamily = OutfitFont,
-                        fontSize = 10.sp,
+                        fontSize = 15.sp,
                         color = MkGris
                     )
                 }
                 Row(
-                    modifier = Modifier.height(15.dp),
+                    modifier = Modifier.wrapContentHeight(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Schedule,
                         contentDescription = null,
                         tint = MkGris,
-                        modifier = Modifier.size(9.dp)
+                        modifier = Modifier.size(15.dp)
                     )
                     Spacer(modifier = Modifier.width(2.dp))
                     Text(
                         text = reto.duracion,
                         fontFamily = OutfitFont,
-                        fontSize = 10.sp,
+                        fontSize = 15.sp,
                         color = MkGris
                     )
                 }
@@ -319,7 +319,7 @@ private fun RetoCard(
                         text = "Aceptar el reto",
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Normal,
-                        fontSize = 14.sp,
+                        fontSize = 16.sp,
                         color = Color(0xFFFFFAFA)
                     )
                     Spacer(modifier = Modifier.width(5.dp))
