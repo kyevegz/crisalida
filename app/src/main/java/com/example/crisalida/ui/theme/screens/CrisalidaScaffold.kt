@@ -42,6 +42,10 @@ private val MkSeleccionada = Color(0xFF62012A) // mismo vino del chip "Todos" de
 
 @Composable
 fun CrisalidaScaffold(
+
+
+
+
     currentTitle: String,
     selectedTab: Int, // 0: Retos, 1: Marketplace, 2: Inicio, 3: Bienestar, 4: Mascota, 5: Perfil
     onNavigate: (String) -> Unit,
