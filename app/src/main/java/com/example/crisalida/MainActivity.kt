@@ -1,4 +1,5 @@
 package com.example.crisalida
+import com.example.crisalida.ui.theme.screens.*
 import com.example.crisalida.ui.theme.*
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -40,44 +41,28 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 NavHost(
                     navController = navController,
-                    startDestination = "login" // Pantalla inicial al abrir la app
+                    startDestination = "login"
                 ) {
-                    // 1. Ruta de la Pantalla de Login
                     composable("login") {
                         LoginScreen(
                             onLoginClick = { seudonimo, pin ->
-                                // AQUÍ ES DONDE NAVEGAMOS AL HOME:
-                                navController.navigate("home")
+                                navController.navigate("home") {
+                                    popUpTo("login") { inclusive = true } // atrás ya no regresa al login
+                                }
                             },
-                            onNavigateToRegister = {
-                                // Navega hacia la pantalla de registro
-                                navController.navigate("register")
-                            }
+                            onNavigateToRegister = { navController.navigate("register") }
                         )
                     }
 
-                    // 2. Ruta de la Pantalla de Registro
                     composable("register") {
                         RegisterScreen(
-                            onNextClick = { seudonimo, pinPrincipal, pinCamuflaje ->
-                                // Acción al presionar "Siguiente" en el Registro
-                            },
-                            onNavigateToLogin = {
-                                // Regresa a la pantalla de inicio de sesión
-                                navController.popBackStack()
-                            }
+                            onNextClick = { seudonimo, pinPrincipal, pinCamuflaje -> },
+                            onNavigateToLogin = { navController.popBackStack() }
                         )
                     }
 
-                    // 3. NUEVA RUTA: Pantalla del Home
-                    composable("home") {
-                        HomeScreen(
-                            onNavigate = { route ->
-                                // Esto permite que el menú inferior del Home navegue a otras secciones
-                                navController.navigate(route)
-                            }
-                        )
-                    }
+                    // home, retos, marketplace, bienestar, mascota y perfil
+                    pantallasPrincipales(navController)
                 }
             }
         }
@@ -87,21 +72,7 @@ class MainActivity : ComponentActivity() {
 
 
 // ==================== TIPOGRAFÍAS ====================
-val OutfitFont = FontFamily(
-    Font(R.font.outfit_regular, FontWeight.Normal),
-    Font(R.font.outfit_medium, FontWeight.Medium),
-    Font(R.font.outfit_semibold, FontWeight.SemiBold),
-    Font(R.font.outfit_bold, FontWeight.Bold),
-    Font(R.font.outfit_extrabold, FontWeight.ExtraBold)
-)
 
-val JakartaSansFont = FontFamily(
-    Font(R.font.plusjakartasans_regular, FontWeight.Normal),
-    Font(R.font.plusjakartasans_bold, FontWeight.Bold),
-    Font(R.font.plusjakartasans_semibold, FontWeight.SemiBold),
-    Font(R.font.plusjakartasans_medium, FontWeight.Medium),
-    Font(R.font.plusjakartasans_extrabold, FontWeight.ExtraBold)
-)
 
 @Composable
 fun LoginScreen(
