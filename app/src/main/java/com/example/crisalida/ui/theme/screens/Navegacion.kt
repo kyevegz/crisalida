@@ -1,4 +1,5 @@
 package com.example.crisalida.ui.theme.screens
+
 import com.example.crisalida.ui.screens.HomeScreen
 import com.example.crisalida.ui.screens.CrisalidaScaffold
 import androidx.compose.foundation.background
@@ -17,6 +18,7 @@ import androidx.navigation.compose.composable
 import com.example.crisalida.ui.theme.ColorFondoApp
 import com.example.crisalida.ui.theme.ColorTextoPrincipal
 import com.example.crisalida.ui.theme.OutfitFont
+import com.example.crisalida.ui.screens.*
 
 /**
  * Navegación entre pestañas de la barra inferior:
@@ -67,7 +69,7 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
     val ir: (String) -> Unit = { navController.navigateToTab(it) }
 
     composable("retos") { RetosScreen(onNavigate = ir) }
-    composable("marketplace") { PantallaPendiente("Marketplace", 1, ir) }
+    composable("marketplace") { MarketplaceScreen(onNavigate = ir) }
     composable("home") { HomeScreen(onNavigate = ir) }
     composable("bienestar") { PantallaPendiente("Bienestar diario", 3, ir) }
     composable("mascota") { PantallaPendiente("Mascota", 4, ir) }
