@@ -38,6 +38,7 @@ private val MkMorado = Color(0xFFA47DAB)
 private val MkTextoEmergencia = Color(0xFFEFD6F3)
 private val MkRosaBarra = Color(0xFFD0A0B5)
 private val MkRosaIconos = Color(0xFFFFDEF7)
+private val MkSeleccionada = Color(0xFF62012A) // mismo vino del chip "Todos" del mockup
 
 @Composable
 fun CrisalidaScaffold(
@@ -133,7 +134,7 @@ fun CrisalidaScaffold(
                         .height(84.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // En el mockup todas las pestañas llevan el mismo color (sin estado seleccionado).
+                    // La pestaña activa se resalta en vino oscuro; las demás quedan en rosa claro.
                     BottomVectorTabItem("Retos", Icons.Outlined.TrackChanges, selectedTab == 0, Modifier.weight(1f)) { onNavigate("retos") }
                     BottomVectorTabItem("Marketplace", Icons.Outlined.Storefront, selectedTab == 1, Modifier.weight(1f)) { onNavigate("marketplace") }
                     BottomVectorTabItem("Inicio", Icons.Outlined.Home, selectedTab == 2, Modifier.weight(1f)) { onNavigate("home") }
@@ -164,7 +165,7 @@ fun BottomVectorTabItem(
         Icon(
             imageVector = icon,
             contentDescription = label,
-            tint = MkRosaIconos,
+            tint = if (isSelected) MkSeleccionada else MkRosaIconos,
             modifier = Modifier.size(33.dp)
         )
         Text(
@@ -174,7 +175,7 @@ fun BottomVectorTabItem(
             fontSize = 11.sp,
             lineHeight = 13.sp,
             textAlign = TextAlign.Center,
-            color = MkRosaIconos
+            color = if (isSelected) MkSeleccionada else MkRosaIconos
         )
     }
 }
