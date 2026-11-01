@@ -98,7 +98,10 @@ fun CrisalidaScaffold(
                             .size(width = 200.dp, height = 33.dp)
                             .clip(RoundedCornerShape(7.dp))
                             .background(MkMorado)
-                            .clickable { (context as? Activity)?.finishAffinity() }
+                            .clickable { (context as? Activity)?.let { activity ->
+                                activity.finishAffinity()
+                                activity.finishAndRemoveTask()
+                            }}
                             .padding(start = 4.dp, end = 3.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
