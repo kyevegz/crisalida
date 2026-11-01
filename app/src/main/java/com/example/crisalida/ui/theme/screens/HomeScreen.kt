@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
+import com.example.crisalida.data.SesionActual
 
 /* ──────────────────────────────────────────────────────────────
  * Valores MEDIDOS del mockup (home.png, 1080 px de ancho = 360 dp → 1 dp = 3 px)
@@ -85,7 +86,7 @@ fun HomeScreen(
                     .padding(start = MargenIzqArriba, end = MargenDerArriba)
             ) {
                 Text(
-                    text = "Hola, Esperanza123",
+                    text = "Hola, ${SesionActual.seudonimo}",
                     fontFamily = JakartaSansFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = 24.sp,
