@@ -71,7 +71,7 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
     composable("retos") { RetosScreen(onNavigate = ir) }
     composable("marketplace") { MarketplaceScreen(onNavigate = ir) }
     composable("home") { HomeScreen(onNavigate = ir) }
-    composable("bienestar") { PantallaPendiente("Bienestar diario", 3, ir) }
+    composable("bienestar") { BienestarScreen (onNavigate = ir) }
     composable("mascota") { PantallaPendiente("Mascota", 4, ir) }
     composable("perfil") { PantallaPendiente("Perfil", 5, ir) }
 }
