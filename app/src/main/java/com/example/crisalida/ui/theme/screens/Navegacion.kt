@@ -80,4 +80,5 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
     composable("respirar_lilu") { RespirarLiluScreen(onNavigate = ir) }
     composable("portafolio_completo") { PantallaPendiente("Portafolio Personal Completo", 5, ir) }
     composable("portafolio_completo") { PortafolioScreen(onNavigate = ir) }
+    composable("publicar_producto") { PublicarProductoScreen(onNavigate = ir) }
 }
