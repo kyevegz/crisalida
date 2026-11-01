@@ -72,6 +72,10 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
     composable("marketplace") { MarketplaceScreen(onNavigate = ir) }
     composable("home") { HomeScreen(onNavigate = ir) }
     composable("bienestar") { BienestarScreen (onNavigate = ir) }
-    composable("mascota") { PantallaPendiente("Mascota", 4, ir) }
+    composable("mascota") { MascotaScreen (onNavigate =  ir) }
     composable("perfil") { PantallaPendiente("Perfil", 5, ir) }
+
+    // Rutas de canje y complementos
+    composable("publicar_producto") { PantallaPendiente("Publicar nuevo producto", 1, ir) }
+    composable("respirar_lilu") { RespirarLiluScreen(onNavigate = ir) } //
 }
