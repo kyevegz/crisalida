@@ -1,4 +1,4 @@
-package com.example.crisalida.ui.screens
+package com.example.crisalida.ui.theme.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -30,8 +30,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
+import com.example.crisalida.data.ResultadoApi
+import com.example.crisalida.data.RetosRepositorio
 import com.example.crisalida.data.SesionActual
-
+import com.example.crisalida.data.RetoDto
+import kotlinx.coroutines.launch
+import com.example.crisalida.ui.screens.*
 /* ──────────────────────────────────────────────────────────────
  * Valores MEDIDOS del mockup (home.png, 1080 px de ancho = 360 dp → 1 dp = 3 px)
  * Si ya tienes alguno en ui.theme, puedes reemplazarlo; aquí van privados
@@ -64,6 +68,15 @@ fun HomeScreen(
     onNavigate: (String) -> Unit
 ) {
     val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
+
+    // ── Datos del servidor: progreso (nivel y flores) y un microrreto abierto ──
+    val progreso = rememberProgreso()
+    val datos = (progreso.estado as? Carga.Lista)?.datos
+    val retoCarga = rememberCarga { RetosRepositorio.tablero() }
+    val reto: RetoDto? = (retoCarga.estado as? Carga.Lista)?.datos?.retos?.firstOrNull()
+    var aceptando by remember { mutableStateOf(false) }
+    var avisoReto by remember { mutableStateOf<String?>(null) }
 
     CrisalidaScaffold(
         currentTitle = "Inicio",
@@ -290,7 +303,7 @@ fun HomeScreen(
                             verticalAlignment = Alignment.Top
                         ) {
                             Text(
-                                text = "Nivel 3: En\nFlorecimiento",
+                                text = datos?.let { "Nivel ${it.nivel.nivel}:\n${it.nivel.nombre}" } ?: "Nivel…",
                                 fontFamily = JakartaSansFont,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
@@ -309,7 +322,9 @@ fun HomeScreen(
                                 )
                                 Spacer(modifier = Modifier.width(3.dp))
                                 Text(
-                                    text = "85 / 100\nSemillas",
+                                    text = datos?.lilu?.let { l ->
+                                        if (l.floresSiguiente != null) "${l.flores} / ${l.floresSiguiente}\nFlores" else "${l.flores}\nFlores"
+                                    } ?: "…\nFlores",
                                     fontFamily = JakartaSansFont,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp,
@@ -329,7 +344,7 @@ fun HomeScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth(0.85f)
+                                    .fillMaxWidth(((datos?.lilu?.porcentaje ?: 0) / 100f).coerceIn(0f, 1f))
                                     .fillMaxHeight()
                                     .background(MkVerde)
                             )
@@ -380,7 +395,17 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(36.dp))
 
             // ── Tarjeta Micro-reto ──────────────────────────────────
-            Column(
+            if (reto == null) {
+                when (val e = retoCarga.estado) {
+                    is Carga.Cargando -> IndicadorCargando()
+                    is Carga.Falla -> MensajeError(e.mensaje, retoCarga.recargar)
+                    is Carga.Lista -> Text(
+                        text = "Por ahora no hay microrretos abiertos. ¡Vuelve pronto!",
+                        modifier = Modifier.padding(horizontal = MargenTarjetas),
+                        fontFamily = JakartaSansFont, fontSize = 14.sp, color = MkTextoSuave
+                    )
+                }
+            } else Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = MargenTarjetas)
@@ -404,7 +429,7 @@ fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.width(1.dp))
                     Text(
-                        text = "Fácil • 25 min",
+                        text = "${when (reto?.dificultad) { "facil" -> "Fácil"; "media" -> "Media"; else -> "Difícil" }} • ${reto?.duracionMin ?: 0} min",
                         fontFamily = JakartaSansFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
@@ -438,7 +463,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.width(4.dp))
                     Column {
                         Text(
-                            text = "Transcribir notas de catálogo",
+                            text = reto?.titulo ?: "",
                             fontFamily = OutfitFont,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
@@ -446,14 +471,14 @@ fun HomeScreen(
                             maxLines = 1
                         )
                         Text(
-                            text = "Digitalización sencilla de fichas…",
+                            text = reto?.descripcion ?: "",
                             fontFamily = JakartaSansFont,
                             fontSize = 15.sp,
                             color = MkTextoSuave,
                             maxLines = 1
                         )
                         Text(
-                            text = "+$140 MXN",
+                            text = "+" + formatoPrecio(reto?.compensacion ?: 0.0) + " MXN",
                             fontFamily = JakartaSansFont,
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
@@ -465,7 +490,21 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Button(
-                    onClick = { /* Aceptar reto */ },
+                    onClick = {
+                        val r = reto ?: return@Button
+                        if (!aceptando) {
+                            aceptando = true
+                            scope.launch {
+                                avisoReto = when (val res = RetosRepositorio.aceptar(r.retoId)) {
+                                    is ResultadoApi.Exito -> "¡Reto aceptado! Encuéntralo en la pestaña Retos."
+                                    is ResultadoApi.Error -> res.mensaje
+                                }
+                                aceptando = false
+                                retoCarga.recargar()
+                            }
+                        }
+                    },
+                    enabled = !aceptando,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(40.dp),
@@ -496,6 +535,19 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+
+    avisoReto?.let { texto ->
+        AlertDialog(
+            onDismissRequest = { avisoReto = null },
+            text = { Text(text = texto, fontFamily = JakartaSansFont, color = MkTextoOscuro) },
+            confirmButton = {
+                TextButton(onClick = { avisoReto = null }) {
+                    Text(text = "Entendido", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkMorado)
+                }
+            },
+            containerColor = Color.White
+        )
     }
 }
 

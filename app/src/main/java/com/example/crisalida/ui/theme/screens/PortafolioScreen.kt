@@ -1,6 +1,10 @@
-package com.example.crisalida.ui.screens
+package com.example.crisalida.ui.theme.screens
 
 import androidx.compose.foundation.background
+import com.example.crisalida.data.ProgresoRepositorio
+import com.example.crisalida.data.PublicacionesRepositorio
+import com.example.crisalida.data.ResultadoApi
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -20,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.SesionActual
-
+import com.example.crisalida.ui.screens.*
 /* ──────────────────────────────────────────────────────────────
  * Colores medidos del mockup Perfil/Portafolio (portafolio.png)
  * ────────────────────────────────────────────────────────────── */
@@ -38,15 +42,13 @@ fun PortafolioScreen(
     var publicacionSeleccionadaParaAccion by remember { mutableStateOf<PublicacionPortafolio?>(null) }
     var tipoAccionPendiente by remember { mutableStateOf<String?>(null) } // "pausar" o "reactivar"
 
-    // Lista completa de publicaciones del portafolio (mostrando todas las registradas)
-    val publicacionesPortafolio = remember {
-        mutableStateListOf(
-            PublicacionPortafolio("1", "Nieve de limón", "$45.00 c/litro", "Activo", "8 vendidos", "Entrega: parque Ireka", 3),
-            PublicacionPortafolio("2", "Pastel de elote", "$120.00 c/u", "Por encargo", "8 vendidos", "Elaboración: 24 hrs anticipación • Recoger en calle Juárez...", 0),
-            PublicacionPortafolio("3", "Paseo de perros", "$50.00 c/perro x hora", "Pausado", "3 completados", "Recorrido: parque Ireka-parque lomas, 1 hora", 0),
-            PublicacionPortafolio("4", "Paseo de perros", "$50.00 c/perro x hora", "Pausado", "3 completados", "Recorrido: parque Ireka-parque lomas, 1 hora", 0)
-        )
-    }
+    val scope = rememberCoroutineScope()
+    var mensajeInfo by remember { mutableStateOf<String?>(null) }
+
+    // Lista completa de publicaciones de la usuaria, desde el servidor
+    val portafolio = rememberCarga(ProgresoRepositorio.version) { PublicacionesRepositorio.mias() }
+    val publicacionesPortafolio: List<PublicacionPortafolio> =
+        (portafolio.estado as? Carga.Lista)?.datos?.publicaciones?.map { it.aPortafolioUi() } ?: emptyList()
 
     CrisalidaScaffold(
         currentTitle = "Perfil/portafolio",
@@ -187,12 +189,29 @@ fun PortafolioScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             // Listado completo de publicaciones reutilizando la misma Card del perfil
+            when (val e = portafolio.estado) {
+                is Carga.Cargando -> IndicadorCargando()
+                is Carga.Falla -> MensajeError(e.mensaje, portafolio.recargar)
+                is Carga.Lista -> if (publicacionesPortafolio.isEmpty()) {
+                    Text(
+                        text = "Aún no has publicado nada. ¡Anímate a subir tu primer producto o servicio!",
+                        fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo
+                    )
+                }
+            }
+
             publicacionesPortafolio.forEach { pub ->
                 ItemPortafolioCardFiel(
                     pub = pub,
                     onPausarClick = {
-                        publicacionSeleccionadaParaAccion = pub
-                        tipoAccionPendiente = if (pub.estado == "Pausado") "reactivar" else "pausar"
+                        if (pub.estado == "En revisión" || pub.estado == "Rechazado") {
+                            mensajeInfo = if (pub.estado == "En revisión")
+                                "Tu publicación está en revisión. Cuando la aprobemos aparecerá en el marketplace."
+                            else "Esta publicación no fue aprobada, así que no se puede pausar ni reactivar."
+                        } else {
+                            publicacionSeleccionadaParaAccion = pub
+                            tipoAccionPendiente = if (pub.estado == "Pausado") "reactivar" else "pausar"
+                        }
                     },
                     onEditarClick = { /* Acción editar detalles */ }
                 )
@@ -252,13 +271,15 @@ fun PortafolioScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        if (esPausa) {
-                            pub.estado = "Pausado"
-                        } else {
-                            pub.estado = "Activo"
-                        }
+                        val nuevoEstado = if (esPausa) "pausado" else "activo"
                         publicacionSeleccionadaParaAccion = null
                         tipoAccionPendiente = null
+                        scope.launch {
+                            when (val r = PublicacionesRepositorio.cambiarEstado(pub.id, nuevoEstado)) {
+                                is ResultadoApi.Exito -> portafolio.recargar()
+                                is ResultadoApi.Error -> mensajeInfo = r.mensaje
+                            }
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)
                 ) {
@@ -268,6 +289,20 @@ fun PortafolioScreen(
             dismissButton = {
                 TextButton(onClick = { publicacionSeleccionadaParaAccion = null }) {
                     Text(text = "Cancelar", fontFamily = JakartaSansFont, color = MkTitulo)
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(12.dp)
+        )
+    }
+
+    mensajeInfo?.let { texto ->
+        AlertDialog(
+            onDismissRequest = { mensajeInfo = null },
+            text = { Text(text = texto, fontFamily = JakartaSansFont, color = MkSubtitulo) },
+            confirmButton = {
+                TextButton(onClick = { mensajeInfo = null }) {
+                    Text(text = "Entendido", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo)
                 }
             },
             containerColor = Color.White,

@@ -1,5 +1,5 @@
 package com.example.crisalida
-
+import com.example.crisalida.ui.screens.RadarScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -68,6 +68,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     // ---------- REGISTRO ----------
+                    // ---------- REGISTRO (paso 1: solo valida; la cuenta se crea al terminar el radar) ----------
                     composable("register") {
                         var cargando by remember { mutableStateOf(false) }
                         var error by remember { mutableStateOf<String?>(null) }
@@ -79,19 +80,26 @@ class MainActivity : ComponentActivity() {
                                 scope.launch {
                                     cargando = true
                                     error = null
-                                    when (val resultado = AuthRepositorio.registrar(seudonimo, pinPrincipal, pinCamuflaje)) {
-                                        is ResultadoApi.Exito -> {
-                                            // Cuando exista el cuestionario, aquí irá navigate("cuestionario")
-                                            navController.navigate("home") {
-                                                popUpTo("login") { inclusive = true }
-                                            }
-                                        }
+                                    when (val resultado = AuthRepositorio.validarRegistro(seudonimo, pinPrincipal, pinCamuflaje)) {
+                                        is ResultadoApi.Exito -> navController.navigate("radar")   // sin cuenta todavía
                                         is ResultadoApi.Error -> error = resultado.mensaje
                                     }
                                     cargando = false
                                 }
                             },
                             onNavigateToLogin = { navController.popBackStack() }
+                        )
+                    }
+
+                    // ---------- RADAR DE TALENTOS ----------
+                    composable("radar") {
+                        RadarScreen(
+                            onTerminar = {
+                                // La cuenta ya se creó y la sesión está iniciada → entra a la app
+                                navController.navigate("home") {
+                                    popUpTo("login") { inclusive = true }
+                                }
+                            }
                         )
                     }
 

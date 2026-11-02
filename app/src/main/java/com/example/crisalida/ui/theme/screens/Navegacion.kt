@@ -1,6 +1,6 @@
 package com.example.crisalida.ui.theme.screens
 
-import com.example.crisalida.ui.screens.HomeScreen
+import com.example.crisalida.ui.theme.screens.HomeScreen
 import com.example.crisalida.ui.screens.CrisalidaScaffold
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -75,10 +75,8 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
     composable("mascota") { MascotaScreen (onNavigate =  ir) }
     composable("perfil") { PerfilScreen (onNavigate =  ir) }
 
-    // Rutas de canje y complementos
-    composable("publicar_producto") { PantallaPendiente("Publicar nuevo producto", 1, ir) }
+    // Rutas de canje y complementos (cada ruta se registra UNA sola vez)
     composable("respirar_lilu") { RespirarLiluScreen(onNavigate = ir) }
-    composable("portafolio_completo") { PantallaPendiente("Portafolio Personal Completo", 5, ir) }
     composable("portafolio_completo") { PortafolioScreen(onNavigate = ir) }
     composable("publicar_producto") { PublicarProductoScreen(onNavigate = ir) }
 }

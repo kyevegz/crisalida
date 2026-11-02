@@ -1,4 +1,4 @@
-package com.example.crisalida.ui.screens
+package com.example.crisalida.ui.theme.screens
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
@@ -31,7 +31,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
+import com.example.crisalida.data.FotoRemota
+import com.example.crisalida.data.ProgresoRepositorio
+import com.example.crisalida.data.PublicacionesRepositorio
+import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
+import kotlinx.coroutines.launch
+import com.example.crisalida.ui.screens.*
 /* ──────────────────────────────────────────────────────────────
  * Colores medidos del mockup de Perfil y Tarjetas
  * ────────────────────────────────────────────────────────────── */
@@ -56,7 +62,8 @@ data class PublicacionPortafolio(
     val detalleVentas: String,
     val ubicacionDetalle: String,
     val pedidosCount: Int,
-    @DrawableRes val imagenRes: Int? = null
+    @DrawableRes val imagenRes: Int? = null,
+    val imagenRuta: String? = null   // foto que viene del servidor (ver FotoRemota)
 )
 
 data class HabilidadInsignia(
@@ -71,30 +78,27 @@ fun PerfilScreen(
 ) {
     val scrollState = rememberScrollState()
 
+    val scope = rememberCoroutineScope()
     var mostrarSelectorAvatar by remember { mutableStateOf(false) }
-    var avatarSeleccionado by remember { mutableStateOf("🐱") }
+    var avatarSeleccionado by remember { mutableStateOf(SesionActual.avatar) }
+    var mensajeInfo by remember { mutableStateOf<String?>(null) }
+
+    // ── Todo viene del servidor ──
+    val progreso = rememberProgreso()
+    val datosProgreso = (progreso.estado as? Carga.Lista)?.datos
+    val portafolio = rememberCarga(ProgresoRepositorio.version) { PublicacionesRepositorio.mias() }
+    val habilidadesCarga = rememberCarga { ProgresoRepositorio.habilidades() }
 
     // Diálogos de confirmación para pausar/reactivar
     var publicacionSeleccionadaParaAccion by remember { mutableStateOf<PublicacionPortafolio?>(null) }
     var tipoAccionPendiente by remember { mutableStateOf<String?>(null) } // "pausar" o "reactivar"
 
-    // Catálogo de publicaciones mutable para reflejar los cambios en tiempo real
-    val publicacionesPortafolio = remember {
-        mutableStateListOf(
-            PublicacionPortafolio("1", "Nieve de limón", "$45.00 c/litro", "Activo", "8 vendidos", "Entrega: parque Ireka", 3),
-            PublicacionPortafolio("2", "Pastel de elote", "$120.00 c/u", "Por encargo", "8 vendidos", "Elaboración: 24 hrs anticipación • Recoger en calle Juárez...", 0),
-            PublicacionPortafolio("3", "Paseo de perros", "$50.00 c/perro x hora", "Pausado", "3 completados", "Recorrido: parque Ireka-parque lomas, 1 hora", 0),
-            PublicacionPortafolio("4", "Bordado artesanal en servilletas", "$150.00 c/u", "Activo", "12 vendidos", "Entrega en punto medio acordado", 2)
-        )
-    }
+    val publicacionesPortafolio: List<PublicacionPortafolio> =
+        (portafolio.estado as? Carga.Lista)?.datos?.publicaciones?.map { it.aPortafolioUi() } ?: emptyList()
 
-    val habilidadesInsignias = remember {
-        listOf(
-            HabilidadInsignia("Repostería y Cocina Casera", "Habilidad destacada en preparación de postres tradicionales y conservas.", "Gastronomía"),
-            HabilidadInsignia("Organización y TICS", "Facilidad para la captura de datos, orden de archivos y digitalización sencilla.", "Tecnología"),
-            HabilidadInsignia("Costura y Manualidades", "Dominio del bordado a mano y confección de textiles utilitarios.", "Artesanías")
-        )
-    }
+    val habilidadesInsignias: List<HabilidadInsignia> =
+        (habilidadesCarga.estado as? Carga.Lista)?.datos?.habilidades
+            ?.map { HabilidadInsignia(it.titulo, it.descripcion, it.categoria) } ?: emptyList()
 
     CrisalidaScaffold(
         currentTitle = "Perfil",
@@ -143,7 +147,7 @@ fun PerfilScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "3",
+                                text = datosProgreso?.nivel?.nivel?.toString() ?: "–",
                                 fontFamily = OutfitFont,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
@@ -188,6 +192,10 @@ fun PerfilScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            if (progreso.estado is Carga.Falla) {
+                MensajeError((progreso.estado as Carga.Falla).mensaje, progreso.recargar)
+            }
+
             // Tarjeta Nivel
             Card(
                 shape = RoundedCornerShape(12.dp),
@@ -208,7 +216,7 @@ fun PerfilScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Nivel 3: En florecimiento",
+                            text = datosProgreso?.let { "Nivel ${it.nivel.nivel}: ${it.nivel.nombre}" } ?: "Cargando tu nivel…",
                             fontFamily = OutfitFont,
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
@@ -225,7 +233,7 @@ fun PerfilScreen(
                     ) {
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth(0.5f)
+                                .fillMaxWidth(((datosProgreso?.nivel?.porcentaje ?: 0) / 100f).coerceIn(0f, 1f))
                                 .fillMaxHeight()
                                 .clip(CircleShape)
                                 .background(MkBarraProgreso)
@@ -237,13 +245,16 @@ fun PerfilScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Próximo nivel: Alas plenas",
+                            text = datosProgreso?.nivel?.let { n ->
+                                if (n.siguienteNombre != null) "Próximo nivel: ${n.siguienteNombre} • ${n.actividades}/${n.actividadesSiguiente} actividades"
+                                else "¡Llegaste al nivel máximo!"
+                            } ?: "",
                             fontFamily = JakartaSansFont,
                             fontSize = 11.sp,
                             color = MkSubtitulo
                         )
                         Text(
-                            text = "50%",
+                            text = "${datosProgreso?.nivel?.porcentaje ?: 0}%",
                             fontFamily = JakartaSansFont,
                             fontWeight = FontWeight.Bold,
                             fontSize = 11.sp,
@@ -260,11 +271,11 @@ fun PerfilScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                CardEstadisticaColumna(numero = "14", etiqueta = "Retos completados", icon = Icons.Outlined.WorkspacePremium, modifier = Modifier.weight(1f))
+                CardEstadisticaColumna(numero = datosProgreso?.estadisticas?.retosCompletados?.toString() ?: "–", etiqueta = "Retos completados", icon = Icons.Outlined.WorkspacePremium, modifier = Modifier.weight(1f))
                 Spacer(modifier = Modifier.width(8.dp))
-                CardEstadisticaColumna(numero = "4.9", etiqueta = "20 ventas", icon = Icons.Outlined.StarBorder, modifier = Modifier.weight(1f))
+                CardEstadisticaColumna(numero = datosProgreso?.estadisticas?.calificacionPromedio?.let { String.format(java.util.Locale.US, "%.1f", it) } ?: "–", etiqueta = "${datosProgreso?.estadisticas?.ventasCompletadas ?: 0} ventas", icon = Icons.Outlined.StarBorder, modifier = Modifier.weight(1f))
                 Spacer(modifier = Modifier.width(8.dp))
-                CardEstadisticaColumna(numero = "751", etiqueta = "Semillas", icon = Icons.Outlined.LocalFlorist, modifier = Modifier.weight(1f))
+                CardEstadisticaColumna(numero = datosProgreso?.lilu?.flores?.toString() ?: "–", etiqueta = "Flores", icon = Icons.Outlined.LocalFlorist, modifier = Modifier.weight(1f))
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -304,12 +315,29 @@ fun PerfilScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             // Primeros 3 elementos del catálogo con el diseño exacto de la Card
+            when (val e = portafolio.estado) {
+                is Carga.Cargando -> IndicadorCargando()
+                is Carga.Falla -> MensajeError(e.mensaje, portafolio.recargar)
+                is Carga.Lista -> if (publicacionesPortafolio.isEmpty()) {
+                    Text(
+                        text = "Aún no has publicado nada. ¡Anímate a subir tu primer producto o servicio!",
+                        fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo
+                    )
+                }
+            }
+
             publicacionesPortafolio.take(3).forEach { pub ->
                 ItemPortafolioCardFiel(
                     pub = pub,
                     onPausarClick = {
-                        publicacionSeleccionadaParaAccion = pub
-                        tipoAccionPendiente = if (pub.estado == "Pausado") "reactivar" else "pausar"
+                        if (pub.estado == "En revisión" || pub.estado == "Rechazado") {
+                            mensajeInfo = if (pub.estado == "En revisión")
+                                "Tu publicación está en revisión. Cuando la aprobemos aparecerá en el marketplace."
+                            else "Esta publicación no fue aprobada, así que no se puede pausar ni reactivar."
+                        } else {
+                            publicacionSeleccionadaParaAccion = pub
+                            tipoAccionPendiente = if (pub.estado == "Pausado") "reactivar" else "pausar"
+                        }
                     },
                     onEditarClick = { /* Acción editar detalles */ }
                 )
@@ -334,6 +362,12 @@ fun PerfilScreen(
             )
 
             Spacer(modifier = Modifier.height(12.dp))
+
+            when (val e = habilidadesCarga.estado) {
+                is Carga.Cargando -> IndicadorCargando()
+                is Carga.Falla -> MensajeError(e.mensaje, habilidadesCarga.recargar)
+                is Carga.Lista -> {}
+            }
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 habilidadesInsignias.forEach { hab ->
@@ -409,13 +443,15 @@ fun PerfilScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        if (esPausa) {
-                            pub.estado = "Pausado"
-                        } else {
-                            pub.estado = "Activo"
-                        }
+                        val nuevoEstado = if (esPausa) "pausado" else "activo"
                         publicacionSeleccionadaParaAccion = null
                         tipoAccionPendiente = null
+                        scope.launch {
+                            when (val r = PublicacionesRepositorio.cambiarEstado(pub.id, nuevoEstado)) {
+                                is ResultadoApi.Exito -> portafolio.recargar()
+                                is ResultadoApi.Error -> mensajeInfo = r.mensaje
+                            }
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)
                 ) {
@@ -425,6 +461,21 @@ fun PerfilScreen(
             dismissButton = {
                 TextButton(onClick = { publicacionSeleccionadaParaAccion = null }) {
                     Text(text = "Cancelar", fontFamily = JakartaSansFont, color = MkTitulo)
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(12.dp)
+        )
+    }
+
+    // Avisos (errores del servidor, publicaciones en revisión...)
+    mensajeInfo?.let { texto ->
+        AlertDialog(
+            onDismissRequest = { mensajeInfo = null },
+            text = { Text(text = texto, fontFamily = JakartaSansFont, color = MkSubtitulo) },
+            confirmButton = {
+                TextButton(onClick = { mensajeInfo = null }) {
+                    Text(text = "Entendido", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo)
                 }
             },
             containerColor = Color.White,
@@ -452,8 +503,16 @@ fun PerfilScreen(
                                 .clip(CircleShape)
                                 .background(if (avatarSeleccionado == emoji) MkBarraFondo else Color.LightGray.copy(alpha = 0.3f))
                                 .clickable {
+                                    val anterior = avatarSeleccionado
                                     avatarSeleccionado = emoji
                                     mostrarSelectorAvatar = false
+                                    scope.launch {
+                                        val r = ProgresoRepositorio.cambiarAvatar(emoji)
+                                        if (r is ResultadoApi.Error) {
+                                            avatarSeleccionado = anterior
+                                            mensajeInfo = r.mensaje
+                                        }
+                                    }
                                 },
                             contentAlignment = Alignment.Center
                         ) {
@@ -551,7 +610,13 @@ fun ItemPortafolioCardFiel(
                         .background(Color.LightGray),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (pub.imagenRes != null) {
+                    if (pub.imagenRuta != null) {
+                        FotoRemota(
+                            ruta = pub.imagenRuta,
+                            modifier = Modifier.fillMaxSize(),
+                            alternativa = { Text(text = "📷", fontSize = 24.sp) }
+                        )
+                    } else if (pub.imagenRes != null) {
                         Image(
                             painter = painterResource(id = pub.imagenRes),
                             contentDescription = pub.titulo,

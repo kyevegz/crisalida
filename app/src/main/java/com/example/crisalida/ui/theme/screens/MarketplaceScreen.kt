@@ -1,4 +1,4 @@
-package com.example.crisalida.ui.screens
+package com.example.crisalida.ui.theme.screens
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
@@ -26,7 +26,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.ui.theme.*
-
+import com.example.crisalida.data.FotoRemota
+import com.example.crisalida.data.MarketplaceRepositorio
+import com.example.crisalida.data.PublicacionDto
+import com.example.crisalida.ui.screens.*
 /* ──────────────────────────────────────────────────────────────
  * Colores y dimensiones MEDIDOS del mockup del Marketplace
  * ────────────────────────────────────────────────────────────── */
@@ -55,95 +58,28 @@ data class ProductoMarketplaceUi(
     val esServicio: Boolean = false,
     val notaPrecio: String? = null, // p. ej. "*Por sesión"
     val categoria: String,
-    @DrawableRes val imagenRes: Int? = null
+    @DrawableRes val imagenRes: Int? = null,
+    val imagenRuta: String? = null   // foto del servidor (ver FotoRemota)
 )
 
 @Composable
 fun MarketplaceScreen(
     onNavigate: (String) -> Unit
 ) {
-    // Categorías de filtrado compuestas por los productos y servicios
-    val categorias = remember {
-        listOf(
-            "Todos",
-            "Artesanías",
-            "Repostería y cocina",
-            "Servicios",
-            "Manualidades y Regalos",
-            "Bisutería y Accesorios",
-            "Belleza y Cosmética Natural",
-            "Jardinería y Plantas",
-            "Papelería y Cuadernos Artesanales",
-            "Juguetes y Muñecos Hechos a Mano",
-            "Velas y Aromaterapia",
-            "Panadería y Galletas",
-            "Conservas y Salsas",
-            "Bordados y Tejidos",
-            "Cuidado de Mascotas",
-            "Organización de Eventos",
-            "Cuidado Infantil",
-            "Cuidado de Adultos Mayores",
-            "Fotografía y Edición",
-            "Diseño Gráfico Básico",
-            "Corte y Confección",
-            "Limpieza y Mantenimiento",
-            "Clases y Tutorías",
-            "Traducción y Transcripción"
-        )
-    }
+    // Filtros: "Todos", los dos tipos y las categorías reales de la base de datos
+    val categoriasCarga = rememberCarga { MarketplaceRepositorio.categorias() }
+    val categoriasDto = ((categoriasCarga.estado as? Carga.Lista)?.datos?.categorias ?: emptyList())
+        .filter { it.ambito != "reto" }
+    val categorias = listOf("Todos", "Productos", "Servicios") + categoriasDto.map { it.nombre }
 
     var seleccionCategoria by remember { mutableIntStateOf(0) }
+    val tipo: String? = when (seleccionCategoria) { 1 -> "producto"; 2 -> "servicio"; else -> null }
+    val categoriaId: Int? = if (seleccionCategoria >= 3) categoriasDto.getOrNull(seleccionCategoria - 3)?.id else null
 
-    // Catálogo inicial basado exactamente en las tarjetas del mockup
-    val productos = remember {
-        listOf(
-            ProductoMarketplaceUi(
-                id = "1",
-                titulo = "Mermelada artesanal de mango",
-                vendedora = "Esperanza12",
-                calificacion = "4.9",
-                ventas = 18,
-                puntoEntrega = "Entrega en punto medio en ___",
-                precio = "$180.00 MXN",
-                esServicio = false,
-                categoria = "Conservas y Salsas"
-            ),
-            ProductoMarketplaceUi(
-                id = "2",
-                titulo = "Bordado personalizado a mano en playeras",
-                vendedora = "Esperanza12",
-                calificacion = "4.9",
-                ventas = 18,
-                puntoEntrega = "Entrega en punto medio en ___",
-                precio = "$320.00 MXN",
-                esServicio = false,
-                categoria = "Bordados y Tejidos"
-            ),
-            ProductoMarketplaceUi(
-                id = "3",
-                titulo = "Limpieza de hogares",
-                vendedora = "Esperanza12",
-                calificacion = "5.0",
-                ventas = 52,
-                puntoEntrega = "Entrega en punto medio en ___",
-                precio = "$250.00 MXN*",
-                esServicio = true,
-                notaPrecio = "*Por sesión",
-                categoria = "Limpieza y Mantenimiento"
-            )
-        )
-    }
-
-    val productosFiltrados = if (seleccionCategoria == 0) {
-        productos
-    } else {
-        val catActual = categorias[seleccionCategoria]
-        productos.filter { it.categoria.equals(catActual, ignoreCase = true) ||
-                (catActual == "Servicios" && it.esServicio) ||
-                (catActual == "Repostería y cocina" && (it.categoria == "Conservas y Salsas" || it.categoria == "Panadería y Galletas")) ||
-                (catActual == "Artesanías" && it.categoria == "Bordados y Tejidos")
-        }
-    }
+    // Catálogo real: se vuelve a pedir cada vez que cambia el filtro
+    val catalogo = rememberCarga(tipo, categoriaId) { MarketplaceRepositorio.catalogo(tipo = tipo, categoriaId = categoriaId) }
+    val productosFiltrados: List<ProductoMarketplaceUi> =
+        (catalogo.estado as? Carga.Lista)?.datos?.publicaciones?.map { it.aMarketplaceUi() } ?: emptyList()
 
     CrisalidaScaffold(
         currentTitle = "Marketplace",
@@ -174,7 +110,7 @@ fun MarketplaceScreen(
                         color = MkTitulo
                     )
                     Text(
-                        text = "${productosFiltrados.size} productos nuevos",
+                        text = "${productosFiltrados.size} publicaciones",
                         fontFamily = JakartaSansFont,
                         fontWeight = FontWeight.Normal,
                         fontSize = 14.sp,
@@ -216,6 +152,20 @@ fun MarketplaceScreen(
 
             item { Spacer(modifier = Modifier.height(8.dp)) }
 
+            item {
+                when (val e = catalogo.estado) {
+                    is Carga.Cargando -> IndicadorCargando()
+                    is Carga.Falla -> MensajeError(e.mensaje, catalogo.recargar)
+                    is Carga.Lista -> if (productosFiltrados.isEmpty()) {
+                        Text(
+                            text = "Todavía no hay publicaciones en este rubro.",
+                            fontFamily = JakartaSansFont, fontSize = 14.sp, color = MkGrisContador,
+                            modifier = Modifier.padding(start = MargenIzq, end = MargenDer, top = 8.dp)
+                        )
+                    }
+                }
+            }
+
             // Lista de Tarjetas de Productos / Servicios
             items(productosFiltrados) { producto ->
                 ProductoCard(
@@ -252,7 +202,20 @@ private fun ProductoCard(
                     .background(Color(0xFFD9D9D9)),
                 contentAlignment = Alignment.Center
             ) {
-                if (producto.imagenRes != null) {
+                if (producto.imagenRuta != null) {
+                    FotoRemota(
+                        ruta = producto.imagenRuta,
+                        modifier = Modifier.fillMaxSize(),
+                        alternativa = {
+                            Icon(
+                                imageVector = Icons.Outlined.Image,
+                                contentDescription = null,
+                                tint = MkGrisContador,
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
+                    )
+                } else if (producto.imagenRes != null) {
                     Image(
                         painter = painterResource(id = producto.imagenRes),
                         contentDescription = producto.titulo,
@@ -408,3 +371,18 @@ private fun ProductoCard(
         }
     }
 }
+
+/** Del servidor a la tarjeta. La dirección real NUNCA llega aquí: solo la zona pública. */
+private fun PublicacionDto.aMarketplaceUi() = ProductoMarketplaceUi(
+    id = id,
+    titulo = titulo,
+    vendedora = vendedora ?: "Vendedora",
+    calificacion = calificacion?.let { String.format(java.util.Locale.US, "%.1f", it) } ?: "Nueva",
+    ventas = vendidos,
+    puntoEntrega = entregaPublicaTexto(),
+    precio = formatoPrecio(precio) + " MXN" + (if (notaPrecio.isNullOrBlank()) "" else "*"),
+    esServicio = tipo == "servicio",
+    notaPrecio = notaPrecio?.takeIf { it.isNotBlank() }?.let { "*$it" },
+    categoria = categoria,
+    imagenRuta = imagenes.firstOrNull()
+)

@@ -27,6 +27,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.ui.screens.CrisalidaScaffold
+import com.example.crisalida.ui.screens.Carga
+import com.example.crisalida.ui.screens.IndicadorCargando
+import com.example.crisalida.ui.screens.MensajeError
+import com.example.crisalida.ui.screens.rememberCarga
+import com.example.crisalida.data.MarketplaceRepositorio
+import com.example.crisalida.data.ProgresoRepositorio
+import com.example.crisalida.data.ResultadoApi
+import com.example.crisalida.data.RetoDto
+import com.example.crisalida.data.RetosRepositorio
+import kotlinx.coroutines.launch
 import com.example.crisalida.ui.theme.*
 
 /* Colores medidos del mockup (microrretos.png, 1080 px = 360 dp) */
@@ -43,45 +53,86 @@ private val MargenIzq = 21.dp
 private val MargenDer = 12.dp
 
 private data class RetoUi(
+    val retoId: String,
+    val aceptacionId: String?,      // solo en "Mis retos"
+    val estado: String?,            // aceptado | entregado | validado (solo en "Mis retos")
     val titulo: String,
     val precio: String,
     val etiqueta: String,
     val etiquetaFondo: Color,
     val etiquetaTexto: Color,
-    val categoria: String,          // chip del filtro al que pertenece
+    val categoria: String,
     val habilidad: String,
     val duracion: String,
     @DrawableRes val imagen: Int?   // null = marcador con icono
 )
 
+// Colores de las etiquetas: se reparten según el nombre para que cada etiqueta siempre tenga el mismo color
+private val PaletaEtiquetas = listOf(
+    Color(0xFFAFD0DD) to Color(0xFF11215A),
+    Color(0xFFC8AEDD) to Color(0xFF2B115A),
+    Color(0xFFDEBDAE) to Color(0xFF5A2511),
+    Color(0xFFBFDDB5) to Color(0xFF1B3F11),
+    Color(0xFFF0D9A6) to Color(0xFF5A4311)
+)
+
+private fun RetoDto.aUi(): RetoUi {
+    val (fondo, texto) = PaletaEtiquetas[(etiqueta ?: categoria).hashCode().mod(PaletaEtiquetas.size)]
+    return RetoUi(
+        retoId = retoId,
+        aceptacionId = aceptacionId,
+        estado = estado,
+        titulo = titulo,
+        precio = formatoPrecio(compensacion) + " MXN",
+        etiqueta = etiqueta ?: categoria,
+        etiquetaFondo = fondo,
+        etiquetaTexto = texto,
+        categoria = categoria,
+        habilidad = habilidadRequerida ?: "Sin requisito especial",
+        duracion = "$duracionMin min. aprox",
+        imagen = null
+    )
+}
+
 @Composable
 fun RetosScreen(
     onNavigate: (String) -> Unit
 ) {
-    val categorias = listOf("Todos", "Organización y datos", "Redacción y textos", "Cocina y repostería", "Costura y confección", "Cuidado personal y cosmética natural", "Digitalización y apoyo administrativo", "Oficios y reparaciones del hogar", "Educación y asesorías", "Cuidado y asistencia", "Eventos y banquetes")
+    val scope = rememberCoroutineScope()
+    var verMisRetos by remember { mutableStateOf(false) }
     var seleccion by remember { mutableIntStateOf(0) }
+    var aviso by remember { mutableStateOf<String?>(null) }
+    var ocupado by remember { mutableStateOf(false) }
 
-    // Pon aquí tus fotos: imagen = R.drawable.reto_excel, etc.
-    val retos = remember {
-        listOf(
-            RetoUi(
-                "Captura y orden de 35 contactos en Excel", "$120.00 MXN",
-                "TICS", Color(0xFFAFD0DD), Color(0xFF11215A),
-                "Organización y datos", "Organización básica", "45 min. aprox", null
-            ),
-            RetoUi(
-                "Revisar ortografía de un menú de cafetería (3pags)", "$150.00 MXN",
-                "Redacción", Color(0xFFC8AEDD), Color(0xFF2B115A),
-                "Redacción y textos", "Atención al detalle", "30 min. aprox", null
-            ),
-            RetoUi(
-                "Receta del mole más rico", "$90.00 MXN",
-                "Cocina", Color(0xFFDEBDAE), Color(0xFF5A2511),
-                "Cocina y recetas", "Cocinar muy bueno", "10 min. aprox", null
-            )
-        )
+    // Categorías reales (las mismas que usa la base de datos)
+    val categoriasCarga = rememberCarga { MarketplaceRepositorio.categorias("reto") }
+    val categoriasDto = (categoriasCarga.estado as? Carga.Lista)?.datos?.categorias ?: emptyList()
+    val categorias = listOf("Todos") + categoriasDto.map { it.nombre }
+    val categoriaId: Int? = if (seleccion == 0) null else categoriasDto.getOrNull(seleccion - 1)?.id
+
+    // Tablero y "mis retos"; `version` fuerza volver a pedirlos después de aceptar/entregar/soltar
+    var version by remember { mutableIntStateOf(0) }
+    val tablero = rememberCarga(categoriaId, version) { RetosRepositorio.tablero(categoriaId = categoriaId) }
+    val mios = rememberCarga(version) { RetosRepositorio.mis() }
+
+    val activo = if (verMisRetos) mios else tablero
+    val visibles: List<RetoUi> = ((activo.estado as? Carga.Lista)?.datos?.retos ?: emptyList())
+        .filter { it.estado != "abandonado" }
+        .map { it.aUi() }
+
+    fun ejecutar(accion: suspend () -> ResultadoApi<*>, exito: String) {
+        if (ocupado) return
+        ocupado = true
+        scope.launch {
+            aviso = when (val r = accion()) {
+                is ResultadoApi.Exito -> exito
+                is ResultadoApi.Error -> r.mensaje
+            }
+            ocupado = false
+            version++
+            ProgresoRepositorio.avisarCambio()
+        }
     }
-    val visibles = if (seleccion == 0) retos else retos.filter { it.categoria == categorias[seleccion] }
 
     CrisalidaScaffold(
         currentTitle = "Tablero de retos",
@@ -105,14 +156,14 @@ fun RetosScreen(
                     verticalAlignment = Alignment.Bottom
                 ) {
                     Text(
-                        text = "Retos disponibles hoy",
+                        text = if (verMisRetos) "Mis retos" else "Retos disponibles hoy",
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 35.sp,
                         color = MkTitulo
                     )
                     Text(
-                        text = "${retos.size} nuevos",
+                        text = if (verMisRetos) "${visibles.size}" else "${visibles.size} nuevos",
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Normal,
                         fontSize = 18.sp,
@@ -122,20 +173,48 @@ fun RetosScreen(
                 }
             }
 
-            // Chips de categoría (se desplazan; el 4.º queda cortado como en el mockup)
+            // Pestañas: Disponibles / Mis retos
             item {
+                Row(
+                    modifier = Modifier.padding(start = MargenIzq, end = MargenDer, top = 9.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    listOf("Disponibles" to false, "Mis retos" to true).forEach { (texto, esMios) ->
+                        val sel = verMisRetos == esMios
+                        Box(
+                            modifier = Modifier
+                                .height(28.dp)
+                                .clip(CircleShape)
+                                .background(if (sel) MkVerde else MkChipNormal)
+                                .clickable { verMisRetos = esMios }
+                                .padding(horizontal = 16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = texto,
+                                fontFamily = OutfitFont,
+                                fontSize = 15.sp,
+                                color = if (sel) Color.White else Color.Black
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Chips de categoría (solo en "Disponibles")
+            if (!verMisRetos) item {
                 LazyRow(
                     modifier = Modifier.padding(top = 9.dp),
                     contentPadding = PaddingValues(start = MargenIzq, end = MargenDer),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     items(categorias.size) { i ->
-                        val activo = i == seleccion
+                        val activoChip = i == seleccion
                         Box(
                             modifier = Modifier
                                 .height(24.dp)
                                 .clip(CircleShape)
-                                .background(if (activo) MkChipSeleccionado else MkChipNormal)
+                                .background(if (activoChip) MkChipSeleccionado else MkChipNormal)
                                 .clickable { seleccion = i }
                                 .padding(horizontal = 13.dp),
                             contentAlignment = Alignment.Center
@@ -145,7 +224,7 @@ fun RetosScreen(
                                 fontFamily = OutfitFont,
                                 fontWeight = FontWeight.Normal,
                                 fontSize = 15.sp,
-                                color = if (activo) Color.White else Color.Black
+                                color = if (activoChip) Color.White else Color.Black
                             )
                         }
                     }
@@ -154,13 +233,66 @@ fun RetosScreen(
 
             item { Spacer(modifier = Modifier.height(3.dp)) }
 
+            // Cargando / error / vacío
+            item {
+                when (val e = activo.estado) {
+                    is Carga.Cargando -> IndicadorCargando()
+                    is Carga.Falla -> MensajeError(e.mensaje, activo.recargar)
+                    is Carga.Lista -> if (visibles.isEmpty()) {
+                        Text(
+                            text = if (verMisRetos) "Aún no has tomado ningún reto. ¡Ve a «Disponibles» y elige uno!"
+                            else "No hay retos en esta categoría por ahora. ¡Vuelve pronto!",
+                            fontFamily = OutfitFont, fontSize = 15.sp, color = MkGris,
+                            modifier = Modifier.padding(start = MargenIzq, end = MargenDer, top = 16.dp)
+                        )
+                    }
+                }
+            }
+
             items(visibles) { reto ->
-                RetoCard(
-                    reto = reto,
-                    modifier = Modifier.padding(start = MargenIzq, end = MargenDer, top = 16.dp)
-                )
+                val modificador = Modifier.padding(start = MargenIzq, end = MargenDer, top = 16.dp)
+                if (!verMisRetos) {
+                    RetoCard(
+                        reto = reto,
+                        modifier = modificador,
+                        habilitado = !ocupado,
+                        onAceptar = {
+                            ejecutar({ RetosRepositorio.aceptar(reto.retoId) },
+                                "¡Reto aceptado! Lo encuentras en «Mis retos». Cuando termines, márcalo como entregado.")
+                        }
+                    )
+                } else when (reto.estado) {
+                    "aceptado" -> RetoCard(
+                        reto = reto, modifier = modificador,
+                        textoBoton = "Marcar como entregado", habilitado = !ocupado,
+                        onAceptar = {
+                            ejecutar({ RetosRepositorio.entregar(reto.aceptacionId.orEmpty()) },
+                                "¡Entregado! Cuando el contratista lo valide, recibirás tus flores.")
+                        },
+                        textoSecundario = "Soltar este reto",
+                        onSecundario = {
+                            ejecutar({ RetosRepositorio.abandonar(reto.aceptacionId.orEmpty()) },
+                                "Soltaste el reto. Volvió al tablero para otra persona.")
+                        }
+                    )
+                    "entregado" -> RetoCard(reto = reto, modifier = modificador, textoBoton = "Esperando validación", habilitado = false)
+                    else -> RetoCard(reto = reto, modifier = modificador, textoBoton = "Completado ✓", habilitado = false)
+                }
             }
         }
+    }
+
+    aviso?.let { texto ->
+        AlertDialog(
+            onDismissRequest = { aviso = null },
+            text = { Text(text = texto, fontFamily = OutfitFont, color = Color.Black) },
+            confirmButton = {
+                TextButton(onClick = { aviso = null }) {
+                    Text(text = "Entendido", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkVerde)
+                }
+            },
+            containerColor = Color.White
+        )
     }
 }
 
@@ -168,7 +300,11 @@ fun RetosScreen(
 private fun RetoCard(
     reto: RetoUi,
     modifier: Modifier = Modifier,
-    onAceptar: () -> Unit = {}
+    textoBoton: String = "Aceptar el reto",
+    habilitado: Boolean = true,
+    onAceptar: () -> Unit = {},
+    textoSecundario: String? = null,
+    onSecundario: () -> Unit = {}
 ) {
     Card(
         shape = RoundedCornerShape(6.dp),
@@ -308,6 +444,7 @@ private fun RetoCard(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 Button(
                     onClick = onAceptar,
+                    enabled = habilitado,
                     modifier = Modifier
                         .width(191.dp)
                         .height(38.dp),
@@ -316,7 +453,7 @@ private fun RetoCard(
                     contentPadding = PaddingValues(0.dp)
                 ) {
                     Text(
-                        text = "Aceptar el reto",
+                        text = textoBoton,
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Normal,
                         fontSize = 16.sp,
@@ -329,6 +466,14 @@ private fun RetoCard(
                         tint = Color(0xFFFFFAFA),
                         modifier = Modifier.size(16.dp)
                     )
+                }
+            }
+
+            if (textoSecundario != null) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onSecundario, enabled = habilitado) {
+                        Text(text = textoSecundario, fontFamily = OutfitFont, fontSize = 14.sp, color = MkGris)
+                    }
                 }
             }
         }
