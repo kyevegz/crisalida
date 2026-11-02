@@ -1,29 +1,24 @@
 package com.example.crisalida
-import com.example.crisalida.ui.screens.RadarScreen
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.crisalida.data.AuthRepositorio
 import com.example.crisalida.data.ResultadoApi
+import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.screens.LoginScreen
-import com.example.crisalida.ui.screens.RegisterScreen
-import com.example.crisalida.ui.theme.ColorFondoApp
-import com.example.crisalida.ui.theme.ColorTextoPrincipal
+import com.example.crisalida.ui.screens.RadarScreen
+import com.example.crisalida.ui.theme.screens.RegisterScreen
+import com.example.crisalida.ui.theme.screens.GaleriaMariposasScreen
 import com.example.crisalida.ui.theme.screens.pantallasPrincipales
 import kotlinx.coroutines.launch
 
@@ -67,7 +62,6 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    // ---------- REGISTRO ----------
                     // ---------- REGISTRO (paso 1: solo valida; la cuenta se crea al terminar el radar) ----------
                     composable("register") {
                         var cargando by remember { mutableStateOf(false) }
@@ -97,20 +91,22 @@ class MainActivity : ComponentActivity() {
                             onTerminar = {
                                 // La cuenta ya se creó y la sesión está iniciada → entra a la app
                                 navController.navigate("home") {
-                                    popUpTo("login") { inclusive = true }
+                                    popUpTo("login") { inclusive = true }   // ya no se puede volver al login/registro/radar
                                 }
                             }
                         )
                     }
 
-                    // ---------- GALERÍA DE CAMUFLAJE (provisional) ----------
+                    // ---------- GALERÍA DE MARIPOSAS (app de camuflaje) ----------
                     composable("camuflaje") {
-                        Box(
-                            modifier = Modifier.fillMaxSize().background(ColorFondoApp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("🦋 Galería de mariposas (pendiente)", color = ColorTextoPrincipal)
-                        }
+                        GaleriaMariposasScreen(
+                            onCerrar = {
+                                SesionActual.cerrar()
+                                navController.navigate("login") {
+                                    popUpTo(0) { inclusive = true }   // vacía toda la pila: nada de «atrás»
+                                }
+                            }
+                        )
                     }
 
                     // ---------- home, retos, marketplace, bienestar, mascota, perfil, etc. ----------

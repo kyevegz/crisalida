@@ -1,4 +1,4 @@
-package com.example.crisalida.ui.screens
+package com.example.crisalida.ui.theme.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -11,6 +11,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,6 +44,8 @@ fun RegisterScreen(
     var seudonimo by remember { mutableStateOf("") }
     var pinPrincipal by remember { mutableStateOf("") }
     var pinCamuflaje by remember { mutableStateOf("") }
+    var pinPrincipalVisible by remember { mutableStateOf(false) }   // ojito para ver/ocultar el PIN
+    var pinCamuflajeVisible by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
     val puedeContinuar = !cargando && seudonimo.trim().length >= 3 &&
@@ -196,13 +200,24 @@ fun RegisterScreen(
 
             // 6. CAMPO: CREA TU PIN PRINCIPAL
             Column(modifier = Modifier.fillMaxWidth(0.95f)) {
-                Text(
-                    text = "Crea tu PIN principal",
-                    fontFamily = JakartaSansFont,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = ColorTextoPrincipal
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Crea tu PIN principal",
+                        fontFamily = JakartaSansFont,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = ColorTextoPrincipal
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(onClick = { pinPrincipalVisible = !pinPrincipalVisible }, modifier = Modifier.size(24.dp)) {
+                        Icon(
+                            imageVector = if (pinPrincipalVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
+                            contentDescription = if (pinPrincipalVisible) "Ocultar PIN" else "Ver PIN",
+                            tint = ColorTextoPrincipal,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Lock,
@@ -234,7 +249,7 @@ fun RegisterScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         for (i in 0 until 6) {
-                            val char = if (i < pinPrincipal.length) "•" else ""
+                            val char = if (i < pinPrincipal.length) (if (pinPrincipalVisible) pinPrincipal[i].toString() else "•") else ""
                             Box(
                                 modifier = Modifier
                                     .size(width = 42.dp, height = 48.dp)
@@ -260,13 +275,24 @@ fun RegisterScreen(
 
             // 7. CAMPO: CREA TU PIN DE CAMUFLAJE
             Column(modifier = Modifier.fillMaxWidth(0.95f)) {
-                Text(
-                    text = "Crea tu PIN de camuflaje",
-                    fontFamily = JakartaSansFont,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = ColorTextoPrincipal
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Crea tu PIN de camuflaje",
+                        fontFamily = JakartaSansFont,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = ColorTextoPrincipal
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(onClick = { pinCamuflajeVisible = !pinCamuflajeVisible }, modifier = Modifier.size(24.dp)) {
+                        Icon(
+                            imageVector = if (pinCamuflajeVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
+                            contentDescription = if (pinCamuflajeVisible) "Ocultar PIN" else "Ver PIN",
+                            tint = ColorTextoPrincipal,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Lock,
@@ -298,7 +324,7 @@ fun RegisterScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         for (i in 0 until 6) {
-                            val char = if (i < pinCamuflaje.length) "•" else ""
+                            val char = if (i < pinCamuflaje.length) (if (pinCamuflajeVisible) pinCamuflaje[i].toString() else "•") else ""
                             Box(
                                 modifier = Modifier
                                     .size(width = 42.dp, height = 48.dp)
@@ -339,7 +365,7 @@ fun RegisterScreen(
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = "Podrás ingresar datos personales más adelante si así lo deseas, con la garantía de que estos, junto con tus reflexiones íntimas y registros de ventas se protegen con cifrado y solo se muestran dentro de tu cuenta.",
+                        text = "Podrás ingresar datos personales más adelante si así lo deseas, con la garantía de que estos, junto con tus reflexiones íntimas y registros de ventas se protegen con cifrado de extremo a extremo en tu dispositivo.",
                         fontFamily = JakartaSansFont,
                         fontSize = 11.sp,
                         color = ColorTextoPrincipal,
@@ -362,7 +388,7 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            MensajeError(error)
+            error?.let { MensajeError(it) }
 
             Spacer(modifier = Modifier.height(10.dp))
 

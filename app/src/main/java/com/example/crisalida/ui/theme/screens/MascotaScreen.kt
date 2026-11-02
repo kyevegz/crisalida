@@ -1,6 +1,5 @@
 package com.example.crisalida.ui.theme.screens
 
-import com.example.crisalida.ui.screens.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -31,7 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.ProgresoRepositorio
-
+import com.example.crisalida.ui.screens.CrisalidaScaffold
 /* ──────────────────────────────────────────────────────────────
  * Colores medidos del mockup de la Mascota (mascotaF.png)
  * ────────────────────────────────────────────────────────────── */
@@ -124,7 +123,7 @@ fun MascotaScreen(
                         Image(
                             // Cuando agregues las 3 imágenes a res/drawable, cámbialas aquí (etapa 1 = huevo, 2 = larva, 3 = mariposa):
                             // painter = painterResource(id = when (lilu?.etapa) { 2 -> R.drawable.lilu_larva; 3 -> R.drawable.lilu_mariposa; else -> R.drawable.lilu_huevo }),
-                            painter = painterResource(id = R.drawable.mascotadormida),
+                            painter = painterResource(id = when (lilu?.etapa) { 2 -> R.drawable.lilu_larva; 3 -> R.drawable.lilu_mariposa; else -> R.drawable.lilu_huevo }),
                             contentDescription = "Lilu",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize()
@@ -285,7 +284,7 @@ fun MascotaScreen(
             // 2. Registra cómo te has sentido hoy
             TarjetaObtenerFlores(
                 titulo = "Registra cómo te has sentido hoy",
-                descripcion = "Reconocer y expresar tus emociones puede ser un buen método de desahogo. Añade tu estado de ánimo y completa los demás bloques de bienestar: puedes ganar hasta $maxBienestar flores al día.",
+                descripcion = "Reconocer y expresar tus emociones puede ser un buen método de desahogo. Añade tu estado de ánimo y completa los demás bloques de bienestar: puedes ganar hasta $maxBienestar flores al día (te puedes registrar las veces que quieras, pero las flores se dan solo la primera vez del día en cada bloque).",
                 flores = flores("bienestar_emocion", 5),
                 iconVector = Icons.Outlined.Face,
                 onCanjearClick = { onNavigate("bienestar") }

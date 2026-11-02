@@ -1,4 +1,4 @@
-package com.example.crisalida.ui.screens
+package com.example.crisalida.ui.theme.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,15 +23,13 @@ import com.example.crisalida.data.FloresResponse
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.ResultadoApi
 import kotlinx.coroutines.launch
-import com.example.crisalida.ui.screens.*
-import java.text.SimpleDateFormat
-import java.util.Locale
-
+import com.example.crisalida.ui.screens.CrisalidaScaffold
 data class EmocionItem(val emoji: String, val nombre: String)
 
 @Composable
 fun BienestarScreen(
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onVerRegistros: () -> Unit = {}
 ) {
     // 1. Amplio catálogo de emociones
     val emocionesBase = listOf(
@@ -88,12 +86,7 @@ fun BienestarScreen(
     val monitoreoCompleto = tensionFisica != null && claridadMental != null && nivelEnergia != null
 
     // 3. Preguntas de Acompañamiento
-    val preguntasReflexion = listOf(
-        "¿Qué pensamiento te pesó más hoy?",
-        "¿Pudiste tomarte 10 minutos para ti?",
-        "¿Necesitas silencio o desahogarte?",
-        "¿Reconociste tus propios límites?"
-    )
+    val preguntasReflexion = PreguntasReflexion
     val respuestasPreguntas = remember { mutableStateMapOf<Int, String>() }
     var floresPreguntasGuardadas by remember { mutableStateOf(false) }
     val hayPreguntaRespondida = respuestasPreguntas.values.any { it.isNotBlank() }
@@ -102,12 +95,10 @@ fun BienestarScreen(
     var textoBitacora by remember { mutableStateOf("") }
     var floresBitacoraGuardadas by remember { mutableStateOf(false) }
 
-    // ── Servidor: lo que ya registró hoy, el valor de las flores y el historial de la bitácora ──
+    // ── Servidor: qué bloques ya dieron flores hoy y el valor de las flores ──
     val scope = rememberCoroutineScope()
     var guardando by remember { mutableStateOf(false) }
     var aviso by remember { mutableStateOf<String?>(null) }
-    var versionBitacora by remember { mutableIntStateOf(0) }
-    var entradaPorBorrar by remember { mutableStateOf<String?>(null) }
 
     val reglasCarga = rememberCarga { ProgresoRepositorio.reglas() }
     val reglas = (reglasCarga.estado as? Carga.Lista)?.datos?.reglas ?: emptyMap()
@@ -115,21 +106,15 @@ fun BienestarScreen(
 
     val hoyCarga = rememberCarga { BienestarRepositorio.hoy() }
     val hoy = (hoyCarga.estado as? Carga.Lista)?.datos
-    val historial = rememberCarga(versionBitacora) { BienestarRepositorio.historialBitacora() }
 
-    // Al llegar, se rellena lo que ya guardó hoy (y se marcan los bloques ya hechos)
+    // Se puede registrar a cualquier hora y las veces que quiera: el formulario siempre empieza en blanco.
+    // Aquí solo marcamos los bloques cuyas flores ya se ganaron hoy (solo la 1.ª vez del día da flores).
     LaunchedEffect(hoy) {
         if (hoy != null) {
-            hoy.emocion?.let { emocionSeleccionada = it }
-            if (hoy.tension != null && hoy.claridad != null && hoy.energia != null) {
-                tensionFisica = hoy.tension; claridadMental = hoy.claridad; nivelEnergia = hoy.energia
-            }
-            hoy.respuestas?.forEachIndexed { i, t -> if (t.isNotBlank()) respuestasPreguntas[i] = t }
-            textoBitacora = hoy.bitacora ?: ""
-            floresEmocionGuardadas = hoy.emocion != null
-            floresMonitoreoGuardadas = hoy.tension != null
-            floresPreguntasGuardadas = hoy.respuestas != null
-            floresBitacoraGuardadas = hoy.bitacora != null
+            floresEmocionGuardadas = hoy.floresCobradas["emocion"] == true
+            floresMonitoreoGuardadas = hoy.floresCobradas["monitoreo"] == true
+            floresPreguntasGuardadas = hoy.floresCobradas["reflexion"] == true
+            floresBitacoraGuardadas = hoy.floresCobradas["bitacora"] == true
         }
     }
 
@@ -141,7 +126,7 @@ fun BienestarScreen(
                 is ResultadoApi.Exito -> {
                     alExito()
                     aviso = if (r.datos.floresGanadas > 0) "🌸 ¡+${r.datos.floresGanadas} flores sumadas para Lilu!"
-                    else "Guardado. Hoy ya ganaste las flores de este bloque; mañana podrás ganarlas otra vez."
+                    else "Registro guardado ✓. Las flores de este bloque ya las ganaste hoy; puedes seguir registrando cuando quieras y mañana ganarás flores otra vez."
                 }
                 is ResultadoApi.Error -> aviso = r.mensaje
             }
@@ -173,7 +158,7 @@ fun BienestarScreen(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Tu sentir es completamente válido. Este espacio es privado y no juzga. Lo que escribes se guarda cifrado y solo se muestra en tu cuenta.",
+                    text = "Tu sentir es completamente válido. Este espacio es privado y no juzga. Puedes registrarte a cualquier hora y las veces que quieras (las flores se ganan la primera vez del día en cada bloque). Lo que escribes se guarda cifrado y solo se muestra en tu cuenta.",
                     fontFamily = JakartaSansFont,
                     fontSize = 14.sp,
                     color = ColorTextoPrincipal,
@@ -261,7 +246,7 @@ fun BienestarScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (floresEmocionGuardadas) "🌸 ¡+${fl("bienestar_emocion", 5)} flores sumadas para Lilu!" else "Gana ${fl("bienestar_emocion", 5)} flores para tu mascota",
+                        text = if (floresEmocionGuardadas) "🌸 Hoy ya ganaste las flores de este bloque" else "Gana ${fl("bienestar_emocion", 5)} flores para tu mascota",
                         fontFamily = JakartaSansFont,
                         fontSize = 12.sp,
                         color = if (floresEmocionGuardadas) Color(0xFF2E7D32) else ColorPlaceholder,
@@ -270,14 +255,14 @@ fun BienestarScreen(
                     Button(
                         onClick = {
                             val e = emocionSeleccionada
-                            if (e != null) guardar({ BienestarRepositorio.guardarEmocion(e) }) { floresEmocionGuardadas = true }
+                            if (e != null) guardar({ BienestarRepositorio.guardarEmocion(e) }) { floresEmocionGuardadas = true; emocionSeleccionada = null; searchQuery = "" }
                         },
                         enabled = emocionSeleccionada != null && !guardando,
-                        colors = ButtonDefaults.buttonColors(containerColor = if (floresEmocionGuardadas) Color(0xFF2E7D32) else ColorBotonEntrar),
+                        colors = ButtonDefaults.buttonColors(containerColor = ColorBotonEntrar),
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.height(38.dp)
                     ) {
-                        Text(text = if (floresEmocionGuardadas) "Guardado ✓" else "Guardar emoción", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "Guardar emoción", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -364,7 +349,7 @@ fun BienestarScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = if (floresMonitoreoGuardadas) "🌸 ¡+${fl("bienestar_monitoreo", 3)} flores sumadas para Lilu!" else "Gana ${fl("bienestar_monitoreo", 3)} flores (responde las 3)",
+                                text = if (floresMonitoreoGuardadas) "🌸 Hoy ya ganaste las flores de este bloque" else "Gana ${fl("bienestar_monitoreo", 3)} flores (responde las 3)",
                                 fontFamily = JakartaSansFont,
                                 fontSize = 11.sp,
                                 color = if (floresMonitoreoGuardadas) Color(0xFF2E7D32) else ColorPlaceholder,
@@ -374,15 +359,15 @@ fun BienestarScreen(
                                 onClick = {
                                     val t = tensionFisica; val c = claridadMental; val n = nivelEnergia
                                     if (t != null && c != null && n != null) {
-                                        guardar({ BienestarRepositorio.guardarMonitoreo(t, c, n) }) { floresMonitoreoGuardadas = true }
+                                        guardar({ BienestarRepositorio.guardarMonitoreo(t, c, n) }) { floresMonitoreoGuardadas = true; tensionFisica = null; claridadMental = null; nivelEnergia = null }
                                     }
                                 },
                                 enabled = monitoreoCompleto && !guardando, // Habilitado SOLO si respondió los 3
-                                colors = ButtonDefaults.buttonColors(containerColor = if (floresMonitoreoGuardadas) Color(0xFF2E7D32) else ColorBotonEntrar),
+                                colors = ButtonDefaults.buttonColors(containerColor = ColorBotonEntrar),
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier.height(38.dp)
                             ) {
-                                Text(text = if (floresMonitoreoGuardadas) "Guardado ✓" else "Guardar monitoreo", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                Text(text = "Guardar monitoreo", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -454,7 +439,7 @@ fun BienestarScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (floresPreguntasGuardadas) "🌸 ¡+${fl("bienestar_reflexion", 8)} flores sumadas para Lilu!" else "Gana ${fl("bienestar_reflexion", 8)} flores (responde al menos 1)",
+                        text = if (floresPreguntasGuardadas) "🌸 Hoy ya ganaste las flores de este bloque" else "Gana ${fl("bienestar_reflexion", 8)} flores (responde al menos 1)",
                         fontFamily = JakartaSansFont,
                         fontSize = 11.sp,
                         color = if (floresPreguntasGuardadas) Color(0xFF2E7D32) else ColorPlaceholder,
@@ -464,15 +449,15 @@ fun BienestarScreen(
                         onClick = {
                             if (hayPreguntaRespondida) {
                                 val respuestas = preguntasReflexion.indices.map { respuestasPreguntas[it].orEmpty() }
-                                guardar({ BienestarRepositorio.guardarReflexion(respuestas) }) { floresPreguntasGuardadas = true }
+                                guardar({ BienestarRepositorio.guardarReflexion(respuestas) }) { floresPreguntasGuardadas = true; respuestasPreguntas.clear() }
                             }
                         },
                         enabled = hayPreguntaRespondida && !guardando,
-                        colors = ButtonDefaults.buttonColors(containerColor = if (floresPreguntasGuardadas) Color(0xFF2E7D32) else ColorBotonEntrar),
+                        colors = ButtonDefaults.buttonColors(containerColor = ColorBotonEntrar),
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.height(38.dp)
                     ) {
-                        Text(text = if (floresPreguntasGuardadas) "Guardado ✓" else "Guardar reflexión", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "Guardar reflexión", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -531,7 +516,7 @@ fun BienestarScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = if (floresBitacoraGuardadas) "🌸 ¡+${fl("bienestar_bitacora", 12)} flores sumadas!" else "Gana ${fl("bienestar_bitacora", 12)} flores",
+                                text = if (floresBitacoraGuardadas) "🌸 Hoy ya ganaste las flores de este bloque" else "Gana ${fl("bienestar_bitacora", 12)} flores",
                                 fontFamily = JakartaSansFont,
                                 fontSize = 12.sp,
                                 color = if (floresBitacoraGuardadas) Color(0xFF2E7D32) else ColorPlaceholder,
@@ -542,17 +527,17 @@ fun BienestarScreen(
                                     if (textoBitacora.isNotBlank()) {
                                         guardar({ BienestarRepositorio.guardarBitacora(textoBitacora) }) {
                                             floresBitacoraGuardadas = true
-                                            versionBitacora++
+                                            textoBitacora = ""
                                         }
                                     }
                                 },
                                 enabled = textoBitacora.isNotBlank() && !guardando,
-                                colors = ButtonDefaults.buttonColors(containerColor = if (floresBitacoraGuardadas) Color(0xFF2E7D32) else ColorBotonEntrar),
+                                colors = ButtonDefaults.buttonColors(containerColor = ColorBotonEntrar),
                                 shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier.height(42.dp)
                             ) {
                                 Text(
-                                    text = if (floresBitacoraGuardadas) "Guardado ✓" else "Guardar bitácora",
+                                    text = "Guardar bitácora",
                                     fontFamily = OutfitFont,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 15.sp,
@@ -564,7 +549,7 @@ fun BienestarScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = "Se guarda cifrada en nuestro servidor y solo se muestra cuando entras a tu cuenta con tu PIN. Puedes borrar cualquier entrada cuando quieras.",
+                            text = "Se guarda cifrada en nuestro servidor y solo se muestra cuando entras a tu cuenta con tu PIN. Puedes releerla y borrar cualquier registro desde «Ver mis registros».",
                             fontFamily = JakartaSansFont,
                             fontSize = 11.sp,
                             color = ColorPlaceholder,
@@ -577,59 +562,18 @@ fun BienestarScreen(
             }
 
             // ==========================================
-            // MIS ENTRADAS ANTERIORES (la usuaria puede releer y borrar su bitácora)
+            // VER MIS REGISTROS (emociones, monitoreo, reflexiones y bitácora)
             // ==========================================
             item {
-                Text(
-                    text = "Mis entradas anteriores",
-                    fontFamily = OutfitFont,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = ColorTextoPrincipal
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                when (val e = historial.estado) {
-                    is Carga.Cargando -> IndicadorCargando()
-                    is Carga.Falla -> MensajeError(e.mensaje, historial.recargar)
-                    is Carga.Lista -> {
-                        if (e.datos.entradas.isEmpty()) {
-                            Text(
-                                text = "Aún no tienes entradas guardadas.",
-                                fontFamily = JakartaSansFont, fontSize = 13.sp, color = ColorPlaceholder
-                            )
-                        }
-                        e.datos.entradas.forEach { entrada ->
-                            Card(
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.White),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(modifier = Modifier.padding(14.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = fechaLegible(entrada.dia),
-                                            fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold,
-                                            fontSize = 12.sp, color = ColorPlaceholder
-                                        )
-                                        TextButton(onClick = { entradaPorBorrar = entrada.dia }) {
-                                            Text("Borrar", fontFamily = JakartaSansFont, fontSize = 12.sp, color = ColorBotonEntrar)
-                                        }
-                                    }
-                                    Text(
-                                        text = entrada.texto,
-                                        fontFamily = JakartaSansFont, fontSize = 14.sp,
-                                        color = ColorTextoPrincipal, lineHeight = 19.sp
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                    }
+                OutlinedButton(
+                    onClick = onVerRegistros,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                ) {
+                    Text(
+                        "📖  Ver mis registros",
+                        fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = ColorBotonEntrar
+                    )
                 }
                 Spacer(modifier = Modifier.height(32.dp))
             }
@@ -648,38 +592,6 @@ fun BienestarScreen(
             containerColor = Color.White
         )
     }
-
-    entradaPorBorrar?.let { dia ->
-        AlertDialog(
-            onDismissRequest = { entradaPorBorrar = null },
-            title = { Text("¿Borrar esta entrada?", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = ColorTextoPrincipal) },
-            text = { Text("Se elimina para siempre. Las flores que ya ganaste se conservan.", fontFamily = JakartaSansFont, color = ColorTextoPrincipal) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        entradaPorBorrar = null
-                        scope.launch {
-                            when (val r = BienestarRepositorio.borrarEntrada(dia)) {
-                                is ResultadoApi.Exito -> { versionBitacora++; hoyCarga.recargar() }
-                                is ResultadoApi.Error -> aviso = r.mensaje
-                            }
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = ColorBotonEntrar)
-                ) { Text("Borrar", color = Color.White) }
-            },
-            dismissButton = { TextButton(onClick = { entradaPorBorrar = null }) { Text("Cancelar", color = ColorBotonEntrar) } },
-            containerColor = Color.White
-        )
-    }
-}
-
-/** "2026-11-02" → "2 de noviembre de 2026" */
-private fun fechaLegible(dia: String): String = try {
-    val fecha = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(dia)
-    if (fecha == null) dia else SimpleDateFormat("d 'de' MMMM 'de' yyyy", Locale("es", "MX")).format(fecha)
-} catch (e: Exception) {
-    dia
 }
 
 /** Componente reutilizable para mostrar las escalas 1 al 5 con sus respectivas caritas en los 3 apartados de monitoreo */

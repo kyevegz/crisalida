@@ -29,7 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
-
+// (si el archivo está en otro paquete, estos nombres son los mismos)
+import com.example.crisalida.ui.theme.screens.rememberProgreso
+import com.example.crisalida.ui.theme.screens.Carga
 /* ──────────────────────────────────────────────────────────────
  * Colores medidos del mockup Respira con Lilu (respiraConLilu.png)
  * ────────────────────────────────────────────────────────────── */
@@ -68,7 +70,8 @@ fun RespirarLiluScreen(
         ),
         label = "flotar_frases"
     )
-
+    val progreso = rememberProgreso()
+    val etapa = (progreso.estado as? Carga.Lista)?.datos?.lilu?.etapa
     CrisalidaScaffold(
         currentTitle = "Respirar con Lilu",
         selectedTab = 4,
@@ -131,7 +134,7 @@ fun RespirarLiluScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.mascotagrande),
+                    painter = painterResource(id = when (etapa) { 2 -> R.drawable.lilu_larva; 3 -> R.drawable.lilu_mariposa; else -> R.drawable.lilu_huevo}),
                     contentDescription = "Lilu emocionada",
                     contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize()

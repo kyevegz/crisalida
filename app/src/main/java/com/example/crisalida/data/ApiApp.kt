@@ -56,6 +56,22 @@ data class ResultadoRadarResponse(
     val habilidades: List<HabilidadDto>
 )
 
+data class NivelMapaDto(
+    val nivel: Int,
+    val nombre: String,
+    val descripcion: String?,
+    @SerializedName("actividades_requeridas") val actividadesRequeridas: Int
+)
+data class EtapaLiluDto(
+    val etapa: Int,
+    val nombre: String,
+    @SerializedName("flores_requeridas") val floresRequeridas: Int
+)
+data class NivelesResponse(
+    val niveles: List<NivelMapaDto>,
+    @SerializedName("etapas_lilu") val etapasLilu: List<EtapaLiluDto>
+)
+
 /** Flores que da cada acción: venta, reto, publicacion, nivel, bienestar_emocion, bienestar_monitoreo, ... */
 data class ReglasResponse(val reglas: Map<String, Int>)
 
@@ -91,7 +107,10 @@ data class PublicacionDto(
     // Solo en "mis publicaciones" (portafolio):
     val estado: String?,
     @SerializedName("pedidos_pendientes") val pedidosPendientes: Int?,
-    @SerializedName("punto_entrega") val puntoEntrega: String?
+    @SerializedName("punto_entrega") val puntoEntrega: String?,
+    @SerializedName("costo_insumos") val costoInsumos: Double? = null,
+    @SerializedName("horas_dedicacion") val horasDedicacion: Double? = null,
+    @SerializedName("creada_en") val creadaEn: String? = null
 )
 
 data class CatalogoResponse(val publicaciones: List<PublicacionDto>)
@@ -119,6 +138,12 @@ data class PublicacionCreadaResponse(
     @SerializedName("flores_ganadas") val floresGanadas: Int
 )
 
+data class PublicacionEditadaResponse(
+    val id: String,
+    val estado: String,
+    @SerializedName("reenviada_a_revision") val reenviadaARevision: Boolean
+)
+
 data class ImagenSubidaResponse(val id: String, val orden: Int, val url: String)
 data class EstadoRequest(val estado: String)          // "activo" o "pausado"
 data class EstadoResponse(val estado: String)
@@ -140,7 +165,10 @@ data class RetoDto(
     val contratista: String,
     // Solo en "mis retos":
     @SerializedName("aceptacion_id") val aceptacionId: String?,
-    val estado: String?                                // aceptado | entregado | validado | abandonado
+    val estado: String?,                               // aceptado | entregado | validado | abandonado
+    // Foto del reto (ruta tipo "/retos/<id>/imagen", ver FotoRemota) y, en el detalle, mi estado en el reto:
+    @SerializedName("imagen_ruta") val imagenRuta: String? = null,
+    @SerializedName("mi_estado") val miEstado: String? = null
 )
 
 data class RetosResponse(val retos: List<RetoDto>)
@@ -154,22 +182,30 @@ data class ReflexionRequest(val respuestas: List<String>)
 data class BitacoraRequest(val texto: String)
 
 data class FloresResponse(
+    val id: String? = null,
     @SerializedName("flores_ganadas") val floresGanadas: Int,
     @SerializedName("ya_registrado_hoy") val yaRegistradoHoy: Boolean
 )
 
 data class BienestarHoyResponse(
+    @SerializedName("flores_cobradas") val floresCobradas: Map<String, Boolean>,   // emocion, monitoreo, reflexion, bitacora
+    @SerializedName("registros_hoy") val registrosHoy: Map<String, Int>
+)
+
+/** Un registro del historial. Según el bloque vienen unos campos u otros. */
+data class EntradaBienestar(
+    val id: String,
+    val subtipo: String,                               // emocion | monitoreo | reflexion | bitacora
+    val dia: String,                                   // "2026-11-02"
+    val hora: String,                                  // "18:45" (hora de México)
     val emocion: String?,
     val tension: Int?,
     val claridad: Int?,
     val energia: Int?,
-    val respuestas: List<String>?,
-    val bitacora: String?,
-    @SerializedName("flores_cobradas") val floresCobradas: Map<String, Boolean>   // emocion, monitoreo, reflexion, bitacora
+    val texto: String?,                                // bitácora
+    val respuestas: List<String>?                      // reflexión (una por pregunta)
 )
-
-data class EntradaBitacora(val dia: String, val texto: String)
-data class BitacoraHistorialResponse(val entradas: List<EntradaBitacora>)
+data class EntradasBienestarResponse(val entradas: List<EntradaBienestar>)
 data class BorradoResponse(val borrada: Boolean)
 
 // ======================================================== REPOSITORIOS
@@ -188,6 +224,8 @@ object ProgresoRepositorio {
 
     suspend fun reglas(): ResultadoApi<ReglasResponse> = llamarApi { RetrofitCliente.api.reglasFlores() }
 
+    suspend fun niveles(): ResultadoApi<NivelesResponse> = llamarApi { RetrofitCliente.api.niveles() }
+
     suspend fun cambiarAvatar(emoji: String): ResultadoApi<AvatarResponse> =
         llamarApi { RetrofitCliente.api.cambiarAvatar(AvatarRequest(emoji)) }
             .also { if (it is ResultadoApi.Exito) { SesionActual.avatar = it.datos.avatar; avisarCambio() } }
@@ -196,6 +234,8 @@ object ProgresoRepositorio {
 object MarketplaceRepositorio {
     suspend fun categorias(ambito: String? = null): ResultadoApi<CategoriasResponse> =
         llamarApi { RetrofitCliente.api.categorias(ambito) }
+
+    suspend fun detalle(id: String): ResultadoApi<PublicacionDto> = llamarApi { RetrofitCliente.api.marketplaceDetalle(id) }
 
     suspend fun catalogo(tipo: String? = null, categoriaId: Int? = null, busqueda: String? = null): ResultadoApi<CatalogoResponse> =
         llamarApi { RetrofitCliente.api.marketplace(tipo, categoriaId, busqueda?.takeIf { it.isNotBlank() }) }
@@ -207,6 +247,8 @@ object RetosRepositorio {
 
     suspend fun mis(): ResultadoApi<RetosResponse> = llamarApi { RetrofitCliente.api.misRetos() }
 
+    suspend fun detalle(retoId: String): ResultadoApi<RetoDto> = llamarApi { RetrofitCliente.api.retoDetalle(retoId) }
+
     suspend fun aceptar(retoId: String): ResultadoApi<AceptacionResponse> = llamarApi { RetrofitCliente.api.aceptarReto(retoId) }
 
     suspend fun entregar(aceptacionId: String): ResultadoApi<EstadoResponse> = llamarApi { RetrofitCliente.api.entregarReto(aceptacionId) }
@@ -217,9 +259,19 @@ object RetosRepositorio {
 object PublicacionesRepositorio {
     suspend fun publicar(datos: PublicacionRequest): ResultadoApi<PublicacionCreadaResponse> =
         llamarApi { RetrofitCliente.api.publicar(datos) }
-            .also { if (it is ResultadoApi.Exito && it.datos.floresGanadas > 0) ProgresoRepositorio.avisarCambio() }
+            .also { if (it is ResultadoApi.Exito) ProgresoRepositorio.avisarCambio() }
 
     suspend fun mias(): ResultadoApi<CatalogoResponse> = llamarApi { RetrofitCliente.api.misPublicaciones() }
+
+    /** Guarda los cambios de una publicación propia (el tipo producto/servicio no cambia). */
+    suspend fun editar(id: String, datos: PublicacionRequest): ResultadoApi<PublicacionEditadaResponse> =
+        llamarApi { RetrofitCliente.api.editarPublicacion(id, datos) }
+            .also { if (it is ResultadoApi.Exito) ProgresoRepositorio.avisarCambio() }
+
+    /** [imagenRuta] es la ruta que manda el servidor, p. ej. "/imagenes/<id>". */
+    suspend fun borrarFoto(publicacionId: String, imagenRuta: String): ResultadoApi<BorradoResponse> =
+        llamarApi { RetrofitCliente.api.borrarImagen(publicacionId, imagenRuta.substringAfterLast('/')) }
+            .also { if (it is ResultadoApi.Exito) ProgresoRepositorio.avisarCambio() }
 
     suspend fun cambiarEstado(id: String, estado: String): ResultadoApi<EstadoResponse> =
         llamarApi { RetrofitCliente.api.cambiarEstadoPublicacion(id, EstadoRequest(estado)) }
@@ -227,6 +279,7 @@ object PublicacionesRepositorio {
     /** Sube una foto ya comprimida (JPEG, máx. 400 KB). Ver prepararFoto() en Fotos.kt. */
     suspend fun subirFoto(publicacionId: String, jpeg: ByteArray): ResultadoApi<ImagenSubidaResponse> =
         llamarApi { RetrofitCliente.api.subirImagen(publicacionId, jpeg.toRequestBody("image/jpeg".toMediaType())) }
+            .also { if (it is ResultadoApi.Exito) ProgresoRepositorio.avisarCambio() }
 }
 
 object BienestarRepositorio {
@@ -249,7 +302,8 @@ object BienestarRepositorio {
     suspend fun guardarBitacora(texto: String): ResultadoApi<FloresResponse> =
         llamarApi { RetrofitCliente.api.guardarBitacora(BitacoraRequest(texto)) }.avisandoFlores()
 
-    suspend fun historialBitacora(): ResultadoApi<BitacoraHistorialResponse> = llamarApi { RetrofitCliente.api.historialBitacora() }
+    suspend fun entradas(subtipo: String): ResultadoApi<EntradasBienestarResponse> =
+        llamarApi { RetrofitCliente.api.entradasBienestar(subtipo) }
 
-    suspend fun borrarEntrada(dia: String): ResultadoApi<BorradoResponse> = llamarApi { RetrofitCliente.api.borrarEntradaBitacora(dia) }
+    suspend fun borrarEntrada(id: String): ResultadoApi<BorradoResponse> = llamarApi { RetrofitCliente.api.borrarEntradaBienestar(id) }
 }

@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.SesionActual
-import com.example.crisalida.ui.screens.*
+import com.example.crisalida.ui.screens.CrisalidaScaffold
 /* ──────────────────────────────────────────────────────────────
  * Colores medidos del mockup Perfil/Portafolio (portafolio.png)
  * ────────────────────────────────────────────────────────────── */
@@ -35,7 +35,8 @@ private val MkFondoBotonVolver = Color(0xFFE2D4DA)
 
 @Composable
 fun PortafolioScreen(
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onEditar: (String) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -44,6 +45,11 @@ fun PortafolioScreen(
 
     val scope = rememberCoroutineScope()
     var mensajeInfo by remember { mutableStateOf<String?>(null) }
+
+    // Nivel y avatar reales (se actualizan solos cuando cambian)
+    val progreso = (rememberProgreso().estado as? Carga.Lista)?.datos
+    val nivelActual = progreso?.nivel?.nivel
+    val avatarActual = progreso?.avatar ?: SesionActual.avatar
 
     // Lista completa de publicaciones de la usuaria, desde el servidor
     val portafolio = rememberCarga(ProgresoRepositorio.version) { PublicacionesRepositorio.mias() }
@@ -102,7 +108,7 @@ fun PortafolioScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Avatar con nivel 3
+                // Avatar con su nivel actual
                 Box(contentAlignment = Alignment.BottomEnd) {
                     Box(
                         modifier = Modifier
@@ -111,7 +117,7 @@ fun PortafolioScreen(
                             .background(Color(0xFF8A6D9E)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "🐱", fontSize = 40.sp)
+                        Text(text = avatarActual, fontSize = 40.sp)
                     }
                     Box(
                         modifier = Modifier
@@ -129,7 +135,7 @@ fun PortafolioScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "3",
+                                text = nivelActual?.toString() ?: "–",
                                 fontFamily = OutfitFont,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
@@ -143,7 +149,7 @@ fun PortafolioScreen(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = SesionActual.seudonimo,
+                        text = progreso?.seudonimo ?: SesionActual.seudonimo,
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 24.sp,
@@ -213,7 +219,7 @@ fun PortafolioScreen(
                             tipoAccionPendiente = if (pub.estado == "Pausado") "reactivar" else "pausar"
                         }
                     },
-                    onEditarClick = { /* Acción editar detalles */ }
+                    onEditarClick = { onEditar(pub.id) }
                 )
                 Spacer(modifier = Modifier.height(14.dp))
             }

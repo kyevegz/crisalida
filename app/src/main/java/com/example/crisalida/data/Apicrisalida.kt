@@ -96,6 +96,9 @@ interface ApiService {
     @GET("progreso/yo")
     suspend fun progresoYo(): Response<ProgresoResponse>
 
+    @GET("progreso/niveles")
+    suspend fun niveles(): Response<NivelesResponse>
+
     @GET("progreso/reglas")
     suspend fun reglasFlores(): Response<ReglasResponse>
 
@@ -113,12 +116,21 @@ interface ApiService {
         @Query("q") busqueda: String?
     ): Response<CatalogoResponse>
 
+    @GET("marketplace/{id}")
+    suspend fun marketplaceDetalle(@Path("id") id: String): Response<PublicacionDto>
+
     // ----- Publicaciones (portafolio)
     @POST("publicaciones")
     suspend fun publicar(@Body datos: PublicacionRequest): Response<PublicacionCreadaResponse>
 
     @GET("publicaciones/mias")
     suspend fun misPublicaciones(): Response<CatalogoResponse>
+
+    @PUT("publicaciones/{id}")
+    suspend fun editarPublicacion(@Path("id") id: String, @Body datos: PublicacionRequest): Response<PublicacionEditadaResponse>
+
+    @DELETE("publicaciones/{id}/imagenes/{imagenId}")
+    suspend fun borrarImagen(@Path("id") id: String, @Path("imagenId") imagenId: String): Response<BorradoResponse>
 
     @PATCH("publicaciones/{id}/estado")
     suspend fun cambiarEstadoPublicacion(@Path("id") id: String, @Body datos: EstadoRequest): Response<EstadoResponse>
@@ -136,6 +148,9 @@ interface ApiService {
 
     @GET("retos/mis")
     suspend fun misRetos(): Response<RetosResponse>
+
+    @GET("retos/{id}")
+    suspend fun retoDetalle(@Path("id") retoId: String): Response<RetoDto>
 
     @POST("retos/{id}/aceptar")
     suspend fun aceptarReto(@Path("id") retoId: String): Response<AceptacionResponse>
@@ -162,11 +177,11 @@ interface ApiService {
     @POST("bienestar/bitacora")
     suspend fun guardarBitacora(@Body datos: BitacoraRequest): Response<FloresResponse>
 
-    @GET("bienestar/bitacora")
-    suspend fun historialBitacora(): Response<BitacoraHistorialResponse>
+    @GET("bienestar/entradas")
+    suspend fun entradasBienestar(@Query("subtipo") subtipo: String): Response<EntradasBienestarResponse>
 
-    @DELETE("bienestar/bitacora/{dia}")
-    suspend fun borrarEntradaBitacora(@Path("dia") dia: String): Response<BorradoResponse>
+    @DELETE("bienestar/entradas/{id}")
+    suspend fun borrarEntradaBienestar(@Path("id") id: String): Response<BorradoResponse>
 }
 
 // ---------- 4. Quién soy ahora mismo (se borra al cerrar la app o con la salida de emergencia)

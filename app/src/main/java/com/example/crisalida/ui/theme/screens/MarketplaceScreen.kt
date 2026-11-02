@@ -28,8 +28,9 @@ import androidx.compose.ui.unit.sp
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.FotoRemota
 import com.example.crisalida.data.MarketplaceRepositorio
+import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.PublicacionDto
-import com.example.crisalida.ui.screens.*
+import com.example.crisalida.ui.screens.CrisalidaScaffold
 /* ──────────────────────────────────────────────────────────────
  * Colores y dimensiones MEDIDOS del mockup del Marketplace
  * ────────────────────────────────────────────────────────────── */
@@ -64,7 +65,8 @@ data class ProductoMarketplaceUi(
 
 @Composable
 fun MarketplaceScreen(
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onAbrirDetalle: (String) -> Unit = {}
 ) {
     // Filtros: "Todos", los dos tipos y las categorías reales de la base de datos
     val categoriasCarga = rememberCarga { MarketplaceRepositorio.categorias() }
@@ -77,7 +79,7 @@ fun MarketplaceScreen(
     val categoriaId: Int? = if (seleccionCategoria >= 3) categoriasDto.getOrNull(seleccionCategoria - 3)?.id else null
 
     // Catálogo real: se vuelve a pedir cada vez que cambia el filtro
-    val catalogo = rememberCarga(tipo, categoriaId) { MarketplaceRepositorio.catalogo(tipo = tipo, categoriaId = categoriaId) }
+    val catalogo = rememberCarga(tipo, categoriaId, ProgresoRepositorio.version) { MarketplaceRepositorio.catalogo(tipo = tipo, categoriaId = categoriaId) }
     val productosFiltrados: List<ProductoMarketplaceUi> =
         (catalogo.estado as? Carga.Lista)?.datos?.publicaciones?.map { it.aMarketplaceUi() } ?: emptyList()
 
@@ -171,7 +173,8 @@ fun MarketplaceScreen(
                 ProductoCard(
                     producto = producto,
                     modifier = Modifier.padding(start = MargenIzq, end = MargenDer, top = 14.dp),
-                    onComprarClick = { /* Acción de compra o contacto */ }
+                    onAbrir = { onAbrirDetalle(producto.id) },
+                    onComprarClick = { onAbrirDetalle(producto.id) }
                 )
             }
         }
@@ -182,13 +185,14 @@ fun MarketplaceScreen(
 private fun ProductoCard(
     producto: ProductoMarketplaceUi,
     modifier: Modifier = Modifier,
+    onAbrir: () -> Unit = {},
     onComprarClick: () -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(containerColor = MkFondoCard),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth().clickable { onAbrir() }
     ) {
         Column(
             modifier = Modifier.padding(10.dp)

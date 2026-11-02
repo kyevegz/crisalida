@@ -1,6 +1,5 @@
 package com.example.crisalida.ui.theme.screens
 
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,15 +21,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import com.example.crisalida.data.FotoRemota
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.crisalida.ui.screens.CrisalidaScaffold
-import com.example.crisalida.ui.screens.Carga
-import com.example.crisalida.ui.screens.IndicadorCargando
-import com.example.crisalida.ui.screens.MensajeError
-import com.example.crisalida.ui.screens.rememberCarga
 import com.example.crisalida.data.MarketplaceRepositorio
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.ResultadoApi
@@ -38,7 +32,7 @@ import com.example.crisalida.data.RetoDto
 import com.example.crisalida.data.RetosRepositorio
 import kotlinx.coroutines.launch
 import com.example.crisalida.ui.theme.*
-
+import com.example.crisalida.ui.screens.CrisalidaScaffold
 /* Colores medidos del mockup (microrretos.png, 1080 px = 360 dp) */
 private val MkTitulo = Color(0xFF9D4067)
 private val MkGris = Color(0xFF545454)
@@ -64,7 +58,7 @@ private data class RetoUi(
     val categoria: String,
     val habilidad: String,
     val duracion: String,
-    @DrawableRes val imagen: Int?   // null = marcador con icono
+    val imagenRuta: String?         // ruta de la foto en el servidor; null = marcador con icono
 )
 
 // Colores de las etiquetas: se reparten según el nombre para que cada etiqueta siempre tenga el mismo color
@@ -90,13 +84,14 @@ private fun RetoDto.aUi(): RetoUi {
         categoria = categoria,
         habilidad = habilidadRequerida ?: "Sin requisito especial",
         duracion = "$duracionMin min. aprox",
-        imagen = null
+        imagenRuta = imagenRuta
     )
 }
 
 @Composable
 fun RetosScreen(
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onAbrirDetalle: (String) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     var verMisRetos by remember { mutableStateOf(false) }
@@ -112,8 +107,8 @@ fun RetosScreen(
 
     // Tablero y "mis retos"; `version` fuerza volver a pedirlos después de aceptar/entregar/soltar
     var version by remember { mutableIntStateOf(0) }
-    val tablero = rememberCarga(categoriaId, version) { RetosRepositorio.tablero(categoriaId = categoriaId) }
-    val mios = rememberCarga(version) { RetosRepositorio.mis() }
+    val tablero = rememberCarga(categoriaId, version, ProgresoRepositorio.version) { RetosRepositorio.tablero(categoriaId = categoriaId) }
+    val mios = rememberCarga(version, ProgresoRepositorio.version) { RetosRepositorio.mis() }
 
     val activo = if (verMisRetos) mios else tablero
     val visibles: List<RetoUi> = ((activo.estado as? Carga.Lista)?.datos?.retos ?: emptyList())
@@ -255,6 +250,7 @@ fun RetosScreen(
                     RetoCard(
                         reto = reto,
                         modifier = modificador,
+                        onAbrir = { onAbrirDetalle(reto.retoId) },
                         habilitado = !ocupado,
                         onAceptar = {
                             ejecutar({ RetosRepositorio.aceptar(reto.retoId) },
@@ -263,7 +259,7 @@ fun RetosScreen(
                     )
                 } else when (reto.estado) {
                     "aceptado" -> RetoCard(
-                        reto = reto, modifier = modificador,
+                        reto = reto, modifier = modificador, onAbrir = { onAbrirDetalle(reto.retoId) },
                         textoBoton = "Marcar como entregado", habilitado = !ocupado,
                         onAceptar = {
                             ejecutar({ RetosRepositorio.entregar(reto.aceptacionId.orEmpty()) },
@@ -275,8 +271,8 @@ fun RetosScreen(
                                 "Soltaste el reto. Volvió al tablero para otra persona.")
                         }
                     )
-                    "entregado" -> RetoCard(reto = reto, modifier = modificador, textoBoton = "Esperando validación", habilitado = false)
-                    else -> RetoCard(reto = reto, modifier = modificador, textoBoton = "Completado ✓", habilitado = false)
+                    "entregado" -> RetoCard(reto = reto, modifier = modificador, onAbrir = { onAbrirDetalle(reto.retoId) }, textoBoton = "Esperando validación", habilitado = false)
+                    else -> RetoCard(reto = reto, modifier = modificador, onAbrir = { onAbrirDetalle(reto.retoId) }, textoBoton = "Completado ✓", habilitado = false)
                 }
             }
         }
@@ -300,6 +296,7 @@ fun RetosScreen(
 private fun RetoCard(
     reto: RetoUi,
     modifier: Modifier = Modifier,
+    onAbrir: () -> Unit = {},
     textoBoton: String = "Aceptar el reto",
     habilitado: Boolean = true,
     onAceptar: () -> Unit = {},
@@ -310,7 +307,7 @@ private fun RetoCard(
         shape = RoundedCornerShape(6.dp),
         colors = CardDefaults.cardColors(containerColor = MkFondoCard),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth().clickable { onAbrir() }
     ) {
         Column(modifier = Modifier.padding(start = 13.dp, end = 11.dp, top = 10.dp, bottom = 13.dp)) {
             // Título + precio
@@ -359,34 +356,32 @@ private fun RetoCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Foto
-            if (reto.imagen != null) {
-                Image(
-                    painter = painterResource(id = reto.imagen),
-                    contentDescription = reto.titulo,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(125.dp)
-                        .clip(RoundedCornerShape(7.dp))
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(125.dp)
-                        .clip(RoundedCornerShape(7.dp))
-                        .background(ColorCamposFondo),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Image,
-                        contentDescription = null,
-                        tint = MkGris,
-                        modifier = Modifier.size(40.dp)
-                    )
+            // Foto del reto (si no tiene, o mientras carga, se ve el marcador)
+            FotoRemota(
+                ruta = reto.imagenRuta,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(125.dp)
+                    .clip(RoundedCornerShape(7.dp)),
+                alternativa = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(125.dp)
+                            .clip(RoundedCornerShape(7.dp))
+                            .background(ColorCamposFondo),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Image,
+                            contentDescription = null,
+                            tint = MkGris,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
                 }
-            }
+            )
 
             Spacer(modifier = Modifier.height(15.dp))
 

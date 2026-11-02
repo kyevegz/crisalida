@@ -2,6 +2,7 @@ package com.example.crisalida.ui.theme.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -30,12 +31,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
+import com.example.crisalida.data.FotoRemota
+import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.RetosRepositorio
 import com.example.crisalida.data.SesionActual
 import com.example.crisalida.data.RetoDto
 import kotlinx.coroutines.launch
-import com.example.crisalida.ui.screens.*
+import com.example.crisalida.ui.screens.CrisalidaScaffold
+
 /* ──────────────────────────────────────────────────────────────
  * Valores MEDIDOS del mockup (home.png, 1080 px de ancho = 360 dp → 1 dp = 3 px)
  * Si ya tienes alguno en ui.theme, puedes reemplazarlo; aquí van privados
@@ -65,7 +69,8 @@ private val TamanoMascotaGrande = 410.dp
 
 @Composable
 fun HomeScreen(
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onAbrirReto: (String) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
@@ -73,7 +78,7 @@ fun HomeScreen(
     // ── Datos del servidor: progreso (nivel y flores) y un microrreto abierto ──
     val progreso = rememberProgreso()
     val datos = (progreso.estado as? Carga.Lista)?.datos
-    val retoCarga = rememberCarga { RetosRepositorio.tablero() }
+    val retoCarga = rememberCarga(ProgresoRepositorio.version) { RetosRepositorio.tablero() }
     val reto: RetoDto? = (retoCarga.estado as? Carga.Lista)?.datos?.retos?.firstOrNull()
     var aceptando by remember { mutableStateOf(false) }
     var avisoReto by remember { mutableStateOf<String?>(null) }
@@ -232,7 +237,7 @@ fun HomeScreen(
                         // Mascota pequeña + chip "Sereno"
                         Box(modifier = Modifier.width(58.dp).height(81.dp)) {
                             Image(
-                                painter = painterResource(id = R.drawable.mascotagrande),
+                                painter = painterResource(id = when (datos?.lilu?.etapa) { 2 -> R.drawable.lilu_larva; 3 -> R.drawable.lilu_mariposa; else -> R.drawable.lilu_huevo }),
                                 contentDescription = "Lilu sereno",
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier
@@ -411,6 +416,7 @@ fun HomeScreen(
                     .padding(horizontal = MargenTarjetas)
                     .clip(RoundedCornerShape(8.dp))
                     .background(MkSuperficieSuave)
+                    .clickable { onAbrirReto(reto.retoId) }
                     .padding(start = 5.dp, end = 5.dp, top = 5.dp)
             ) {
                 // Chip "Fácil • 25 min"
@@ -444,22 +450,30 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Sin asset de foto en el proyecto: marcador con icono de la librería.
-                    // Cuando tengas la imagen, cámbialo por Image(painterResource(...), contentScale = Crop).
-                    Box(
+                    // Foto del reto (si no tiene, o mientras carga, se ve el marcador)
+                    FotoRemota(
+                        ruta = reto.imagenRuta,
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(width = 80.dp, height = 78.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(ColorCamposFondo),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Image,
-                            contentDescription = null,
-                            tint = MkTextoSuave,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
+                            .clip(RoundedCornerShape(6.dp)),
+                        alternativa = {
+                            Box(
+                                modifier = Modifier
+                                    .size(width = 80.dp, height = 78.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(ColorCamposFondo),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Image,
+                                    contentDescription = null,
+                                    tint = MkTextoSuave,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
+                        }
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
                     Column {
                         Text(

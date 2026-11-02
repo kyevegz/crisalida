@@ -37,7 +37,7 @@ import com.example.crisalida.data.PublicacionesRepositorio
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
 import kotlinx.coroutines.launch
-import com.example.crisalida.ui.screens.*
+import com.example.crisalida.ui.screens.CrisalidaScaffold
 /* ──────────────────────────────────────────────────────────────
  * Colores medidos del mockup de Perfil y Tarjetas
  * ────────────────────────────────────────────────────────────── */
@@ -74,7 +74,8 @@ data class HabilidadInsignia(
 
 @Composable
 fun PerfilScreen(
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onEditar: (String) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -88,6 +89,9 @@ fun PerfilScreen(
     val datosProgreso = (progreso.estado as? Carga.Lista)?.datos
     val portafolio = rememberCarga(ProgresoRepositorio.version) { PublicacionesRepositorio.mias() }
     val habilidadesCarga = rememberCarga { ProgresoRepositorio.habilidades() }
+    val nivelesCarga = rememberCarga { ProgresoRepositorio.niveles() }
+    val reglasCarga = rememberCarga { ProgresoRepositorio.reglas() }
+    var verTodosLosNiveles by remember { mutableStateOf(false) }
 
     // Diálogos de confirmación para pausar/reactivar
     var publicacionSeleccionadaParaAccion by remember { mutableStateOf<PublicacionPortafolio?>(null) }
@@ -266,6 +270,72 @@ fun PerfilScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // ── ¿Cómo subo de nivel? ──
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MkFondoCard),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "¿Cómo subo de nivel?",
+                        fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MkTitulo
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Tu nivel sube con tus actividades completadas. Estas son las que cuentan:",
+                        fontFamily = JakartaSansFont, fontSize = 12.sp, lineHeight = 17.sp, color = MkSubtitulo
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val reglas = (reglasCarga.estado as? Carga.Lista)?.datos?.reglas ?: emptyMap()
+                    Text("🛍️  Cada venta completada (cuando la compradora confirma que recibió su pedido)", fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = ColorTextoPrincipal)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("🎯  Cada microrreto que el contratista valida como bien hecho", fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = ColorTextoPrincipal)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Lo demás (publicar, registrar tus emociones, cuidar a Lilu) no sube de nivel, pero sí te da flores 🌸 para Lilu." +
+                            (reglas["nivel"]?.let { " Y cada vez que subes de nivel, ¡ganas $it flores de regalo!" } ?: ""),
+                        fontFamily = JakartaSansFont, fontSize = 12.sp, lineHeight = 17.sp, color = MkSubtitulo
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextButton(onClick = { verTodosLosNiveles = !verTodosLosNiveles }, contentPadding = PaddingValues(0.dp)) {
+                        Text(
+                            text = if (verTodosLosNiveles) "Ocultar los niveles ▲" else "Ver los 10 niveles ▼",
+                            fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo
+                        )
+                    }
+                    if (verTodosLosNiveles) {
+                        val niveles = (nivelesCarga.estado as? Carga.Lista)?.datos?.niveles ?: emptyList()
+                        if (niveles.isEmpty()) Text("Cargando…", fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkSubtitulo)
+                        niveles.forEach { n ->
+                            val esActual = n.nivel == datosProgreso?.nivel?.nivel
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 2.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(if (esActual) MkBarraFondo else Color.Transparent)
+                                    .padding(horizontal = 8.dp, vertical = 5.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Nivel ${n.nivel} · ${n.nombre}" + if (esActual) "  (tú)" else "",
+                                    fontFamily = JakartaSansFont, fontSize = 12.sp,
+                                    fontWeight = if (esActual) FontWeight.Bold else FontWeight.Normal, color = ColorTextoPrincipal
+                                )
+                                Text(
+                                    text = if (n.actividadesRequeridas == 0) "al empezar" else "${n.actividadesRequeridas} actividades",
+                                    fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkSubtitulo
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // ── Estadísticas en Dirección de Columna (Fiel al Mockup 15) ──
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -339,9 +409,21 @@ fun PerfilScreen(
                             tipoAccionPendiente = if (pub.estado == "Pausado") "reactivar" else "pausar"
                         }
                     },
-                    onEditarClick = { /* Acción editar detalles */ }
+                    onEditarClick = { onEditar(pub.id) }
                 )
                 Spacer(modifier = Modifier.height(14.dp))
+            }
+
+            Button(
+                onClick = { onNavigate("publicar_producto") },
+                modifier = Modifier.fillMaxWidth().height(46.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF005524))
+            ) {
+                Text(
+                    text = "+  Añadir nuevo producto",
+                    fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White
+                )
             }
 
             Spacer(modifier = Modifier.height(20.dp))

@@ -1,7 +1,5 @@
 package com.example.crisalida.ui.theme.screens
 
-import com.example.crisalida.ui.theme.screens.HomeScreen
-import com.example.crisalida.ui.screens.CrisalidaScaffold
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,12 +12,14 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.crisalida.ui.theme.ColorFondoApp
 import com.example.crisalida.ui.theme.ColorTextoPrincipal
 import com.example.crisalida.ui.theme.OutfitFont
-import com.example.crisalida.ui.screens.*
-
+import com.example.crisalida.ui.screens.CrisalidaScaffold
+import com.example.crisalida.ui.screens.RespirarLiluScreen
 /**
  * Navegación entre pestañas de la barra inferior:
  * una sola copia de cada pantalla en la pila, sin acumular historial y restaurando estado.
@@ -67,16 +67,39 @@ fun PantallaPendiente(titulo: String, selectedTab: Int, onNavigate: (String) -> 
  */
 fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
     val ir: (String) -> Unit = { navController.navigateToTab(it) }
+    // Pantallas de detalle: se apilan encima y «Volver» regresa a donde estabas (sin tocar la pila de pestañas)
+    val abrirReto: (String) -> Unit = { navController.navigate("reto_detalle/$it") }
+    val abrirProducto: (String) -> Unit = { navController.navigate("producto_detalle/$it") }
+    val editar: (String) -> Unit = { navController.navigate("editar_publicacion/$it") }
+    val volver: () -> Unit = { navController.popBackStack() }
+    val argId = listOf(navArgument("id") { type = NavType.StringType })
 
-    composable("retos") { RetosScreen(onNavigate = ir) }
-    composable("marketplace") { MarketplaceScreen(onNavigate = ir) }
-    composable("home") { HomeScreen(onNavigate = ir) }
-    composable("bienestar") { BienestarScreen (onNavigate = ir) }
+    composable("retos") { RetosScreen(onNavigate = ir, onAbrirDetalle = abrirReto) }
+    composable("marketplace") { MarketplaceScreen(onNavigate = ir, onAbrirDetalle = abrirProducto) }
+    composable("home") { HomeScreen(onNavigate = ir, onAbrirReto = abrirReto) }
+    composable("bienestar") {
+        BienestarScreen(onNavigate = ir, onVerRegistros = { navController.navigate("bienestar_registros") })
+    }
     composable("mascota") { MascotaScreen (onNavigate =  ir) }
-    composable("perfil") { PerfilScreen (onNavigate =  ir) }
+    composable("perfil") { PerfilScreen (onNavigate =  ir, onEditar = editar) }
 
     // Rutas de canje y complementos (cada ruta se registra UNA sola vez)
     composable("respirar_lilu") { RespirarLiluScreen(onNavigate = ir) }
-    composable("portafolio_completo") { PortafolioScreen(onNavigate = ir) }
+    composable("portafolio_completo") { PortafolioScreen(onNavigate = ir, onEditar = editar) }
     composable("publicar_producto") { PublicarProductoScreen(onNavigate = ir) }
+
+    // Detalles y edición
+    composable("reto_detalle/{id}", arguments = argId) { entrada ->
+        RetoDetalleScreen(retoId = entrada.arguments?.getString("id").orEmpty(), onNavigate = ir, onVolver = volver)
+    }
+    composable("producto_detalle/{id}", arguments = argId) { entrada ->
+        ProductoDetalleScreen(
+            publicacionId = entrada.arguments?.getString("id").orEmpty(),
+            onNavigate = ir, onVolver = volver, onEditar = editar
+        )
+    }
+    composable("editar_publicacion/{id}", arguments = argId) { entrada ->
+        PublicarProductoScreen(onNavigate = ir, publicacionId = entrada.arguments?.getString("id").orEmpty())
+    }
+    composable("bienestar_registros") { BienestarRegistrosScreen(onNavigate = ir, onVolver = volver) }
 }
