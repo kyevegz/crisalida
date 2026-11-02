@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.ui.theme.*
-
+import com.example.crisalida.data.SesionActual
 
 /* ──────────────────────────────────────────────────────────────
  * Colores medidos del mockup Perfil/Portafolio (portafolio.png)
@@ -141,7 +141,7 @@ fun PortafolioScreen(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Esperanza123",
+                        text = SesionActual.seudonimo,
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 24.sp,

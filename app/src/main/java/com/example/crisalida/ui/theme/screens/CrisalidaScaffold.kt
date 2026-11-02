@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
+import com.example.crisalida.data.SesionActual
 
 // Colores medidos del mockup (home.png)
 private val MkCrisalida = Color(0xFF9D4067)
@@ -103,6 +104,7 @@ fun CrisalidaScaffold(
                             .clip(RoundedCornerShape(7.dp))
                             .background(MkMorado)
                             .clickable { (context as? Activity)?.let { activity ->
+                                SesionActual.cerrar()
                                 activity.finishAffinity()
                                 activity.finishAndRemoveTask()
                             }}

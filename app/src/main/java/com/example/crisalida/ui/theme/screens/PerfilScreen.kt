@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
-
+import com.example.crisalida.data.SesionActual
 /* ──────────────────────────────────────────────────────────────
  * Colores medidos del mockup de Perfil y Tarjetas
  * ────────────────────────────────────────────────────────────── */
@@ -157,7 +157,7 @@ fun PerfilScreen(
 
                 Column {
                     Text(
-                        text = "Esperanza123",
+                        text = SesionActual.seudonimo,
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 28.sp,

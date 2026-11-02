@@ -35,13 +35,17 @@ import com.example.crisalida.ui.theme.*
 @Composable
 fun RegisterScreen(
     onNextClick: (String, String, String) -> Unit,
-    onNavigateToLogin: () -> Unit
+    onNavigateToLogin: () -> Unit,
+    cargando: Boolean = false,   // true mientras se espera al servidor
+    error: String? = null        // mensaje a mostrar si algo falló
 ) {
     var seudonimo by remember { mutableStateOf("") }
     var pinPrincipal by remember { mutableStateOf("") }
     var pinCamuflaje by remember { mutableStateOf("") }
 
     val scrollState = rememberScrollState()
+    val puedeContinuar = !cargando && seudonimo.trim().length >= 3 &&
+            pinPrincipal.length == 6 && pinCamuflaje.length == 6
 
     Box(
         modifier = Modifier
@@ -165,7 +169,7 @@ fun RegisterScreen(
                 ) {
                     BasicTextField(
                         value = seudonimo,
-                        onValueChange = { seudonimo = it },
+                        onValueChange = { if (it.length <= 30) seudonimo = it },
                         singleLine = true,
                         textStyle = TextStyle(
                             fontFamily = JakartaSansFont,
@@ -219,7 +223,7 @@ fun RegisterScreen(
                 Box {
                     BasicTextField(
                         value = pinPrincipal,
-                        onValueChange = { if (it.length <= 6) pinPrincipal = it },
+                        onValueChange = { if (it.length <= 6 && it.all(Char::isDigit)) pinPrincipal = it },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                         modifier = Modifier.matchParentSize(),
                         textStyle = TextStyle(color = Color.Transparent)
@@ -283,7 +287,7 @@ fun RegisterScreen(
                 Box {
                     BasicTextField(
                         value = pinCamuflaje,
-                        onValueChange = { if (it.length <= 6) pinCamuflaje = it },
+                        onValueChange = { if (it.length <= 6 && it.all(Char::isDigit)) pinCamuflaje = it },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                         modifier = Modifier.matchParentSize(),
                         textStyle = TextStyle(color = Color.Transparent)
@@ -358,22 +362,38 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            MensajeError(error)
+
+            Spacer(modifier = Modifier.height(10.dp))
+
             // 10. BOTÓN "Siguiente"
             Button(
                 onClick = { onNextClick(seudonimo, pinPrincipal, pinCamuflaje) },
+                enabled = puedeContinuar,
                 modifier = Modifier
                     .fillMaxWidth(0.95f)
                     .height(52.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = ColorBotonEntrar)
-            ) {
-                Text(
-                    text = "Siguiente",
-                    fontFamily = OutfitFont,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ColorBotonEntrar,
+                    disabledContainerColor = ColorBotonEntrar.copy(alpha = 0.5f)
                 )
+            ) {
+                if (cargando) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White,
+                        strokeWidth = 2.5.dp
+                    )
+                } else {
+                    Text(
+                        text = "Siguiente",
+                        fontFamily = OutfitFont,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
