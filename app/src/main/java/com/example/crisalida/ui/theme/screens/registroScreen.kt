@@ -339,7 +339,7 @@ fun RegisterScreen(
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = "Podrás ingresar datos personales más adelante si así lo deseas, con la garantía de que estos, junto con tus reflexiones íntimas y registros de ventas se protegen con cifrado de extremo a extremo en tu dispositivo.",
+                        text = "Podrás ingresar datos personales más adelante si así lo deseas, con la garantía de que estos, junto con tus reflexiones íntimas y registros de ventas se protegen con cifrado y solo se muestran dentro de tu cuenta.",
                         fontFamily = JakartaSansFont,
                         fontSize = 11.sp,
                         color = ColorTextoPrincipal,

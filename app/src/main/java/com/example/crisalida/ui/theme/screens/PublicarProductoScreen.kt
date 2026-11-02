@@ -1,6 +1,15 @@
-package com.example.crisalida.ui.screens
+package com.example.crisalida.ui.theme.screens
 
 import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
+import com.example.crisalida.data.MiniaturaLocal
+import com.example.crisalida.data.PublicacionRequest
+import com.example.crisalida.data.PublicacionesRepositorio
+import com.example.crisalida.data.ResultadoApi
+import com.example.crisalida.data.prepararFoto
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -30,7 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.ui.theme.*
-
+import com.example.crisalida.ui.screens.*
 /* ──────────────────────────────────────────────────────────────
  * Colores medidos del mockup Subir Producto
  * ────────────────────────────────────────────────────────────── */
@@ -111,6 +120,66 @@ fun PublicarProductoScreen(
 
     var mostrarDialogoBorrador by remember { mutableStateOf(false) }
     var mostrarDialogoVistaPrevia by remember { mutableStateOf(false) }
+
+    // Zona pública (lo único que ven las compradoras) y punto de entrega real (privado, se guarda cifrado)
+    var zonaPublica by remember { mutableStateOf("") }
+    var puntoEntrega by remember { mutableStateOf("") }
+
+    // Publicación
+    val contexto = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var publicando by remember { mutableStateOf(false) }
+    var mensajePublicar by remember { mutableStateOf<String?>(null) }
+    var publicacionCreada by remember { mutableStateOf(false) }
+
+    fun publicar() {
+        if (publicando) return
+        val categoria = categoriaSeleccionada
+        val precio = precioFinal.replace(",", ".").toDoubleOrNull()
+        if (categoria == null) { mensajePublicar = "Elige una categoría para tu publicación."; return }
+        if (tituloDescriptivo.trim().length < 3) { mensajePublicar = "Escribe un título para tu publicación."; return }
+        if (precio == null || precio <= 0.0) { mensajePublicar = "Escribe un precio mayor a cero."; return }
+        val esProducto = tipoPublicacion == 0
+        val peticion = PublicacionRequest(
+            tipo = if (esProducto) "producto" else "servicio",
+            categoria = categoria,
+            titulo = tituloDescriptivo.trim(),
+            descripcion = descripcion.trim(),
+            precio = precio,
+            notaPrecio = if (esProducto) null else when (tipoCobroServicio) { 1 -> "Por hora"; 2 -> "Por servicio"; else -> "Por diseño" },
+            opcionEntrega = if (esProducto) opcionEntrega else null,
+            modalidadServicio = if (esProducto) null else modalidadServicio,
+            esquemaCobro = if (esProducto) null else tipoCobroServicio,
+            costoInsumos = costoInsumos.replace(",", ".").toDoubleOrNull(),
+            horasDedicacion = horasDedicacion.replace(",", ".").toDoubleOrNull()?.takeIf { it > 0.0 },
+            tiempoElaboracionHoras = if (esProducto && opcionEntrega == 3) 48 else null,
+            zonaPublica = zonaPublica.trim().ifBlank { null },
+            puntoEntrega = puntoEntrega.trim().ifBlank { null }
+        )
+        publicando = true
+        scope.launch {
+            when (val r = PublicacionesRepositorio.publicar(peticion)) {
+                is ResultadoApi.Error -> mensajePublicar = r.mensaje
+                is ResultadoApi.Exito -> {
+                    // Con la publicación creada, se suben las fotos (comprimidas, sin metadatos)
+                    var fallidas = 0
+                    for (uri in imagenesSeleccionadas.toList()) {
+                        val bytes = withContext(Dispatchers.IO) { prepararFoto(contexto, uri) }
+                        val subida = if (bytes == null) null else PublicacionesRepositorio.subirFoto(r.datos.id, bytes)
+                        if (subida !is ResultadoApi.Exito) fallidas++
+                    }
+                    publicacionCreada = true
+                    mensajePublicar = buildString {
+                        append(if (r.datos.estado == "activo") "¡Tu publicación ya está visible en el marketplace!"
+                               else "¡Listo! Tu publicación quedó en revisión; en cuanto la aprobemos se verá en el marketplace.")
+                        if (r.datos.floresGanadas > 0) append("\n\n🌸 Ganaste ${r.datos.floresGanadas} flores para Lilu.")
+                        if (fallidas > 0) append("\n\nNo se pudieron subir $fallidas foto(s). Inténtalo de nuevo más tarde.")
+                    }
+                }
+            }
+            publicando = false
+        }
+    }
 
     CrisalidaScaffold(
         currentTitle = "Subir producto",
@@ -283,9 +352,22 @@ fun PublicarProductoScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        imagenesSeleccionadas.forEach { _ ->
+                        imagenesSeleccionadas.toList().forEach { uri ->
                             Box(modifier = Modifier.size(90.dp).clip(RoundedCornerShape(8.dp)).background(Color.LightGray)) {
-                                Text(text = "📷", fontSize = 30.sp, modifier = Modifier.align(Alignment.Center))
+                                MiniaturaLocal(uri = uri, modifier = Modifier.fillMaxSize())
+                                // Toca la ✕ para quitar la foto
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(3.dp)
+                                        .size(22.dp)
+                                        .clip(RoundedCornerShape(11.dp))
+                                        .background(Color(0xAA000000))
+                                        .clickable { imagenesSeleccionadas.remove(uri) },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(text = "✕", fontSize = 11.sp, color = Color.White)
+                                }
                             }
                         }
                         if (imagenesSeleccionadas.size < 3) {
@@ -462,6 +544,32 @@ fun PublicarProductoScreen(
                         Spacer(modifier = Modifier.height(10.dp))
                         OpcionEntregaItem("Servicio a domicilio de la compradora", "Tú acudes al domicilio de la clienta (ej. maquillaje o peinado para eventos).", "A domicilio", modalidadServicio == 2) { modalidadServicio = 2 }
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(text = "Zona pública (la verán las compradoras)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MkTitulo)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = zonaPublica,
+                        onValueChange = { if (it.length <= 80) zonaPublica = it },
+                        placeholder = { Text("Ej. Centro de Irapuato (solo colonia o zona)", fontFamily = JakartaSansFont, fontSize = 13.sp) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8), focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
+                        textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(text = "Punto de entrega o dirección (solo tú la ves)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MkTitulo)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = puntoEntrega,
+                        onValueChange = { if (it.length <= 200) puntoEntrega = it },
+                        placeholder = { Text("Opcional. Se guarda cifrada y nunca se muestra al público", fontFamily = JakartaSansFont, fontSize = 13.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8), focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
+                        textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
+                    )
                 }
             }
 
@@ -469,12 +577,13 @@ fun PublicarProductoScreen(
 
             // Botón Publicar
             Button(
-                onClick = { onNavigate("portafolio_completo") },
+                onClick = { publicar() },
+                enabled = !publicando,
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MkBotonPublicar)
             ) {
-                Text(text = if (tipoPublicacion == 0) "Publicar Producto" else "Publicar Servicio", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
+                Text(text = if (publicando) "Publicando…" else if (tipoPublicacion == 0) "Publicar Producto" else "Publicar Servicio", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -508,9 +617,23 @@ fun PublicarProductoScreen(
     if (mostrarDialogoBorrador) {
         AlertDialog(
             onDismissRequest = { mostrarDialogoBorrador = false },
-            title = { Text("Borrador guardado", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo) },
-            text = { Text("Tus datos se guardaron de forma privada en el almacenamiento local de tu teléfono.", fontFamily = JakartaSansFont, color = MkSubtitulo) },
+            title = { Text("Borradores próximamente", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo) },
+            text = { Text("Por ahora los borradores no se pueden guardar. Pronto podrás hacerlo; mientras tanto, publica cuando estés lista.", fontFamily = JakartaSansFont, color = MkSubtitulo) },
             confirmButton = { Button(onClick = { mostrarDialogoBorrador = false }, colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)) { Text("Aceptar", color = Color.White) } },
+            containerColor = Color.White, shape = RoundedCornerShape(12.dp)
+        )
+    }
+
+    mensajePublicar?.let { texto ->
+        AlertDialog(
+            onDismissRequest = { mensajePublicar = null; if (publicacionCreada) onNavigate("portafolio_completo") },
+            text = { Text(texto, fontFamily = JakartaSansFont, color = MkSubtitulo) },
+            confirmButton = {
+                Button(
+                    onClick = { mensajePublicar = null; if (publicacionCreada) onNavigate("portafolio_completo") },
+                    colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)
+                ) { Text(if (publicacionCreada) "Ver mi catálogo" else "Entendido", color = Color.White) }
+            },
             containerColor = Color.White, shape = RoundedCornerShape(12.dp)
         )
     }

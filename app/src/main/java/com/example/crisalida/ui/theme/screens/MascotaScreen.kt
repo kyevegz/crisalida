@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
+import com.example.crisalida.data.ProgresoRepositorio
 
 /* ──────────────────────────────────────────────────────────────
  * Colores medidos del mockup de la Mascota (mascotaF.png)
@@ -52,6 +53,16 @@ fun MascotaScreen(
 ) {
     val scrollState = rememberScrollState()
 
+    // ── Datos del servidor: etapa de Lilu, flores y cuánto vale cada acción ──
+    val progreso = rememberProgreso()
+    val lilu = (progreso.estado as? Carga.Lista)?.datos?.lilu
+    val nivel = (progreso.estado as? Carga.Lista)?.datos?.nivel
+    val reglasCarga = rememberCarga { ProgresoRepositorio.reglas() }
+    val reglas = (reglasCarga.estado as? Carga.Lista)?.datos?.reglas ?: emptyMap()
+    fun flores(clave: String, porDefecto: Int) = reglas[clave] ?: porDefecto
+    val maxBienestar = flores("bienestar_emocion", 5) + flores("bienestar_monitoreo", 3) +
+        flores("bienestar_reflexion", 8) + flores("bienestar_bitacora", 12)
+
     CrisalidaScaffold(
         currentTitle = "Mascota",
         selectedTab = 4, // 4 = Pestaña de Mascota
@@ -67,6 +78,10 @@ fun MascotaScreen(
             horizontalAlignment = Alignment.Start
         ) {
             Spacer(modifier = Modifier.height(18.dp))
+
+            if (progreso.estado is Carga.Falla) {
+                MensajeError((progreso.estado as Carga.Falla).mensaje, progreso.recargar)
+            }
 
             // Título principal
             Text(
@@ -107,8 +122,10 @@ fun MascotaScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
+                            // Cuando agregues las 3 imágenes a res/drawable, cámbialas aquí (etapa 1 = huevo, 2 = larva, 3 = mariposa):
+                            // painter = painterResource(id = when (lilu?.etapa) { 2 -> R.drawable.lilu_larva; 3 -> R.drawable.lilu_mariposa; else -> R.drawable.lilu_huevo }),
                             painter = painterResource(id = R.drawable.mascotadormida),
-                            contentDescription = "Lilu durmiendo",
+                            contentDescription = "Lilu",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize()
                         )
@@ -117,14 +134,19 @@ fun MascotaScreen(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Text(
-                        text = "En florecimiento",
+                        text = lilu?.let { "Lilu • ${it.etapaNombre}" } ?: "Lilu",
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         color = MkTitulo
                     )
                     Text(
-                        text = "Lilu está aleteando junto a otras mariposas",
+                        text = when (lilu?.etapa) {
+                            1 -> "Lilu descansa en su huevo, esperando crecer contigo"
+                            2 -> "Lilu ya salió y crece con cada paso tuyo"
+                            3 -> "¡Lilu ya tiene alas! Sigue floreciendo con ella"
+                            else -> "Cargando a Lilu…"
+                        },
                         fontFamily = JakartaSansFont,
                         fontSize = 12.5.sp,
                         color = MkSubtitulo
@@ -143,7 +165,7 @@ fun MascotaScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth(0.85f) // 85% de avance
+                                    .fillMaxWidth(((lilu?.porcentaje ?: 0) / 100f).coerceIn(0f, 1f))
                                     .fillMaxHeight()
                                     .clip(CircleShape)
                                     .background(MkBarraProgreso)
@@ -155,14 +177,14 @@ fun MascotaScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "85 flores",
+                                text = "${lilu?.flores ?: 0} flores",
                                 fontFamily = JakartaSansFont,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp,
                                 color = MkTitulo
                             )
                             Text(
-                                text = "Meta: 100 flores",
+                                text = lilu?.let { if (it.floresSiguiente != null) "Meta: ${it.floresSiguiente} flores (${it.siguienteNombre})" else "¡Etapa máxima!" } ?: "",
                                 fontFamily = JakartaSansFont,
                                 fontSize = 12.sp,
                                 color = MkSubtitulo
@@ -252,8 +274,8 @@ fun MascotaScreen(
             // 1. Publicar un nuevo producto
             TarjetaObtenerFlores(
                 titulo = "Publicar un nuevo producto",
-                descripcion = "Sumar un nuevo producto o servicio a tu catálogo personal te ayuda a crecer a ti y a tu mascota.",
-                flores = 20,
+                descripcion = "Sumar un nuevo producto o servicio a tu catálogo personal te ayuda a crecer a ti y a tu mascota. Ganas flores cuando tu publicación es aprobada (una vez al día).",
+                flores = flores("publicacion", 20),
                 iconVector = Icons.Outlined.ViewInAr,
                 onCanjearClick = { onNavigate("publicar_producto") }
             )
@@ -263,8 +285,8 @@ fun MascotaScreen(
             // 2. Registra cómo te has sentido hoy
             TarjetaObtenerFlores(
                 titulo = "Registra cómo te has sentido hoy",
-                descripcion = "Reconocer y expresar tus emociones puede ser un buen método de desahogo. Añade tu estado de ánimo y obtén néctar para tu mascota.",
-                flores = 10,
+                descripcion = "Reconocer y expresar tus emociones puede ser un buen método de desahogo. Añade tu estado de ánimo y completa los demás bloques de bienestar: puedes ganar hasta $maxBienestar flores al día.",
+                flores = flores("bienestar_emocion", 5),
                 iconVector = Icons.Outlined.Face,
                 onCanjearClick = { onNavigate("bienestar") }
             )
@@ -275,7 +297,7 @@ fun MascotaScreen(
             TarjetaObtenerFlores(
                 titulo = "Completa un microrreto",
                 descripcion = "Usa tus habilidades y talentos para ayudar a los demás, con ello obtienes una remuneración económica y alimentas a Lilu.",
-                flores = 30,
+                flores = flores("reto", 30),
                 iconVector = Icons.Outlined.Speed,
                 onCanjearClick = { onNavigate("retos") }
             )
@@ -285,7 +307,7 @@ fun MascotaScreen(
             // 4. Subir de nivel (Informativo sin botón)
             TarjetaInformativaFlores(
                 titulo = "Subir de nivel",
-                descripcion = "Recuerda que conforme pasa el tiempo, subes de nivel, entre cada eslabón se te recompensa con flores para Lilu.",
+                descripcion = "Recuerda que conforme pasa el tiempo, subes de nivel, entre cada eslabón se te recompensa con ${flores("nivel", 25)} flores para Lilu.",
                 iconVector = Icons.Outlined.Verified
             )
 
@@ -294,7 +316,7 @@ fun MascotaScreen(
             // 5. Hacer una venta (Informativo sin botón)
             TarjetaInformativaFlores(
                 titulo = "Hacer una venta",
-                descripcion = "Cada que concretas una venta, se te recompensa con 40 flores.\n¡Anímate a compartir tu talento!",
+                descripcion = "Cada que concretas una venta, se te recompensa con ${flores("venta", 30)} flores.\n¡Anímate a compartir tu talento!",
                 iconVector = Icons.Outlined.ShoppingBag
             )
 
@@ -365,7 +387,7 @@ private fun TarjetaObtenerFlores(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "Canjear $flores flores",
+                        text = "Ganar $flores flores",
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
