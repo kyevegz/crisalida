@@ -27,9 +27,8 @@ import com.example.crisalida.ui.screens.RespirarLiluScreen
  */
 fun NavController.navigateToTab(route: String) {
     navigate(route) {
-        popUpTo("home") { saveState = true }
+        popUpTo("home")
         launchSingleTop = true
-        restoreState = true
     }
 }
 
@@ -99,7 +98,7 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
         )
     }
     composable("editar_publicacion/{id}", arguments = argId) { entrada ->
-        PublicarProductoScreen(onNavigate = ir, publicacionId = entrada.arguments?.getString("id").orEmpty())
+        PublicarProductoScreen(onNavigate = ir, publicacionId = entrada.arguments?.getString("id").orEmpty(), onEditado = volver)
     }
     composable("bienestar_registros") { BienestarRegistrosScreen(onNavigate = ir, onVolver = volver) }
 }

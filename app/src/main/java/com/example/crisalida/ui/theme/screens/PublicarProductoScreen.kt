@@ -58,7 +58,8 @@ private val MkFondoCard = Color(0xFFFFFFFF)
 @Composable
 fun PublicarProductoScreen(
     onNavigate: (String) -> Unit,
-    publicacionId: String? = null   // null = publicación nueva; con id = editar los detalles de esa publicación
+    publicacionId: String? = null,   // null = publicación nueva; con id = editar los detalles de esa publicación
+    onEditado: (() -> Unit)? = null  // al terminar de editar: regresa a la pantalla de donde vino
 ) {
     val editando = publicacionId != null
     val scrollState = rememberScrollState()
@@ -773,11 +774,11 @@ fun PublicarProductoScreen(
 
     mensajePublicar?.let { texto ->
         AlertDialog(
-            onDismissRequest = { mensajePublicar = null; if (publicacionCreada) onNavigate("portafolio_completo") },
+            onDismissRequest = { mensajePublicar = null; if (publicacionCreada) { if (editando && onEditado != null) onEditado() else onNavigate("portafolio_completo") } },
             text = { Text(texto, fontFamily = JakartaSansFont, color = MkSubtitulo) },
             confirmButton = {
                 Button(
-                    onClick = { mensajePublicar = null; if (publicacionCreada) onNavigate("portafolio_completo") },
+                    onClick = { mensajePublicar = null; if (publicacionCreada) { if (editando && onEditado != null) onEditado() else onNavigate("portafolio_completo") } },
                     colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)
                 ) { Text(if (publicacionCreada) "Ver mi catálogo" else "Entendido", color = Color.White) }
             },
