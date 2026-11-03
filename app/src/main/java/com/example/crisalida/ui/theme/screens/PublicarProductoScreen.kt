@@ -162,7 +162,7 @@ fun PublicarProductoScreen(
             .put("zona", zonaPublica)
         prefs.edit().putString("publicacion", j.toString()).apply()
         mensajeBorrador = "Borrador guardado en este teléfono. La próxima vez que abras «Subir producto» lo recuperas. " +
-            "No guarda las fotos ni tu dirección privada: esas hay que volver a agregarlas."
+                "No guarda las fotos ni tu dirección privada: esas hay que volver a agregarlas."
     }
 
     LaunchedEffect(Unit) {
@@ -278,7 +278,7 @@ fun PublicarProductoScreen(
                     prefs.edit().remove("publicacion").apply()   // ya se publicó: el borrador sobra
                     mensajePublicar = buildString {
                         append(if (r.datos.estado == "activo") "¡Tu publicación ya está visible en el marketplace!"
-                               else "¡Listo! Tu publicación quedó en revisión; en cuanto la aprobemos se verá en el marketplace.")
+                        else "¡Listo! Tu publicación quedó en revisión; en cuanto la aprobemos se verá en el marketplace.")
                         if (r.datos.floresGanadas > 0) append("\n\n🌸 Ganaste ${r.datos.floresGanadas} flores para Lilu.")
                         if (fallidas > 0) append("\n\nNo se pudieron subir $fallidas foto(s). Inténtalo de nuevo más tarde.")
                     }
@@ -786,10 +786,69 @@ fun PublicarProductoScreen(
     }
 
     if (mostrarDialogoVistaPrevia) {
+        val precioNum = precioFinal.replace(",", ".").toDoubleOrNull()
+        val esProd = tipoPublicacion == 0
+        val entregaTxt = if (esProd) when (opcionEntrega) {
+            1 -> "Recoge en " + zonaPublica.trim().ifBlank { "su domicilio" }
+            3 -> "Por encargo" + (zonaPublica.trim().takeIf { it.isNotBlank() }?.let { " • $it" } ?: "")
+            else -> "Envío por paquetería"
+        } else {
+            if (modalidadServicio == 2) "Va a tu domicilio" + (zonaPublica.trim().takeIf { it.isNotBlank() }?.let { " • $it" } ?: "")
+            else "Atiende en " + zonaPublica.trim().ifBlank { "su espacio de trabajo" }
+        }
         AlertDialog(
             onDismissRequest = { mostrarDialogoVistaPrevia = false },
             title = { Text("Vista previa", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo) },
-            text = { Text("Así verán tu publicación en el Marketplace con tu alias protegido.", fontFamily = JakartaSansFont, color = MkSubtitulo) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text("Así verán tu publicación en el Marketplace con tu alias protegido.", fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkSubtitulo)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Card(
+                        shape = RoundedCornerShape(10.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F0EF)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFFD9D9D9)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                val nueva = imagenesSeleccionadas.firstOrNull()
+                                val existente = fotosExistentes.firstOrNull()
+                                when {
+                                    nueva != null -> MiniaturaLocal(uri = nueva, modifier = Modifier.fillMaxSize())
+                                    existente != null -> FotoRemota(ruta = existente, modifier = Modifier.fillMaxSize())
+                                    else -> Text("Sin foto", fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkSubtitulo)
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                "Vendedora: " + com.example.crisalida.data.SesionActual.seudonimo,
+                                fontFamily = JakartaSansFont, fontSize = 11.sp, color = MkTitulo
+                            )
+                            Text(
+                                categoriaSeleccionada ?: "(elige una categoría)",
+                                fontFamily = JakartaSansFont, fontSize = 11.sp, color = MkSubtitulo
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                tituloDescriptivo.ifBlank { "(escribe un título)" },
+                                fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black
+                            )
+                            Text(
+                                if (precioNum != null && precioNum > 0) formatoPrecio(precioNum) + " MXN" else "(escribe un precio)",
+                                fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF1E681E)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(entregaTxt, fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkSubtitulo)
+                            if (descripcion.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(descripcion, fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = Color(0xFF333333))
+                            }
+                        }
+                    }
+                }
+            },
             confirmButton = { Button(onClick = { mostrarDialogoVistaPrevia = false }, colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)) { Text("Cerrar", color = Color.White) } },
             containerColor = Color.White, shape = RoundedCornerShape(12.dp)
         )
