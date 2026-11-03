@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -37,6 +38,15 @@ fun LoginScreen(
     var pinVisible by remember { mutableStateOf(false) }
 
     val puedeEntrar = !cargando && seudonimo.isNotBlank() && pin.length == 6
+    val foco = LocalFocusManager.current
+
+    // al completar los 6 dígitos entra sola, el botón sigue por si lo prefiere
+    LaunchedEffect(pin) {
+        if (puedeEntrar) {
+            foco.clearFocus()
+            onLoginClick(seudonimo, pin)
+        }
+    }
 
     Box(
         modifier = Modifier

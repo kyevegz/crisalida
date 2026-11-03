@@ -494,7 +494,7 @@ fun PerfilScreen(
                     }
                 }
             }
-
+            Spacer(modifier = Modifier.height(20.dp))
             OutlinedButton(
                 onClick = onCerrarSesion,
                 modifier = Modifier.fillMaxWidth().height(46.dp),
@@ -586,7 +586,7 @@ fun PerfilScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
-                    val avatares = listOf("🐱", "🦋", "🌸", "🌿", "⭐", "🌙")
+                    val avatares = listOf("🐱", "🦋", "🌸", "🌿", "⭐", "🌙", "🪻", "🫐", "🌀","🍓","☕","🍊","🍋","🍒","🌽","🍄","🍄‍🟫","🌷","🌺","🌱","🍁","🍂","🫧","🌝","🌈","❄️","💧","💙","🖤","🩶","🤍","💚","💛","🧡","🤎","💜","🩷","❤️","🩵","💫","🔮","🪩","🪄","🪼","🦑","🪸","🦚","🐦‍🔥","🐣","🐧","🐌","🐝","🐲","🐸","🐶","🐺","🦝","🐮","🐷","🙉","👾","👽","👻","🐼","🐬","🦖","🐠","🐡","🐋","🦆","🐤","🐛","🐞")
                     avatares.forEach { emoji ->
                         Box(
                             modifier = Modifier
