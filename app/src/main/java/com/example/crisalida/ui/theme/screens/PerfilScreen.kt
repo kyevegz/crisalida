@@ -75,7 +75,8 @@ data class HabilidadInsignia(
 @Composable
 fun PerfilScreen(
     onNavigate: (String) -> Unit,
-    onEditar: (String) -> Unit = {}
+    onEditar: (String) -> Unit = {},
+    onCerrarSesion: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -492,6 +493,14 @@ fun PerfilScreen(
                         }
                     }
                 }
+            }
+
+            OutlinedButton(
+                onClick = onCerrarSesion,
+                modifier = Modifier.fillMaxWidth().height(46.dp),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Cerrar sesión", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MkTitulo)
             }
 
             Spacer(modifier = Modifier.height(36.dp))

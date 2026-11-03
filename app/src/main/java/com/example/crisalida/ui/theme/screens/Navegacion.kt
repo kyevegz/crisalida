@@ -1,5 +1,6 @@
 package com.example.crisalida.ui.theme.screens
 
+import com.example.crisalida.data.SesionActual
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -80,7 +81,15 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
         BienestarScreen(onNavigate = ir, onVerRegistros = { navController.navigate("bienestar_registros") })
     }
     composable("mascota") { MascotaScreen (onNavigate =  ir) }
-    composable("perfil") { PerfilScreen (onNavigate =  ir, onEditar = editar) }
+    composable("perfil") {
+        PerfilScreen(
+            onNavigate = ir, onEditar = editar,
+            onCerrarSesion = {
+                SesionActual.cerrar()
+                navController.navigate("login") { popUpTo(0) { inclusive = true } }
+            }
+        )
+    }
 
     // Rutas de canje y complementos (cada ruta se registra UNA sola vez)
     composable("respirar_lilu") { RespirarLiluScreen(onNavigate = ir) }
