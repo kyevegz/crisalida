@@ -9,9 +9,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.Eco
-import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.LockClock
 import androidx.compose.material.icons.outlined.Timer
@@ -79,6 +80,8 @@ fun HomeScreen(
     val progreso = rememberProgreso()
     val datos = (progreso.estado as? Carga.Lista)?.datos
     val retoCarga = rememberCarga(ProgresoRepositorio.version) { RetosRepositorio.tablero() }
+    val reglas = (rememberCarga { ProgresoRepositorio.reglas() }.estado as? Carga.Lista)?.datos?.reglas
+    val floresBitacora = reglas?.get("bienestar_bitacora") ?: 12
     val reto: RetoDto? = (retoCarga.estado as? Carga.Lista)?.datos?.retos?.firstOrNull()
     var aceptando by remember { mutableStateOf(false) }
     var avisoReto by remember { mutableStateOf<String?>(null) }
@@ -123,7 +126,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // ── Tarjeta ¿Cómo late tu corazón hoy? ─────────────────
+            // ── Bitácora (lleva a Bienestar) ──
             Card(
                 shape = RoundedCornerShape(8.dp),
                 colors = CardDefaults.cardColors(containerColor = MkFondo),
@@ -131,55 +134,51 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = MargenIzqArriba, end = MargenDerArriba)
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onNavigate("bienestar") }
             ) {
-                Column(modifier = Modifier.padding(start = 5.dp, end = 5.dp, top = 3.dp, bottom = 4.dp)) {
-                    Row(
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(24.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(MkChipFondo),
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.FavoriteBorder,
+                            imageVector = Icons.Outlined.EditNote,
                             contentDescription = null,
-                            tint = MkTitulo,
-                            modifier = Modifier.size(24.dp)
+                            tint = MkChipTexto,
+                            modifier = Modifier.size(26.dp)
                         )
-                        Spacer(modifier = Modifier.width(2.dp))
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "¿Cómo late tu corazón hoy?",
+                            text = "Tu bitácora de hoy",
                             fontFamily = JakartaSansFont,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 12.sp,
-                            color = MkTitulo,
-                            modifier = Modifier.weight(1f)
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = MkTitulo
                         )
-                        // En el mockup mide ≈4 sp. Subido a 5 sp por legibilidad (RNF-03).
                         Text(
-                            text = "Sin presiones",
+                            text = "Escribe lo que traes en la cabeza o en el corazón, sin presiones. " +
+                                    "Es privada y te da $floresBitacora flores la primera vez del día.",
                             fontFamily = JakartaSansFont,
-                            fontSize = 12.sp,
+                            fontSize = 13.sp,
+                            lineHeight = 17.sp,
                             color = MkTextoSuave
                         )
                     }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        EmotionButton("Calmada", Color(0xFF005524), Modifier.weight(1f))
-                        Spacer(modifier = Modifier.weight(0.39f))
-                        EmotionButton("Con energía", Color(0xFF9D4067), Modifier.weight(1f))
-                    }
-                    Spacer(modifier = Modifier.height(7.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        EmotionButton("Busco apoyo", Color(0xFF7F284F), Modifier.weight(1f))
-                        Spacer(modifier = Modifier.weight(0.39f))
-                        EmotionButton("Sobrecarga", Color(0xFF75527D), Modifier.weight(1f))
-                    }
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = MkTitulo,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
             }
 
@@ -562,44 +561,5 @@ fun HomeScreen(
             },
             containerColor = Color.White
         )
-    }
-}
-
-/** Píldora blanca con punto de color, como en el mockup. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun EmotionButton(
-    text: String,
-    dotColor: Color = MkTitulo,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
-) {
-    Surface(
-        onClick = onClick,
-        shape = CircleShape,
-        color = Color.White,
-        shadowElevation = 1.dp,
-        modifier = modifier.height(25.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(3.dp)
-                    .clip(CircleShape)
-                    .background(dotColor)
-            )
-            Spacer(modifier = Modifier.width(2.dp))
-            Text(
-                text = text,
-                fontFamily = JakartaSansFont,
-                fontWeight = FontWeight.Normal,
-                fontSize = 13.sp,
-                color = MkTextoSuave
-            )
-        }
     }
 }
