@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import org.json.JSONObject
 import com.example.crisalida.data.FotoRemota
+import com.example.crisalida.data.MarketplaceRepositorio
 import androidx.compose.ui.platform.LocalContext
 import com.example.crisalida.data.MiniaturaLocal
 import com.example.crisalida.data.PublicacionRequest
@@ -20,6 +21,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.LocalMall
 import androidx.compose.material.icons.outlined.Storefront
@@ -67,28 +71,15 @@ fun PublicarProductoScreen(
     // 0: Producto físico, 1: Servicio local
     var tipoPublicacion by remember { mutableIntStateOf(0) }
 
-    // Listas oficiales de categorías
-    val categoriasProductos = listOf(
-        "Manualidades y Regalos", "Bisutería y Accesorios", "Belleza y Cosmética Natural",
-        "Jardinería y Plantas", "Papelería y Cuadernos Artesanales", "Juguetes y Muñecos Hechos a Mano",
-        "Velas y Aromaterapia", "Panadería y Galletas", "Conservas y Salsas", "Bordados y Tejidos"
-    )
-
-    val categoriasServicios = listOf(
-        "Cuidado de Mascotas", "Organización de Eventos", "Cuidado Infantil",
-        "Cuidado de Adultos Mayores", "Fotografía y Edición", "Diseño Gráfico Básico",
-        "Corte y Confección", "Limpieza y Mantenimiento", "Clases y Tutorías", "Traducción y Transcripción"
-    )
-
-    val categoriasActuales = if (tipoPublicacion == 0) categoriasProductos else categoriasServicios
-
-    // NINGUNA categoría seleccionada por defecto (inicia en null)
-    var categoriaSeleccionada by remember { mutableStateOf<String?>(null) }
-
-    // Al cambiar de tipo, limpiamos la categoría seleccionada
-    LaunchedEffect(tipoPublicacion) {
-        if (categoriaSeleccionada !in categoriasActuales) categoriaSeleccionada = null
+    // las categorías vienen del servidor, así la app y la base siempre coinciden
+    val categoriasCarga = rememberCarga(tipoPublicacion) {
+        MarketplaceRepositorio.categorias(if (tipoPublicacion == 0) "producto" else "servicio")
     }
+    val categoriasActuales = (categoriasCarga.estado as? Carga.Lista)?.datos?.categorias?.map { it.nombre } ?: emptyList()
+
+    // ninguna categoría seleccionada al inicio
+    var categoriaSeleccionada by remember { mutableStateOf<String?>(null) }
+    var mostrarSelectorCategoria by remember { mutableStateOf(false) }
 
     // Campos de formulario limpios
     var tituloDescriptivo by remember { mutableStateOf("") }
@@ -383,14 +374,14 @@ fun PublicarProductoScreen(
                     icono = Icons.Outlined.Storefront,
                     seleccionado = tipoPublicacion == 0,
                     modifier = Modifier.weight(1f),
-                    onClick = { if (!editando) tipoPublicacion = 0 }
+                    onClick = { if (!editando && tipoPublicacion != 0) { tipoPublicacion = 0; categoriaSeleccionada = null } }
                 )
                 TabTipoPublicacion(
                     titulo = "Servicio local",
                     icono = Icons.Outlined.LocalMall,
                     seleccionado = tipoPublicacion == 1,
                     modifier = Modifier.weight(1f),
-                    onClick = { if (!editando) tipoPublicacion = 1 }
+                    onClick = { if (!editando && tipoPublicacion != 1) { tipoPublicacion = 1; categoriaSeleccionada = null } }
                 )
             }
 
@@ -430,40 +421,28 @@ fun PublicarProductoScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    Text(text = "Categoría (Selecciona una)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    // Categorías dinámicas SIN selección por defecto
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        categoriasActuales.chunked(2).forEach { fila ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                fila.forEach { cat ->
-                                    val isSelected = categoriaSeleccionada == cat
-                                    Surface(
-                                        onClick = { categoriaSeleccionada = cat },
-                                        shape = RoundedCornerShape(16.dp),
-                                        color = if (isSelected) MkTitulo else ColorCamposFondo.copy(alpha = 0.5f),
-                                        modifier = Modifier.weight(1f).height(36.dp)
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)) {
-                                            Text(
-                                                text = cat,
-                                                fontFamily = JakartaSansFont,
-                                                fontSize = 11.sp,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                color = if (isSelected) Color.White else ColorTextoPrincipal,
-                                                maxLines = 1
-                                            )
-                                        }
-                                    }
-                                }
-                                if (fila.size == 1) {
-                                    Spacer(modifier = Modifier.weight(1f))
-                                }
-                            }
+                    Text(text = "Categoría", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Surface(
+                        onClick = { mostrarSelectorCategoria = true },
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFFFAF8F8),
+                        border = BorderStroke(1.dp, ColorCamposFondo),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = categoriaSeleccionada ?: "Toca para elegir una categoría",
+                                fontFamily = JakartaSansFont,
+                                fontWeight = if (categoriaSeleccionada != null) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 14.sp,
+                                color = if (categoriaSeleccionada != null) ColorTextoPrincipal else MkSubtitulo,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = null, tint = MkTitulo)
                         }
                     }
 
@@ -760,6 +739,43 @@ fun PublicarProductoScreen(
 
             Spacer(modifier = Modifier.height(36.dp))
         }
+    }
+
+    if (mostrarSelectorCategoria) {
+        AlertDialog(
+            onDismissRequest = { mostrarSelectorCategoria = false },
+            title = { Text("Elige una categoría", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo) },
+            text = {
+                when (val e = categoriasCarga.estado) {
+                    is Carga.Cargando -> IndicadorCargando()
+                    is Carga.Falla -> MensajeError(e.mensaje, categoriasCarga.recargar)
+                    is Carga.Lista -> LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+                        items(categoriasActuales) { cat ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { categoriaSeleccionada = cat; mostrarSelectorCategoria = false }
+                                    .padding(vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = categoriaSeleccionada == cat,
+                                    onClick = { categoriaSeleccionada = cat; mostrarSelectorCategoria = false },
+                                    colors = RadioButtonDefaults.colors(selectedColor = MkTitulo)
+                                )
+                                Text(cat, fontFamily = JakartaSansFont, fontSize = 15.sp, color = ColorTextoPrincipal)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { mostrarSelectorCategoria = false }) {
+                    Text("Cerrar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo)
+                }
+            },
+            containerColor = Color.White, shape = RoundedCornerShape(12.dp)
+        )
     }
 
     mensajeBorrador?.let { texto ->
