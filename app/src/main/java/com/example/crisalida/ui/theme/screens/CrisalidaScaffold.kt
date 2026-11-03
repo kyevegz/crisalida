@@ -105,7 +105,6 @@ fun CrisalidaScaffold(
                             .background(MkMorado)
                             .clickable { (context as? Activity)?.let { activity ->
                                 SesionActual.cerrar()
-                                activity.finishAffinity()
                                 activity.finishAndRemoveTask()
                             }}
                             .padding(start = 4.dp, end = 3.dp),
