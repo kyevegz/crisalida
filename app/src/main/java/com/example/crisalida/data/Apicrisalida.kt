@@ -223,7 +223,7 @@ object RetrofitCliente {
     //  - Celular real en tu mismo Wi-Fi: la IP de tu compu (en la consola: ipconfig → "Dirección IPv4")
     //  - Emulador de Android Studio:      http://10.0.2.2:8000/
     //private const val BASE_URL = "http://192.168.1.68:8000/"
-    const val BASE_URL = "http://localhost:8000/"   // público: FotoRemota lo usa para armar la dirección de las fotos
+    const val BASE_URL = "https://crisalidabackend.onrender.com/"   // público: FotoRemota lo usa para armar la dirección de las fotos
     private val cliente = OkHttpClient.Builder()
         .connectTimeout(20, TimeUnit.SECONDS)   // Neon puede tardar unos segundos si estaba "dormida"
         .readTimeout(45, TimeUnit.SECONDS)      // el servidor espera hasta 20 s a la IA del radar; este margen evita cortarlo antes
