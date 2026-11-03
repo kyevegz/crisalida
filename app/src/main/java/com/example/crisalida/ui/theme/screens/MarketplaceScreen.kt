@@ -59,6 +59,7 @@ data class ProductoMarketplaceUi(
     val esServicio: Boolean = false,
     val notaPrecio: String? = null, // p. ej. "*Por sesión"
     val categoria: String,
+    val esMia: Boolean = false,
     @DrawableRes val imagenRes: Int? = null,
     val imagenRuta: String? = null   // foto del servidor (ver FotoRemota)
 )
@@ -354,22 +355,43 @@ private fun ProductoCard(
                     }
                 }
 
-                Button(
-                    onClick = onComprarClick,
-                    modifier = Modifier
-                        .width(135.dp)
-                        .height(40.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MkVerdeBotonComprar),
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Text(
-                        text = "Comprar",
-                        fontFamily = OutfitFont,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 19.sp,
-                        color = Color.White
-                    )
+                if (producto.esMia) {
+                    // es de ella, no se compra
+                    Box(
+                        modifier = Modifier
+                            .widthIn(min = 135.dp)
+                            .heightIn(min = 40.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MkTagVendedoraFondo)
+                            .padding(horizontal = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (producto.esServicio) "Este es tu servicio" else "Este es tu producto",
+                            fontFamily = OutfitFont,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp,
+                            color = MkTagVendedoraPunto
+                        )
+                    }
+                } else {
+                    Button(
+                        onClick = onComprarClick,
+                        modifier = Modifier
+                            .width(135.dp)
+                            .height(40.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MkVerdeBotonComprar),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text(
+                            text = "Comprar",
+                            fontFamily = OutfitFont,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 19.sp,
+                            color = Color.White
+                        )
+                    }
                 }
             }
         }
@@ -388,5 +410,6 @@ private fun PublicacionDto.aMarketplaceUi() = ProductoMarketplaceUi(
     esServicio = tipo == "servicio",
     notaPrecio = notaPrecio?.takeIf { it.isNotBlank() }?.let { "*$it" },
     categoria = categoria,
+    esMia = esMia,
     imagenRuta = imagenes.firstOrNull()
 )
