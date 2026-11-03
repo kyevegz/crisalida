@@ -63,7 +63,7 @@ También puedes crear una cuenta nueva con **Crear cuenta**: eliges seudónimo, 
 | 4 | Entra a **Marketplace** y toca tu producto | Se abre el **detalle**: fotos, precio, vendedora, entrega y descripción |
 | 5 | En **Perfil → Portafolio** toca **Editar detalles**, cambia el precio y guarda | Cambios guardados; vuelve a la pantalla anterior |
 
-### Extra (opcional) · Bienestar emocional
+### Extra · Bienestar emocional
 Entra a **Bienestar**, guarda una emoción varias veces en el día (solo la primera da flores) y toca **Ver mis registros** para releer y borrar tus entradas. Lo que escribes se guarda **cifrado** en el servidor.
 
 ## Seguridad y privacidad (resumen)
@@ -79,7 +79,7 @@ Entra a **Bienestar**, guarda una emoción varias veces en el día (solo la prim
 - El borrador de una publicación se guarda solo en el teléfono y no incluye fotos ni la dirección privada.
 - El servidor gratuito puede tardar en responder la primera vez (ver nota arriba).
 
-## Correr el proyecto desde el código (para evaluadoras/es técnicos)
+## Correr el proyecto desde el código
 **Backend**
 ```bash
 pip install -r requirements.txt
