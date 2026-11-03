@@ -237,7 +237,7 @@ fun RadarScreen(onTerminar: () -> Unit) {
                             Spacer(modifier = Modifier.height(20.dp))
                             BotonPrincipal(
                                 texto = "Analizar mis respuestas",
-                                tamano = 16.sp,
+                                tamano = 18.sp,
                                 habilitado = puedeAnalizar,
                                 cargando = false,
                                 onClick = { analizar() }
@@ -260,8 +260,8 @@ fun RadarScreen(onTerminar: () -> Unit) {
                                         Text(
                                             text = mensajeConNegrita(it.mensaje),
                                             fontFamily = OutfitFont,
-                                            fontSize = 13.sp,
-                                            lineHeight = 15.sp,
+                                            fontSize = 16.sp,
+                                            lineHeight = 18.sp,
                                             color = Color.Black
                                         )
                                     }
@@ -281,7 +281,8 @@ fun RadarScreen(onTerminar: () -> Unit) {
                             numero = "2",
                             titulo = "Bloque II. Fase de adaptación",
                             subtitulo = "Las siguientes preguntas se generan dinámicamente según tus intereses",
-                            paddingInferior = 20.dp
+                            paddingInferior = 20.dp,
+
                         ) {
                             b2.preguntas.forEachIndexed { i, p ->
                                 if (i > 0) Spacer(modifier = Modifier.height(40.dp))
@@ -308,7 +309,7 @@ fun RadarScreen(onTerminar: () -> Unit) {
                             Text(
                                 text = "Después de este cuestionario, se harán saber los resultados detectados por el radar, esperando que sirvan como guía en este nuevo camino que haz emprendido <3.",
                                 fontFamily = OutfitFont,
-                                fontSize = 13.sp,
+                                fontSize = 16.sp,
                                 lineHeight = 15.sp,
                                 color = Color.Black
                             )
@@ -318,8 +319,8 @@ fun RadarScreen(onTerminar: () -> Unit) {
                                 text = p.habilidades.joinToString(" · ") { it.titulo },
                                 fontFamily = OutfitFont,
                                 fontWeight = FontWeight.Medium,
-                                fontSize = 11.sp,
-                                lineHeight = 14.sp,
+                                fontSize = 14.sp,
+                                lineHeight = 16.sp,
                                 color = MkVino
                             )
                         }
@@ -336,7 +337,7 @@ fun RadarScreen(onTerminar: () -> Unit) {
                         Spacer(modifier = Modifier.height(10.dp))
                         BotonPrincipal(
                             texto = "Terminar",
-                            tamano = 20.sp,
+                            tamano = 22.sp,
                             habilitado = puedeTerminar,
                             cargando = detectando || creandoCuenta,
                             onClick = { terminar() }
@@ -367,7 +368,7 @@ private fun PreguntaView(
             text = pregunta.texto,
             fontFamily = OutfitFont,
             fontWeight = FontWeight.Medium,
-            fontSize = 10.sp,
+            fontSize = 15.sp,
             lineHeight = 13.sp,
             color = MkTextoPregunta
         )
@@ -403,7 +404,7 @@ private fun PreguntaView(
                             text = opcion.texto,
                             fontFamily = OutfitFont,
                             fontWeight = FontWeight.Medium,
-                            fontSize = 10.sp,
+                            fontSize = 18.sp,
                             color = if (marcada) MkLila else MkOscuro
                         )
                     }
@@ -429,7 +430,7 @@ private fun PreguntaView(
                                 Text(
                                     text = pregunta.placeholder ?: "Describe lo que tienes...",
                                     fontFamily = OutfitFont,
-                                    fontSize = 11.5.sp,
+                                    fontSize = 16.sp,
                                     color = MkPlaceholder
                                 )
                             }
@@ -486,7 +487,7 @@ private fun OpcionFila(
             text = texto,
             fontFamily = OutfitFont,
             fontWeight = FontWeight.Medium,
-            fontSize = 10.sp,
+            fontSize = 16.sp,
             color = MkOscuro,
             modifier = Modifier.weight(1f)
         )
@@ -556,7 +557,7 @@ private fun BloqueCard(
                         text = numero,
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 24.sp,
+                        fontSize = 26.sp,
                         color = MkTitulo
                     )
                 }
@@ -566,15 +567,15 @@ private fun BloqueCard(
                         text = titulo,
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Medium,
-                        fontSize = 12.sp,
-                        lineHeight = 15.sp,
+                        fontSize = 18.sp,
+                        lineHeight = 18.sp,
                         color = Color.Black
                     )
                     Text(
                         text = subtitulo,
                         fontFamily = OutfitFont,
-                        fontSize = 9.sp,
-                        lineHeight = 11.5.sp,
+                        fontSize = 14.sp,
+                        lineHeight = 14.sp,
                         color = MkGris
                     )
                 }

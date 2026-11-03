@@ -571,7 +571,7 @@ fun BienestarScreen(
                     modifier = Modifier.fillMaxWidth().height(50.dp)
                 ) {
                     Text(
-                        "📖  Ver mis registros",
+                        "Ver mis registros",
                         fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = ColorBotonEntrar
                     )
                 }

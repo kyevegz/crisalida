@@ -289,9 +289,9 @@ fun PerfilScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     val reglas = (reglasCarga.estado as? Carga.Lista)?.datos?.reglas ?: emptyMap()
-                    Text("🛍️  Cada venta completada (cuando la compradora confirma que recibió su pedido)", fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = ColorTextoPrincipal)
+                    Text("-  Cada venta completada (cuando la compradora confirma que recibió su pedido)", fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = ColorTextoPrincipal)
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("🎯  Cada microrreto que el contratista valida como bien hecho", fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = ColorTextoPrincipal)
+                    Text("-  Cada microrreto que el contratista valida como bien hecho", fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = ColorTextoPrincipal)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Lo demás (publicar, registrar tus emociones, cuidar a Lilu) no sube de nivel, pero sí te da flores 🌸 para Lilu." +
@@ -470,7 +470,7 @@ fun PerfilScreen(
                                     .background(MkBarraFondo),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(text = "🌸", fontSize = 18.sp)
+                                Text(text = "🎖️", fontSize = 18.sp)
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
