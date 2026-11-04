@@ -19,10 +19,7 @@ import com.example.crisalida.ui.theme.OutfitFont
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-/* Ayudas compartidas por las pantallas de detalle y de historial.
- * (SimpleDateFormat en vez de java.time porque tu minSdk es 24.) */
-
-/** "2026-11-02" o "2026-11-02T18:00:00-06:00" → "2 de noviembre de 2026" */
+// cosas compartidas por las pantallas de detalle e historial
 fun fechaLegible(iso: String): String = try {
     val fecha = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(iso.take(10))
     if (fecha == null) iso else SimpleDateFormat("d 'de' MMMM 'de' yyyy", Locale("es", "MX")).format(fecha)
@@ -37,7 +34,7 @@ fun dificultadTexto(d: String): String = when (d) {
     else -> d
 }
 
-/** Fila «← Volver» que va arriba de las pantallas de detalle. */
+// fila de Volver para las pantallas de detalle / bienestar
 @Composable
 fun BarraVolver(texto: String = "Volver", onVolver: () -> Unit) {
     Row(
@@ -55,7 +52,7 @@ fun BarraVolver(texto: String = "Volver", onVolver: () -> Unit) {
     }
 }
 
-/** Las 4 preguntas de acompañamiento (las usan Bienestar y el historial). */
+// las 4 preguntas de acompañamiento
 val PreguntasReflexion = listOf(
     "¿Qué pensamiento te pesó más hoy?",
     "¿Pudiste tomarte 10 minutos para ti?",

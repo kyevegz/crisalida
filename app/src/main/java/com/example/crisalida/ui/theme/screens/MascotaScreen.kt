@@ -31,9 +31,6 @@ import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.ui.screens.CrisalidaScaffold
-/* ──────────────────────────────────────────────────────────────
- * Colores medidos del mockup de la Mascota (mascotaF.png)
- * ────────────────────────────────────────────────────────────── */
 private val MkTitulo = Color(0xFF9D4067)
 private val MkSubtitulo = Color(0xFF545454)
 private val MkVerdeBoton = Color(0xFF1E681E)
@@ -52,7 +49,7 @@ fun MascotaScreen(
 ) {
     val scrollState = rememberScrollState()
 
-    // ── Datos del servidor: etapa de Lilu, flores y cuánto vale cada acción ──
+    //datos del servidor: etapa de Lilu, flores y cuánto vale cada acción
     val progreso = rememberProgreso()
     val lilu = (progreso.estado as? Carga.Lista)?.datos?.lilu
     val nivel = (progreso.estado as? Carga.Lista)?.datos?.nivel
@@ -64,7 +61,7 @@ fun MascotaScreen(
 
     CrisalidaScaffold(
         currentTitle = "Mascota",
-        selectedTab = 4, // 4 = Pestaña de Mascota
+        selectedTab = 4, //esto es lo que resalta la pestaña donde se encuentra en la barrita de navegación
         onNavigate = onNavigate
     ) { innerPadding ->
         Column(
@@ -82,7 +79,6 @@ fun MascotaScreen(
                 MensajeError((progreso.estado as Carga.Falla).mensaje, progreso.recargar)
             }
 
-            // Título principal
             Text(
                 text = "Tu camino a florecer",
                 fontFamily = OutfitFont,
@@ -101,7 +97,6 @@ fun MascotaScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // ── Tarjeta Principal de Lilu ──────────────────────────────
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MkFondoCard),
@@ -112,7 +107,6 @@ fun MascotaScreen(
                     modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Imagen circular de mascotadormida.png
                     Box(
                         modifier = Modifier
                             .size(130.dp)
@@ -121,8 +115,6 @@ fun MascotaScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
-                            // Cuando agregues las 3 imágenes a res/drawable, cámbialas aquí (etapa 1 = huevo, 2 = larva, 3 = mariposa):
-                            // painter = painterResource(id = when (lilu?.etapa) { 2 -> R.drawable.lilu_larva; 3 -> R.drawable.lilu_mariposa; else -> R.drawable.lilu_huevo }),
                             painter = painterResource(id = when (lilu?.etapa) { 2 -> R.drawable.lilu_larva; 3 -> R.drawable.lilu_mariposa; else -> R.drawable.lilu_huevo }),
                             contentDescription = "Lilu",
                             contentScale = ContentScale.Crop,
@@ -147,13 +139,12 @@ fun MascotaScreen(
                             else -> "Cargando a Lilu…"
                         },
                         fontFamily = JakartaSansFont,
-                        fontSize = 12.5.sp,
+                        fontSize = 13.sp,
                         color = MkSubtitulo
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Barra de progreso personalizada
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Box(
                             modifier = Modifier
@@ -179,13 +170,13 @@ fun MascotaScreen(
                                 text = "${lilu?.flores ?: 0} flores",
                                 fontFamily = JakartaSansFont,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
+                                fontSize = 13.sp,
                                 color = MkTitulo
                             )
                             Text(
                                 text = lilu?.let { if (it.floresSiguiente != null) "Meta: ${it.floresSiguiente} flores (${it.siguienteNombre})" else "¡Etapa máxima!" } ?: "",
                                 fontFamily = JakartaSansFont,
-                                fontSize = 12.sp,
+                                fontSize = 13.sp,
                                 color = MkSubtitulo
                             )
                         }
@@ -193,12 +184,12 @@ fun MascotaScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    // Botón Respirar con Lilu
+
                     Button(
                         onClick = { onNavigate("respirar_lilu") },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(44.dp),
+                            .heightIn(min = 44.dp),
                         shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MkVerdeBoton)
                     ) {
@@ -215,7 +206,7 @@ fun MascotaScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // ── Banner Cero pérdida ──────────────────────────────────
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -250,8 +241,8 @@ fun MascotaScreen(
                     Text(
                         text = "En caso de inactividad, el progreso seguirá igual, tus datos 100% intactos.",
                         fontFamily = JakartaSansFont,
-                        fontSize = 11.5.sp,
-                        lineHeight = 14.sp,
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp,
                         color = MkVerdeCeroPerdidaTexto
                     )
                 }
@@ -259,7 +250,7 @@ fun MascotaScreen(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // Sección Cómo obtener flores
+
             Text(
                 text = "Cómo obtener flores",
                 fontFamily = OutfitFont,
@@ -270,7 +261,7 @@ fun MascotaScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 1. Publicar un nuevo producto
+
             TarjetaObtenerFlores(
                 titulo = "Publicar un nuevo producto",
                 descripcion = "Sumar un nuevo producto o servicio a tu catálogo personal te ayuda a crecer a ti y a tu mascota. Ganas flores cuando tu publicación es aprobada (una vez al día).",
@@ -281,7 +272,7 @@ fun MascotaScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 2. Registra cómo te has sentido hoy
+
             TarjetaObtenerFlores(
                 titulo = "Registra cómo te has sentido hoy",
                 descripcion = "Reconocer y expresar tus emociones puede ser un buen método de desahogo. Añade tu estado de ánimo y completa los demás bloques de bienestar: puedes ganar hasta $maxBienestar flores al día (te puedes registrar las veces que quieras, pero las flores se dan solo la primera vez del día en cada bloque).",
@@ -292,7 +283,7 @@ fun MascotaScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 3. Completa un microrreto
+
             TarjetaObtenerFlores(
                 titulo = "Completa un microrreto",
                 descripcion = "Usa tus habilidades y talentos para ayudar a los demás, con ello obtienes una remuneración económica y alimentas a Lilu.",
@@ -303,7 +294,6 @@ fun MascotaScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 4. Subir de nivel (Informativo sin botón)
             TarjetaInformativaFlores(
                 titulo = "Subir de nivel",
                 descripcion = "Recuerda que conforme pasa el tiempo, subes de nivel, entre cada eslabón se te recompensa con ${flores("nivel", 25)} flores para Lilu.",
@@ -312,7 +302,6 @@ fun MascotaScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 5. Hacer una venta (Informativo sin botón)
             TarjetaInformativaFlores(
                 titulo = "Hacer una venta",
                 descripcion = "Cada que concretas una venta, se te recompensa con ${flores("venta", 30)} flores.\n¡Anímate a compartir tu talento!",
@@ -324,7 +313,7 @@ fun MascotaScreen(
     }
 }
 
-/** Tarjeta interactiva con botón Canjear X flores */
+//tarjeta con botón de canjear
 @Composable
 private fun TarjetaObtenerFlores(
     titulo: String,
@@ -357,7 +346,6 @@ private fun TarjetaObtenerFlores(
             )
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Caja con Icono Morado
             Box(
                 modifier = Modifier
                     .size(42.dp)
@@ -375,12 +363,11 @@ private fun TarjetaObtenerFlores(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Botón Canjear X flores
             Button(
                 onClick = onCanjearClick,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(40.dp),
+                    .heightIn(min = 40.dp),
                 shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MkBotonCanjear)
             ) {
@@ -405,7 +392,7 @@ private fun TarjetaObtenerFlores(
     }
 }
 
-/** Tarjeta meramente informativa (Subir de nivel y Hacer una venta) */
+//tarjeta solo informativa
 @Composable
 private fun TarjetaInformativaFlores(
     titulo: String,
@@ -436,7 +423,6 @@ private fun TarjetaInformativaFlores(
             )
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Caja con Icono Morado
             Box(
                 modifier = Modifier
                     .size(42.dp)

@@ -1,4 +1,4 @@
-package com.example.crisalida.ui.screens
+package com.example.crisalida.ui.theme.screens
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.ui.theme.JakartaSansFont
 
-/** Mensaje de error compartido por Login y Registro. Si error es null, no muestra nada. */
+// mensaje de error de Login y Registro
 @Composable
 fun MensajeError(error: String?, modifier: Modifier = Modifier) {
     if (error != null) {

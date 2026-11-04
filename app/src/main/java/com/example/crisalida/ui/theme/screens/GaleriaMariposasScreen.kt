@@ -25,12 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 
-/* ================================================================
- * Galería de mariposas: la app «alternativa» que se abre con el PIN de camuflaje.
- * Es 100 % local: no pide nada al servidor ni muestra ningún dato de la usuaria.
- * Las mariposas se dibujan con código (no hay imágenes), así la app no necesita archivos extra.
- * Salir: menú ⋮ → «Cerrar galería» (cierra la sesión y vuelve al inicio).
- * ================================================================ */
+// la app "falsa" que se abre con el PIN de camuflaje
+// todo es local, no pide nada al servidor. Para salir: menú ⋮ > Cerrar galería
 
 private class Mariposa(
     val nombre: String,
@@ -42,7 +38,7 @@ private class Mariposa(
     val fondoArriba: Color,
     val fondoAbajo: Color
 )
-
+//mete mariposas falsas para simular
 private val Mariposas = listOf(
     Mariposa("Monarca", "Danaus plexippus",
         "Viaja hasta 4,000 km cada año desde Canadá hasta los bosques de oyamel de Michoacán y el Estado de México.",
@@ -131,7 +127,7 @@ fun GaleriaMariposasScreen(onCerrar: () -> Unit) {
                             }
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Text(m.nombre, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFF3D2C1E))
-                                Text(m.cientifico, fontSize = 11.sp, color = Color(0xFF8A7B6B))
+                                Text(m.cientifico, fontSize = 12.sp, color = Color(0xFF8A7B6B))
                             }
                         }
                     }
@@ -152,7 +148,7 @@ fun GaleriaMariposasScreen(onCerrar: () -> Unit) {
                     ) { DibujoMariposa(m, Modifier.fillMaxSize().padding(24.dp)) }
                     Column(modifier = Modifier.padding(18.dp)) {
                         Text(m.nombre, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Color(0xFF3D2C1E))
-                        Text(m.cientifico, fontSize = 12.sp, color = Color(0xFF8A7B6B))
+                        Text(m.cientifico, fontSize = 13.sp, color = Color(0xFF8A7B6B))
                         Spacer(Modifier.height(10.dp))
                         Text(m.dato, fontSize = 14.sp, lineHeight = 20.sp, color = Color(0xFF4F4034))
                         Spacer(Modifier.height(12.dp))
@@ -169,13 +165,13 @@ fun GaleriaMariposasScreen(onCerrar: () -> Unit) {
     }
 }
 
-/** Dibuja una mariposa con 4 alas ovaladas, manchas, cuerpo y antenas. */
+// mariposa con 4 alas, manchas, cuerpo y antenas, las dibuja mediante el canvas para no tener tema con los derechos de autor
 @Composable
 private fun DibujoMariposa(m: Mariposa, modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
         val cx = size.width / 2f
         val cy = size.height / 2f
-        val u = minOf(size.width, size.height * 1.25f) / 2f      // unidad de tamaño
+        val u = minOf(size.width, size.height * 1.25f) / 2f//unidad de tamaño
 
         fun ala(lado: Float, arriba: Boolean) {
             val ancho = u * (if (arriba) 0.78f else 0.55f)
@@ -188,14 +184,14 @@ private fun DibujoMariposa(m: Mariposa, modifier: Modifier = Modifier) {
                     topLeft = Offset(centro.x - ancho / 2f, centro.y - alto / 2f),
                     size = Size(ancho, alto)
                 )
-                // Manchas
+                //manchas
                 drawCircle(m.manchas, radius = alto * 0.16f, center = Offset(centro.x + lado * ancho * 0.12f, centro.y))
                 drawCircle(m.manchas.copy(alpha = 0.7f), radius = alto * 0.10f, center = Offset(centro.x - lado * ancho * 0.16f, centro.y + alto * 0.12f))
             }
         }
         for (lado in listOf(-1f, 1f)) { ala(lado, true); ala(lado, false) }
 
-        // Cuerpo y antenas
+        //cuerpo y antenas
         drawRoundRect(
             color = Color(0xFF3A2A20),
             topLeft = Offset(cx - u * 0.05f, cy - u * 0.42f),

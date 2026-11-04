@@ -33,7 +33,7 @@ import com.example.crisalida.data.RetosRepositorio
 import kotlinx.coroutines.launch
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.ui.screens.CrisalidaScaffold
-/* Colores medidos del mockup (microrretos.png, 1080 px = 360 dp) */
+// colores del mockup
 private val MkTitulo = Color(0xFF9D4067)
 private val MkGris = Color(0xFF545454)
 private val MkChipSeleccionado = Color(0xFF62012A)
@@ -42,14 +42,13 @@ private val MkVerde = Color(0xFF1E681E)
 private val MkSkillFondo = Color(0xFFE8D7DD)
 private val MkFondoCard = Color(0xFFF2F0EF)
 
-// El mockup tiene 21 dp a la izquierda y 12 dp a la derecha en las tarjetas.
 private val MargenIzq = 21.dp
 private val MargenDer = 12.dp
 
 private data class RetoUi(
     val retoId: String,
     val aceptacionId: String?,      // solo en "Mis retos"
-    val estado: String?,            // aceptado | entregado | validado (solo en "Mis retos")
+    val estado: String?,            // aceptado, entregado, validado
     val titulo: String,
     val precio: String,
     val etiqueta: String,
@@ -58,10 +57,9 @@ private data class RetoUi(
     val categoria: String,
     val habilidad: String,
     val duracion: String,
-    val imagenRuta: String?         // ruta de la foto en el servidor; null = marcador con icono
+    val imagenRuta: String?         // ruta de la foto en el servidor
 )
 
-// Colores de las etiquetas: se reparten según el nombre para que cada etiqueta siempre tenga el mismo color
 private val PaletaEtiquetas = listOf(
     Color(0xFFAFD0DD) to Color(0xFF11215A),
     Color(0xFFC8AEDD) to Color(0xFF2B115A),
@@ -99,13 +97,12 @@ fun RetosScreen(
     var aviso by remember { mutableStateOf<String?>(null) }
     var ocupado by remember { mutableStateOf(false) }
 
-    // Categorías reales (las mismas que usa la base de datos)
+    // Categorías de la bd
     val categoriasCarga = rememberCarga { MarketplaceRepositorio.categorias("reto") }
     val categoriasDto = (categoriasCarga.estado as? Carga.Lista)?.datos?.categorias ?: emptyList()
     val categorias = listOf("Todos") + categoriasDto.map { it.nombre }
     val categoriaId: Int? = if (seleccion == 0) null else categoriasDto.getOrNull(seleccion - 1)?.id
 
-    // Tablero y "mis retos"; `version` fuerza volver a pedirlos después de aceptar/entregar/soltar
     var version by remember { mutableIntStateOf(0) }
     val tablero = rememberCarga(categoriaId, version, ProgresoRepositorio.version) { RetosRepositorio.tablero(categoriaId = categoriaId) }
     val mios = rememberCarga(version, ProgresoRepositorio.version) { RetosRepositorio.mis() }
@@ -178,7 +175,7 @@ fun RetosScreen(
                         val sel = verMisRetos == esMios
                         Box(
                             modifier = Modifier
-                                .height(28.dp)
+                                .heightIn(min = 36.dp)
                                 .clip(CircleShape)
                                 .background(if (sel) MkVerde else MkChipNormal)
                                 .clickable { verMisRetos = esMios }
@@ -207,7 +204,7 @@ fun RetosScreen(
                         val activoChip = i == seleccion
                         Box(
                             modifier = Modifier
-                                .height(24.dp)
+                                .heightIn(min = 34.dp)
                                 .clip(CircleShape)
                                 .background(if (activoChip) MkChipSeleccionado else MkChipNormal)
                                 .clickable { seleccion = i }
@@ -310,7 +307,7 @@ private fun RetoCard(
         modifier = modifier.fillMaxWidth().clickable { onAbrir() }
     ) {
         Column(modifier = Modifier.padding(start = 13.dp, end = 11.dp, top = 10.dp, bottom = 13.dp)) {
-            // Título + precio
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -336,7 +333,6 @@ private fun RetoCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Etiqueta de categoría
             Box(
                 modifier = Modifier
                     .wrapContentHeight()
@@ -356,7 +352,6 @@ private fun RetoCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Foto del reto (si no tiene, o mientras carga, se ve el marcador)
             FotoRemota(
                 ruta = reto.imagenRuta,
                 contentScale = ContentScale.Crop,
@@ -385,7 +380,6 @@ private fun RetoCard(
 
             Spacer(modifier = Modifier.height(15.dp))
 
-            // Caja de habilidad y duración
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -435,14 +429,13 @@ private fun RetoCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Botón alineado a la derecha
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 Button(
                     onClick = onAceptar,
                     enabled = habilitado,
                     modifier = Modifier
-                        .width(191.dp)
-                        .height(38.dp),
+                        .widthIn(min = 191.dp)
+                        .heightIn(min = 38.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MkVerde),
                     contentPadding = PaddingValues(0.dp)

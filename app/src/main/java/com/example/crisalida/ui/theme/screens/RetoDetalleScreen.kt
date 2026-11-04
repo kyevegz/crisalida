@@ -35,7 +35,7 @@ private val RetoVerde = Color(0xFF1E681E)
 private val RetoGris = Color(0xFF545454)
 private val RetoCaja = Color(0xFFF2F0EF)
 
-/** Detalle de un microrreto: qué se pide, quién lo pide, cuánto paga, hasta cuándo y el botón para tomarlo. */
+//detalle del microrreto
 @Composable
 fun RetoDetalleScreen(
     retoId: String,
@@ -134,7 +134,7 @@ private fun ColumnScope.Contenido(
     Text(reto.titulo, fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 26.sp, lineHeight = 31.sp, color = Color.Black)
     Spacer(Modifier.height(6.dp))
     Text("${formatoPrecio(reto.compensacion)} MXN", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = RetoVerde)
-    Text("Pago al completar el reto y que sea validado", fontFamily = JakartaSansFont, fontSize = 12.sp, color = RetoGris)
+    Text("Pago al completar el reto y que sea validado", fontFamily = JakartaSansFont, fontSize = 13.sp, color = RetoGris)
     Spacer(Modifier.height(12.dp))
 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -162,7 +162,7 @@ private fun ColumnScope.Contenido(
     Spacer(Modifier.height(10.dp))
     Text(
         "Al entregarlo, el contratista lo revisa. Cuando lo valide, el reto cuenta para tu nivel y ganas flores para Lilu.",
-        fontFamily = JakartaSansFont, fontSize = 12.sp, lineHeight = 17.sp, color = RetoGris
+        fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = RetoGris
     )
 
     Spacer(Modifier.height(18.dp))
@@ -185,7 +185,7 @@ private fun Boton(texto: String, habilitado: Boolean, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         enabled = habilitado,
-        modifier = Modifier.fillMaxWidth().height(48.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(containerColor = RetoVerde)
     ) { Text(texto, fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFFFFFAFA)) }
@@ -204,7 +204,7 @@ private fun Dato(icono: ImageVector, titulo: String, valor: String) {
         Icon(icono, contentDescription = null, tint = RetoGris, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(10.dp))
         Column {
-            Text(titulo, fontFamily = JakartaSansFont, fontSize = 11.sp, color = RetoGris)
+            Text(titulo, fontFamily = JakartaSansFont, fontSize = 12.sp, color = RetoGris)
             Text(valor, fontFamily = OutfitFont, fontWeight = FontWeight.Medium, fontSize = 15.sp, color = Color.Black)
         }
     }

@@ -1,4 +1,4 @@
-package com.example.crisalida.ui.screens
+package com.example.crisalida.ui.theme.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,12 +35,11 @@ import com.example.crisalida.data.*
 import com.example.crisalida.ui.theme.*
 import kotlinx.coroutines.launch
 
-/* Colores medidos del mockup (form.png, 1080 px = 360 dp) */
 private val MkTitulo = Color(0xFF9D4067)
 private val MkGris = Color(0xFF545454)
 private val MkTarjeta = Color(0xFFF2F0EF)
-private val MkLila = Color(0xFFCBB6CC)        // fondo de opciones, chips y campo de texto
-private val MkOscuro = Color(0xFF3B1F40)      // iconos, bordes de casillas, texto de opciones
+private val MkLila = Color(0xFFCBB6CC)
+private val MkOscuro = Color(0xFF3B1F40)
 private val MkBadge = Color(0xFFFFB5D5)
 private val MkRosaTarjeta = Color(0xFFF1D3DF)
 private val MkVino = Color(0xFF62012A)
@@ -49,38 +48,33 @@ private val MkTextoBoton = Color(0xFFFDF0FF)
 private val MkPlaceholder = Color(0xFF836B86)
 private val MkTextoPregunta = Color(0xFF262626)
 
-/**
- * Pantalla del Radar de talentos (RF-02 y RF-03).
- * Va DENTRO del registro: la cuenta se crea hasta que la usuaria pulsa "Terminar" por segunda vez; entonces llama onTerminar().
- *
- * Fases: Bloque I (fijo) → [Analizar] → tarjeta rosa + Bloque II (dinámico) → [Terminar] → tarjeta final → [Terminar]
- */
+//el radar va dentro del registro, la cuenta se crea hasta el segundo dar clic en terminar
 @Composable
 fun RadarScreen(onTerminar: () -> Unit) {
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
 
-    // ---- Bloque I (viene del servidor)
+    //bloque I (viene del servidor)
     var bloque1 by remember { mutableStateOf<List<PreguntaDto>?>(null) }
     var errorCarga by remember { mutableStateOf<String?>(null) }
     var intentoCarga by remember { mutableIntStateOf(0) }
 
-    // ---- Lo que va contestando (clave = id de la pregunta)
+    //Lo que va contestando (clave = id de la pregunta)
     val respuestas = remember { mutableStateMapOf<String, List<String>>() }
     val textos = remember { mutableStateMapOf<String, String>() }
 
-    // ---- Bloque II (lo genera la IA)
+    //bloque II (lo genera la IA)
     var analisis by remember { mutableStateOf<Bloque2Response?>(null) }
     var analizando by remember { mutableStateOf(false) }
     var errorAnalisis by remember { mutableStateOf<String?>(null) }
 
-    // ---- Resultado final
+    //besultado final
     var perfil by remember { mutableStateOf<PerfilResponse?>(null) }
     var detectando by remember { mutableStateOf(false) }
     var creandoCuenta by remember { mutableStateOf(false) }
     var errorFinal by remember { mutableStateOf<String?>(null) }
 
-    // Pide las 2 preguntas fijas al abrir la pantalla (y cada vez que se pulsa "Reintentar")
+    // Pide las 2 preguntas fijas al abrir la pantalla
     LaunchedEffect(intentoCarga) {
         errorCarga = null
         when (val r = RadarRepositorio.bloque1()) {
@@ -89,7 +83,7 @@ fun RadarScreen(onTerminar: () -> Unit) {
         }
     }
 
-    // Desplazamiento automático para que la usuaria vea lo nuevo que va apareciendo
+    //desplazamiento automático para que la usuaria vea lo nuevo que va apareciendo
     LaunchedEffect(analizando) { if (analizando) listState.animateScrollToItem(2) }
     LaunchedEffect(analisis) { if (analisis != null) listState.animateScrollToItem(2) }
     LaunchedEffect(perfil) { if (perfil != null) listState.animateScrollToItem(4) }
@@ -134,10 +128,6 @@ fun RadarScreen(onTerminar: () -> Unit) {
             )
         }
 
-    /**
-     * 1.ª pulsación: la IA detecta las habilidades y se muestra la tarjeta final.
-     * 2.ª pulsación: se CREA la cuenta (usuaria + mascota + perfil) y se continúa a la app.
-     */
     fun terminar() {
         if (analisis == null) return
         val tiempo = tiempoElegido ?: return
@@ -155,14 +145,14 @@ fun RadarScreen(onTerminar: () -> Unit) {
                 creandoCuenta = true
                 when (val r = AuthRepositorio.completarRegistro(actividadesElegidas, tiempo, construirRespuestas(), perfilActual)) {
                     is ResultadoApi.Exito -> onTerminar()
-                    is ResultadoApi.Error -> errorFinal = r.mensaje   // ej. "Ese seudónimo ya está en uso" → regresar y cambiarlo
+                    is ResultadoApi.Error -> errorFinal = r.mensaje
                 }
                 creandoCuenta = false
             }
         }
     }
 
-    // Esta pantalla es parte del registro: SIN barra superior ni inferior
+    //es parte del registro, sin barras
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -175,7 +165,7 @@ fun RadarScreen(onTerminar: () -> Unit) {
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 40.dp)
         ) {
-            // ---------------------------------------------------------- 0 · Encabezado
+
             item {
                 Column(
                     modifier = Modifier
@@ -192,14 +182,13 @@ fun RadarScreen(onTerminar: () -> Unit) {
                     Text(
                         text = "Descubre tus superpoderes cotidianos a tu propio ritmo, sin tecnicismos ni formularios rígidos.",
                         fontFamily = OutfitFont,
-                        fontSize = 12.sp,
-                        lineHeight = 15.sp,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
                         color = MkGris
                     )
                 }
             }
 
-            // ---------------------------------------------------------- 1 · Bloque I
             item {
                 Column {
                     Spacer(modifier = Modifier.height(20.dp))
@@ -229,7 +218,6 @@ fun RadarScreen(onTerminar: () -> Unit) {
                 }
             }
 
-            // ---------------------------------------------------------- 2 · Botón "Analizar" / tarjeta rosa
             item {
                 Column {
                     if (bloque1 != null) {
@@ -272,7 +260,6 @@ fun RadarScreen(onTerminar: () -> Unit) {
                 }
             }
 
-            // ---------------------------------------------------------- 3 · Bloque II (dinámico)
             item {
                 Column {
                     analisis?.let { b2 ->
@@ -300,7 +287,6 @@ fun RadarScreen(onTerminar: () -> Unit) {
                 }
             }
 
-            // ---------------------------------------------------------- 4 · Tarjeta final
             item {
                 Column {
                     perfil?.let { p ->
@@ -313,7 +299,7 @@ fun RadarScreen(onTerminar: () -> Unit) {
                                 lineHeight = 15.sp,
                                 color = Color.Black
                             )
-                            // Añadido sobre el mockup: resumen de lo detectado (útil para la demo)
+                            //resumen de lo detectado
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = p.habilidades.joinToString(" · ") { it.titulo },
@@ -328,7 +314,6 @@ fun RadarScreen(onTerminar: () -> Unit) {
                 }
             }
 
-            // ---------------------------------------------------------- 5 · Botón "Terminar"
             item {
                 Column {
                     if (analisis != null) {
@@ -349,11 +334,8 @@ fun RadarScreen(onTerminar: () -> Unit) {
     }
 }
 
-/* ======================================================================
- * COMPONENTES (todos privados de este archivo)
- * ====================================================================== */
 
-/** Un solo "dibujador" de preguntas para las fijas y las dinámicas. */
+//dibuja las preguntas fijas y las dinámicas
 @Composable
 private fun PreguntaView(
     pregunta: PreguntaDto,
@@ -393,11 +375,11 @@ private fun PreguntaView(
                     val marcada = opcion.id in seleccion
                     Box(
                         modifier = Modifier
-                            .height(26.dp)
+                            .heightIn(min = 26.dp)
                             .clip(CircleShape)
                             .background(if (marcada) MkOscuro else MkLila)
                             .clickable(enabled = habilitado) { onAlternar(opcion.id) }
-                            .padding(horizontal = 15.dp),
+                            .padding(horizontal = 15.dp, vertical = 2.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -414,7 +396,7 @@ private fun PreguntaView(
             "texto" -> Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(93.dp)
+                    .heightIn(min = 93.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .background(MkLila)
                     .padding(12.dp)
@@ -423,7 +405,7 @@ private fun PreguntaView(
                     value = texto,
                     onValueChange = { if (it.length <= 300) onTexto(it) },
                     enabled = habilitado,
-                    textStyle = TextStyle(fontFamily = OutfitFont, fontSize = 11.5.sp, color = MkOscuro),
+                    textStyle = TextStyle(fontFamily = OutfitFont, fontSize = 15.sp, color = MkOscuro),
                     decorationBox = { campo ->
                         Box {
                             if (texto.isEmpty()) {
@@ -444,7 +426,6 @@ private fun PreguntaView(
     }
 }
 
-/** Fila lila de 53 dp: [icono] texto ... casilla  |  radio texto */
 @Composable
 private fun OpcionFila(
     texto: String,
@@ -457,10 +438,11 @@ private fun OpcionFila(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(53.dp)
+            .heightIn(min = 53.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(MkLila)
-            .clickable(enabled = habilitado, onClick = onClick),
+            .clickable(enabled = habilitado, onClick = onClick)
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (esRadio) {
@@ -527,7 +509,7 @@ private fun Radio(marcada: Boolean) {
     }
 }
 
-/** Tarjeta con insignia numerada, título y subtítulo (Bloque I y II). */
+//tarjeta con numerito, título y subtítulo
 @Composable
 private fun BloqueCard(
     numero: String,
@@ -586,7 +568,7 @@ private fun BloqueCard(
     }
 }
 
-/** Tarjeta rosa (análisis y resultado final). */
+//tarjeta rosa
 @Composable
 private fun TarjetaRosa(
     titulo: String,
@@ -615,7 +597,6 @@ private fun TarjetaRosa(
     }
 }
 
-/** Botón lila grande (Analizar / Terminar). */
 @Composable
 private fun BotonPrincipal(
     texto: String,
@@ -630,7 +611,7 @@ private fun BotonPrincipal(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 25.dp)
-            .height(43.dp),
+            .heightIn(min = 43.dp),
         shape = RoundedCornerShape(8.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = MkBoton,
@@ -651,7 +632,6 @@ private fun BotonPrincipal(
     }
 }
 
-/** Mientras llegan las preguntas fijas: círculo de carga, o el error con botón "Reintentar". */
 @Composable
 private fun EstadoCarga(error: String?, onReintentar: () -> Unit) {
     Column(
@@ -671,7 +651,6 @@ private fun EstadoCarga(error: String?, onReintentar: () -> Unit) {
     }
 }
 
-/** "¡La cocina es un talento hermoso! Veo que..." → la primera frase en negrita y color vino. */
 private fun mensajeConNegrita(mensaje: String): AnnotatedString {
     val fin = mensaje.indexOfFirst { it == '!' || it == '.' || it == '?' }
     return buildAnnotatedString {
@@ -686,7 +665,6 @@ private fun mensajeConNegrita(mensaje: String): AnnotatedString {
     }
 }
 
-/** Los iconos vienen como texto desde el servidor ("cocina", "plantas"...) y aquí se traducen a iconos de Material. */
 private fun iconoDe(nombre: String?): ImageVector? = when (nombre) {
     "cocina" -> Icons.Outlined.Restaurant
     "manualidades" -> Icons.Outlined.Palette

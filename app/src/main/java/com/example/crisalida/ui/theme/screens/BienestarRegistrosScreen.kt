@@ -26,7 +26,7 @@ private val Pestanas = listOf(
     "bitacora" to "Bitácora"
 )
 
-/** Historial privado de los 4 bloques de Bienestar, con pestañas. Se puede releer y borrar cada registro. */
+// historial de los 4 bloques, con pestañas, se puede borrar cada registro
 @Composable
 fun BienestarRegistrosScreen(
     onNavigate: (String) -> Unit,
@@ -88,7 +88,7 @@ fun BienestarRegistrosScreen(
                         item {
                             Text(
                                 "Tus registros se guardan cifrados y solo se muestran cuando entras con tu PIN.",
-                                fontFamily = JakartaSansFont, fontSize = 11.sp, color = ColorPlaceholder,
+                                fontFamily = JakartaSansFont, fontSize = 12.sp, color = ColorPlaceholder,
                                 modifier = Modifier.padding(vertical = 8.dp)
                             )
                         }
@@ -147,10 +147,10 @@ private fun TarjetaRegistro(e: EntradaBienestar, onBorrar: () -> Unit) {
             ) {
                 Text(
                     "${fechaLegible(e.dia)} · ${e.hora}",
-                    fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = ColorPlaceholder
+                    fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = ColorPlaceholder
                 )
                 TextButton(onClick = onBorrar) {
-                    Text("Borrar", fontFamily = JakartaSansFont, fontSize = 12.sp, color = ColorBotonEntrar)
+                    Text("Borrar", fontFamily = JakartaSansFont, fontSize = 13.sp, color = ColorBotonEntrar)
                 }
             }
             when (e.subtipo) {
@@ -168,7 +168,7 @@ private fun TarjetaRegistro(e: EntradaBienestar, onBorrar: () -> Unit) {
                     PreguntasReflexion.forEachIndexed { i, pregunta ->
                         val r = respuestas.getOrNull(i).orEmpty()
                         if (r.isNotBlank()) {
-                            Text(pregunta, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = ColorPlaceholder)
+                            Text(pregunta, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = ColorPlaceholder)
                             Text(r, fontFamily = JakartaSansFont, fontSize = 14.sp, lineHeight = 19.sp, color = ColorTextoPrincipal)
                             Spacer(Modifier.height(6.dp))
                         }

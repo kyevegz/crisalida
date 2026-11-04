@@ -31,9 +31,6 @@ import com.example.crisalida.data.MarketplaceRepositorio
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.PublicacionDto
 import com.example.crisalida.ui.screens.CrisalidaScaffold
-/* ──────────────────────────────────────────────────────────────
- * Colores y dimensiones MEDIDOS del mockup del Marketplace
- * ────────────────────────────────────────────────────────────── */
 private val MkTitulo = Color(0xFF9D4067)
 private val MkGrisContador = Color(0xFF545454)
 private val MkChipSeleccionado = Color(0xFF62012A)
@@ -57,10 +54,11 @@ data class ProductoMarketplaceUi(
     val puntoEntrega: String,
     val precio: String,
     val esServicio: Boolean = false,
-    val notaPrecio: String? = null, // p. ej. "*Por sesión"
+    val notaPrecio: String? = null,
     val categoria: String,
+    val esMia: Boolean = false,
     @DrawableRes val imagenRes: Int? = null,
-    val imagenRuta: String? = null   // foto del servidor (ver FotoRemota)
+    val imagenRuta: String? = null   //foto del servidor
 )
 
 @Composable
@@ -68,7 +66,7 @@ fun MarketplaceScreen(
     onNavigate: (String) -> Unit,
     onAbrirDetalle: (String) -> Unit = {}
 ) {
-    // Filtros: "Todos", los dos tipos y las categorías reales de la base de datos
+    //Filtros: "Todos", los dos tipos y las categorías reales de la base de datos
     val categoriasCarga = rememberCarga { MarketplaceRepositorio.categorias() }
     val categoriasDto = ((categoriasCarga.estado as? Carga.Lista)?.datos?.categorias ?: emptyList())
         .filter { it.ambito != "reto" }
@@ -85,7 +83,7 @@ fun MarketplaceScreen(
 
     CrisalidaScaffold(
         currentTitle = "Marketplace",
-        selectedTab = 1, // Pestaña del Marketplace seleccionada (índice 1)
+        selectedTab = 1, //pestaña del Marketplace seleccionada
         onNavigate = onNavigate
     ) { innerPadding ->
         LazyColumn(
@@ -95,7 +93,6 @@ fun MarketplaceScreen(
                 .padding(innerPadding),
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
-            // Header: Título "Explorar por rubro" + Contador de productos
             item {
                 Row(
                     modifier = Modifier
@@ -122,7 +119,6 @@ fun MarketplaceScreen(
                 }
             }
 
-            // Chips de filtrado horizontal
             item {
                 LazyRow(
                     modifier = Modifier.padding(top = 10.dp),
@@ -130,24 +126,7 @@ fun MarketplaceScreen(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     items(categorias.size) { i ->
-                        val estaActivo = i == seleccionCategoria
-                        Box(
-                            modifier = Modifier
-                                .height(30.dp)
-                                .clip(CircleShape)
-                                .background(if (estaActivo) MkChipSeleccionado else MkChipNormal)
-                                .clickable { seleccionCategoria = i }
-                                .padding(horizontal = 14.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = categorias[i],
-                                fontFamily = OutfitFont,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 14.sp,
-                                color = if (estaActivo) Color.White else Color.Black
-                            )
-                        }
+                        ChipFiltro(categorias[i], i == seleccionCategoria) { seleccionCategoria = i }
                     }
                 }
             }
@@ -182,6 +161,27 @@ fun MarketplaceScreen(
 }
 
 @Composable
+private fun ChipFiltro(texto: String, activo: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .heightIn(min = 30.dp)
+            .clip(CircleShape)
+            .background(if (activo) MkChipSeleccionado else MkChipNormal)
+            .clickable { onClick() }
+            .padding(horizontal = 14.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = texto,
+            fontFamily = OutfitFont,
+            fontWeight = FontWeight.Medium,
+            fontSize = 14.sp,
+            color = if (activo) Color.White else Color.Black
+        )
+    }
+}
+
+@Composable
 private fun ProductoCard(
     producto: ProductoMarketplaceUi,
     modifier: Modifier = Modifier,
@@ -197,7 +197,6 @@ private fun ProductoCard(
         Column(
             modifier = Modifier.padding(10.dp)
         ) {
-            // Imagen del Producto / Servicio
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -227,7 +226,7 @@ private fun ProductoCard(
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    // Marcador visual por defecto si aún no hay imagen en res/drawable
+                    //marcador visual por defecto si aún no hay imagen
                     Icon(
                         imageVector = Icons.Outlined.Image,
                         contentDescription = null,
@@ -239,7 +238,6 @@ private fun ProductoCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Fila de vendedora (Chip) + Rating con ventas
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -263,13 +261,12 @@ private fun ProductoCard(
                     Text(
                         text = producto.vendedora,
                         fontFamily = JakartaSansFont,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = MkTagVendedoraPunto
                     )
                 }
 
-                // Calificación y ventas (ej. ☆ 4.9 (18 ventas))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Outlined.StarBorder,
@@ -281,7 +278,7 @@ private fun ProductoCard(
                     Text(
                         text = "${producto.calificacion} (${producto.ventas} ventas)",
                         fontFamily = JakartaSansFont,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Normal,
                         color = Color.Black
                     )
@@ -289,8 +286,6 @@ private fun ProductoCard(
             }
 
             Spacer(modifier = Modifier.height(6.dp))
-
-            // Título del Producto
             Text(
                 text = producto.titulo,
                 fontFamily = OutfitFont,
@@ -302,14 +297,13 @@ private fun ProductoCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Banner verde: Entrega en punto medio
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(30.dp)
+                    .heightIn(min = 30.dp)
                     .clip(RoundedCornerShape(6.dp))
                     .background(MkVerdePuntoMedio)
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
@@ -322,7 +316,7 @@ private fun ProductoCard(
                 Text(
                     text = producto.puntoEntrega,
                     fontFamily = JakartaSansFont,
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     color = MkVerdeTextoPunto,
                     fontWeight = FontWeight.Medium
                 )
@@ -330,7 +324,7 @@ private fun ProductoCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Fila de Precio + Botón "Comprar"
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -348,35 +342,56 @@ private fun ProductoCard(
                         Text(
                             text = producto.notaPrecio,
                             fontFamily = JakartaSansFont,
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             color = MkGrisContador
                         )
                     }
                 }
 
-                Button(
-                    onClick = onComprarClick,
-                    modifier = Modifier
-                        .width(135.dp)
-                        .height(40.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MkVerdeBotonComprar),
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Text(
-                        text = "Comprar",
-                        fontFamily = OutfitFont,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 19.sp,
-                        color = Color.White
-                    )
+                if (producto.esMia) {
+                    //si el producto es de la usuaria actual, no se compra
+                    Box(
+                        modifier = Modifier
+                            .widthIn(min = 135.dp)
+                            .heightIn(min = 40.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MkTagVendedoraFondo)
+                            .padding(horizontal = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (producto.esServicio) "Este es tu servicio" else "Este es tu producto",
+                            fontFamily = OutfitFont,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp,
+                            color = MkTagVendedoraPunto
+                        )
+                    }
+                } else {
+                    Button(
+                        onClick = onComprarClick,
+                        modifier = Modifier
+                            .width(135.dp)
+                            .heightIn(min = 40.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MkVerdeBotonComprar),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text(
+                            text = "Comprar",
+                            fontFamily = OutfitFont,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 19.sp,
+                            color = Color.White
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-/** Del servidor a la tarjeta. La dirección real NUNCA llega aquí: solo la zona pública. */
+
 private fun PublicacionDto.aMarketplaceUi() = ProductoMarketplaceUi(
     id = id,
     titulo = titulo,
@@ -388,5 +403,6 @@ private fun PublicacionDto.aMarketplaceUi() = ProductoMarketplaceUi(
     esServicio = tipo == "servicio",
     notaPrecio = notaPrecio?.takeIf { it.isNotBlank() }?.let { "*$it" },
     categoria = categoria,
+    esMia = esMia,
     imagenRuta = imagenes.firstOrNull()
 )

@@ -28,11 +28,9 @@ import com.example.crisalida.ui.theme.ColorBotonEntrar
 import com.example.crisalida.ui.theme.ColorTextoPrincipal
 import com.example.crisalida.ui.theme.JakartaSansFont
 
-/* ================================================================
- * Piezas comunes para pantallas que leen datos del servidor.
- * ================================================================ */
+// cosas comunes para pantallas que piden datos al servidor
 
-/** Estado de una carga: cargando, lista con datos, o falla con un mensaje listo para mostrar. */
+// estado de una carga: cargando, con datos o con error
 sealed interface Carga<out T> {
     object Cargando : Carga<Nothing>
     data class Lista<T>(val datos: T) : Carga<T>
@@ -41,10 +39,7 @@ sealed interface Carga<out T> {
 
 class CargaRemota<T>(val estado: Carga<T>, val recargar: () -> Unit)
 
-/**
- * Llama al servidor al entrar a la pantalla y cada vez que cambie alguna de [claves]
- * (un filtro, un buscador...). `recargar()` la repite (botón "Reintentar").
- */
+// pide los datos al entrar y cada que cambien las claves; la función recargar() lo repite
 @Composable
 fun <T> rememberCarga(vararg claves: Any?, llamada: suspend () -> ResultadoApi<T>): CargaRemota<T> {
     var intento by remember { mutableIntStateOf(0) }
@@ -58,7 +53,7 @@ fun <T> rememberCarga(vararg claves: Any?, llamada: suspend () -> ResultadoApi<T
     return CargaRemota(estado) { intento++ }
 }
 
-/** El progreso (nivel, flores, Lilu...). Se refresca solo cuando la usuaria gana flores. */
+// progreso (nivel, flores, Lilu), se refresca cuando gana flores
 @Composable
 fun rememberProgreso(): CargaRemota<ProgresoResponse> =
     rememberCarga(ProgresoRepositorio.version) { ProgresoRepositorio.yo() }
@@ -87,7 +82,7 @@ fun MensajeError(mensaje: String, onReintentar: (() -> Unit)? = null, modifier: 
     }
 }
 
-/** Atajo: muestra cargando / error / contenido según el estado de una carga. */
+// muestra cargando / error / contenido según la carga
 @Composable
 fun <T> CargaRemota<T>.Mostrar(modifier: Modifier = Modifier, contenido: @Composable (T) -> Unit) {
     when (val e = estado) {

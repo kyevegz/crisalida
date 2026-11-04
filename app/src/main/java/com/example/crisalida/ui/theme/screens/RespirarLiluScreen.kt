@@ -1,4 +1,4 @@
-package com.example.crisalida.ui.screens
+package com.example.crisalida.ui.theme.screens
 
 import android.content.Intent
 import android.net.Uri
@@ -29,12 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
-// (si el archivo está en otro paquete, estos nombres son los mismos)
 import com.example.crisalida.ui.theme.screens.rememberProgreso
 import com.example.crisalida.ui.theme.screens.Carga
-/* ──────────────────────────────────────────────────────────────
- * Colores medidos del mockup Respira con Lilu (respiraConLilu.png)
- * ────────────────────────────────────────────────────────────── */
+import com.example.crisalida.ui.screens.CrisalidaScaffold
 private val MkTitulo = Color(0xFF7F284F)
 private val MkSubtitulo = Color(0xFF545454)
 private val MkFondoBotonVolver = Color(0xFFE2D4DA)
@@ -48,7 +45,7 @@ fun RespirarLiluScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    // Animación sutil de respiración/pulsación para la imagen de Lilu
+    //animación sutil de respiración/pulsación para la imagen de Lilu
     val infiniteTransition = rememberInfiniteTransition(label = "lilu_anim")
     val scaleAnim by infiniteTransition.animateFloat(
         initialValue = 0.97f,
@@ -60,7 +57,7 @@ fun RespirarLiluScreen(
         label = "escala_lilu"
     )
 
-    // Animación flotante suave para las frases de apoyo
+    //animación flotante suave para las frases de apoyo
     val floatAnim by infiniteTransition.animateFloat(
         initialValue = -6f,
         targetValue = 6f,
@@ -88,7 +85,7 @@ fun RespirarLiluScreen(
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Botón superior izquierdo "Mascota" (Volver)
+            //botón superior izquierdo para volver a screen de mascota
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Start
@@ -123,7 +120,7 @@ fun RespirarLiluScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Imagen animada de Lilu (mascotagrande.png)
+
             Box(
                 modifier = Modifier
                     .size(240.dp)
@@ -143,7 +140,6 @@ fun RespirarLiluScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Mensaje principal de Lilu
             Text(
                 text = "Lilu está muy feliz de que estés aquí. Quiere recordarte lo valiosa que eres para el mundo.",
                 fontFamily = OutfitFont,
@@ -156,7 +152,6 @@ fun RespirarLiluScreen(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // Frases de apoyo flotantes con animación dinámica
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -187,7 +182,6 @@ fun RespirarLiluScreen(
 
             Spacer(modifier = Modifier.height(36.dp))
 
-            // Sección de Números de Emergencia y Ayuda (Dialer sin marcar)
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MkFondoTarjetaAyuda),
@@ -201,14 +195,14 @@ fun RespirarLiluScreen(
                     Text(
                         text = "Si necesitas ayuda, recuerda que Guanajuato cuenta con líneas de atención gratuitas, confidenciales y especializadas que operan las 24 horas del día, además de los números nacionales de emergencia.",
                         fontFamily = JakartaSansFont,
-                        fontSize = 12.5.sp,
-                        lineHeight = 17.sp,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
                         color = MkTextoAyudaGris
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Lista de números interactivos (ACTION_DIAL)
+                    //lista de números interactivos
                     BotonTelefonoAyuda(numero = "9-1-1", descripcion = "Emergencias en curso", context = context)
                     Spacer(modifier = Modifier.height(8.dp))
                     BotonTelefonoAyuda(numero = "0-7-5", descripcion = "Línea de Atención a las Mujeres", context = context)
@@ -226,7 +220,7 @@ fun RespirarLiluScreen(
     }
 }
 
-/** Componente auxiliar para cada frase de apoyo con estilo tipográfico elegante */
+//cada frase de apoyo
 @Composable
 fun FraseFlotante(texto: String, align: TextAlign) {
     Text(
@@ -243,7 +237,6 @@ fun FraseFlotante(texto: String, align: TextAlign) {
     )
 }
 
-/** Botón de número telefónico que abre el marcador (Dialer) SIN marcar automáticamente */
 @Composable
 fun BotonTelefonoAyuda(
     numero: String,
@@ -252,7 +245,6 @@ fun BotonTelefonoAyuda(
 ) {
     Surface(
         onClick = {
-            // Limpiamos formato para el intent tel: conservando espacios o dígitos necesarios
             val limpiarNumero = numero.replace(Regex("[^0-9+]"), "")
             val intent = Intent(Intent.ACTION_DIAL).apply {
                 data = Uri.parse("tel:$limpiarNumero")
