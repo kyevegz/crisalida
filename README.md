@@ -3,10 +3,6 @@ Por Carrillo Castillo Jimena y Vázquez Canchola Maryjose
 
 App móvil (Android) de acompañamiento y emprendimiento para mujeres en situación de vulnerabilidad en zonas rurales de Guanajuato. Combina un **radar de talentos**, **microrretos** remunerados, un **marketplace** de productos y servicios, **bienestar emocional** privado, y una mascota virtual (**Lilu**) que crece con las flores que la usuaria gana. Incluye una **galería de mariposas** como app de camuflaje para proteger su seguridad.
 
-## Repositorios
-- **App Android (Kotlin + Jetpack Compose):** https://github.com/kyevegz/crisalida
-- **Backend (Python + FastAPI):** https://github.com/kyevegz/crisalidaBackend 
-
 ## Tecnología
 | Parte | Tecnología |
 |---|---|
