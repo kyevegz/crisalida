@@ -79,7 +79,6 @@ fun PublicarProductoScreen(
 
     // ninguna categoría seleccionada al inicio
     var categoriaSeleccionada by remember { mutableStateOf<String?>(null) }
-    var mostrarSelectorCategoria by remember { mutableStateOf(false) }
 
     // Campos de formulario limpios
     var tituloDescriptivo by remember { mutableStateOf("") }
@@ -421,28 +420,41 @@ fun PublicarProductoScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    Text(text = "Categoría", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Surface(
-                        onClick = { mostrarSelectorCategoria = true },
-                        shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFFFAF8F8),
-                        border = BorderStroke(1.dp, ColorCamposFondo),
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = categoriaSeleccionada ?: "Toca para elegir una categoría",
-                                fontFamily = JakartaSansFont,
-                                fontWeight = if (categoriaSeleccionada != null) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 14.sp,
-                                color = if (categoriaSeleccionada != null) ColorTextoPrincipal else MkSubtitulo,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = null, tint = MkTitulo)
+                    Text(text = "Categoría (Selecciona una)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // categorías del servidor, sin ninguna seleccionada al inicio
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        categoriasActuales.chunked(2).forEach { fila ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                fila.forEach { cat ->
+                                    val isSelected = categoriaSeleccionada == cat
+                                    Surface(
+                                        onClick = { categoriaSeleccionada = cat },
+                                        shape = RoundedCornerShape(16.dp),
+                                        color = if (isSelected) MkTitulo else ColorCamposFondo.copy(alpha = 0.5f),
+                                        modifier = Modifier.weight(1f).heightIn(min = 36.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)) {
+                                            Text(
+                                                text = cat,
+                                                fontFamily = JakartaSansFont,
+                                                fontSize = 11.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (isSelected) Color.White else ColorTextoPrincipal,
+                                                maxLines = 1,
+                                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                            )
+                                        }
+                                    }
+                                }
+                                if (fila.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
                         }
                     }
 
@@ -739,43 +751,6 @@ fun PublicarProductoScreen(
 
             Spacer(modifier = Modifier.height(36.dp))
         }
-    }
-
-    if (mostrarSelectorCategoria) {
-        AlertDialog(
-            onDismissRequest = { mostrarSelectorCategoria = false },
-            title = { Text("Elige una categoría", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo) },
-            text = {
-                when (val e = categoriasCarga.estado) {
-                    is Carga.Cargando -> IndicadorCargando()
-                    is Carga.Falla -> MensajeError(e.mensaje, categoriasCarga.recargar)
-                    is Carga.Lista -> LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
-                        items(categoriasActuales) { cat ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { categoriaSeleccionada = cat; mostrarSelectorCategoria = false }
-                                    .padding(vertical = 2.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                RadioButton(
-                                    selected = categoriaSeleccionada == cat,
-                                    onClick = { categoriaSeleccionada = cat; mostrarSelectorCategoria = false },
-                                    colors = RadioButtonDefaults.colors(selectedColor = MkTitulo)
-                                )
-                                Text(cat, fontFamily = JakartaSansFont, fontSize = 15.sp, color = ColorTextoPrincipal)
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { mostrarSelectorCategoria = false }) {
-                    Text("Cerrar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo)
-                }
-            },
-            containerColor = Color.White, shape = RoundedCornerShape(12.dp)
-        )
     }
 
     mensajeBorrador?.let { texto ->

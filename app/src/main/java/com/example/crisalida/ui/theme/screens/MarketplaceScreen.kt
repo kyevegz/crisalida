@@ -69,15 +69,15 @@ fun MarketplaceScreen(
     onNavigate: (String) -> Unit,
     onAbrirDetalle: (String) -> Unit = {}
 ) {
-    // primero se elige el tipo y luego, si quiere, la categoría de ese tipo
+    // Filtros: "Todos", los dos tipos y las categorías reales de la base de datos
     val categoriasCarga = rememberCarga { MarketplaceRepositorio.categorias() }
     val categoriasDto = ((categoriasCarga.estado as? Carga.Lista)?.datos?.categorias ?: emptyList())
         .filter { it.ambito != "reto" }
+    val categorias = listOf("Todos", "Productos", "Servicios") + categoriasDto.map { it.nombre }
 
-    var seleccionTipo by remember { mutableIntStateOf(0) }   // 0 todos, 1 productos, 2 servicios
-    var categoriaId by remember { mutableStateOf<Int?>(null) }
-    val tipo: String? = when (seleccionTipo) { 1 -> "producto"; 2 -> "servicio"; else -> null }
-    val categoriasDelTipo = if (tipo == null) emptyList() else categoriasDto.filter { it.ambito == tipo }
+    var seleccionCategoria by remember { mutableIntStateOf(0) }
+    val tipo: String? = when (seleccionCategoria) { 1 -> "producto"; 2 -> "servicio"; else -> null }
+    val categoriaId: Int? = if (seleccionCategoria >= 3) categoriasDto.getOrNull(seleccionCategoria - 3)?.id else null
 
     // Catálogo real: se vuelve a pedir cada vez que cambia el filtro
     val catalogo = rememberCarga(tipo, categoriaId, ProgresoRepositorio.version) { MarketplaceRepositorio.catalogo(tipo = tipo, categoriaId = categoriaId) }
@@ -123,34 +123,15 @@ fun MarketplaceScreen(
                 }
             }
 
-            // Tipo: todos / productos / servicios
+            // Chips de filtrado horizontal
             item {
                 LazyRow(
                     modifier = Modifier.padding(top = 10.dp),
                     contentPadding = PaddingValues(start = MargenIzq, end = MargenDer),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    val tipos = listOf("Todos", "Productos", "Servicios")
-                    items(tipos.size) { i ->
-                        ChipFiltro(tipos[i], i == seleccionTipo) {
-                            seleccionTipo = i
-                            categoriaId = null
-                        }
-                    }
-                }
-            }
-
-            // Categorías del tipo elegido
-            if (categoriasDelTipo.isNotEmpty()) item {
-                LazyRow(
-                    modifier = Modifier.padding(top = 8.dp),
-                    contentPadding = PaddingValues(start = MargenIzq, end = MargenDer),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    item { ChipFiltro("Todas", categoriaId == null) { categoriaId = null } }
-                    items(categoriasDelTipo.size) { i ->
-                        val cat = categoriasDelTipo[i]
-                        ChipFiltro(cat.nombre, categoriaId == cat.id) { categoriaId = cat.id }
+                    items(categorias.size) { i ->
+                        ChipFiltro(categorias[i], i == seleccionCategoria) { seleccionCategoria = i }
                     }
                 }
             }
@@ -188,11 +169,11 @@ fun MarketplaceScreen(
 private fun ChipFiltro(texto: String, activo: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .heightIn(min = 36.dp)
+            .heightIn(min = 30.dp)
             .clip(CircleShape)
             .background(if (activo) MkChipSeleccionado else MkChipNormal)
             .clickable { onClick() }
-            .padding(horizontal = 14.dp, vertical = 4.dp),
+            .padding(horizontal = 14.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
