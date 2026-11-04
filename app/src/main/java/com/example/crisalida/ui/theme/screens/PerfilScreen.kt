@@ -5,6 +5,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -53,6 +56,8 @@ private val MkGrisPausadoFondo = Color(0xFFE2D8DE)
 private val MkGrisPausadoTexto = Color(0xFF4A3B43)
 private val MkFondoCard = Color(0xFFFFFFFF)
 private val MkFondoItem = Color(0xFFEFE8EC) // Tono rosado claro de la card del portafolio
+
+private val Avatares = listOf("🐱", "🦋", "🌸", "🌿", "⭐", "🌙", "🪻", "🫐", "🌀","🍓","☕","🍊","🍋","🍒","🌽","🍄","🍄‍🟫","🌷","🌺","🌱","🍁","🍂","🫧","🌝","🌈","❄️","💧","💙","🖤","🩶","🤍","💚","💛","🧡","🤎","💜","🩷","❤️","🩵","💫","🔮","🪩","🪄","🪼","🦑","🪸","🦚","🐦‍🔥","🐣","🐧","🐌","🐝","🐲","🐸","🐶","🐺","🦝","🐮","🐷","🙉","👾","👽","👻","🐼","🐬","🦖","🐠","🐡","🐋","🦆","🐤","🐛","🐞")
 
 data class PublicacionPortafolio(
     val id: String,
@@ -296,7 +301,7 @@ fun PerfilScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Lo demás (publicar, registrar tus emociones, cuidar a Lilu) no sube de nivel, pero sí te da flores 🌸 para Lilu." +
-                            (reglas["nivel"]?.let { " Y cada vez que subes de nivel, ¡ganas $it flores de regalo!" } ?: ""),
+                                (reglas["nivel"]?.let { " Y cada vez que subes de nivel, ¡ganas $it flores de regalo!" } ?: ""),
                         fontFamily = JakartaSansFont, fontSize = 12.sp, lineHeight = 17.sp, color = MkSubtitulo
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -582,15 +587,18 @@ fun PerfilScreen(
                 Text(text = "Elige tu avatar predeterminado", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo)
             },
             text = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround
+                // solo los emojis que el teléfono sabe dibujar (los más nuevos salen como cuadritos en Android viejo)
+                val disponibles = remember { val pincel = android.graphics.Paint(); Avatares.filter { pincel.hasGlyph(it) } }
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 52.dp),
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 320.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    val avatares = listOf("🐱", "🦋", "🌸", "🌿", "⭐", "🌙", "🪻", "🫐", "🌀","🍓","☕","🍊","🍋","🍒","🌽","🍄","🍄‍🟫","🌷","🌺","🌱","🍁","🍂","🫧","🌝","🌈","❄️","💧","💙","🖤","🩶","🤍","💚","💛","🧡","🤎","💜","🩷","❤️","🩵","💫","🔮","🪩","🪄","🪼","🦑","🪸","🦚","🐦‍🔥","🐣","🐧","🐌","🐝","🐲","🐸","🐶","🐺","🦝","🐮","🐷","🙉","👾","👽","👻","🐼","🐬","🦖","🐠","🐡","🐋","🦆","🐤","🐛","🐞")
-                    avatares.forEach { emoji ->
+                    items(disponibles) { emoji ->
                         Box(
                             modifier = Modifier
-                                .size(46.dp)
+                                .size(48.dp)
                                 .clip(CircleShape)
                                 .background(if (avatarSeleccionado == emoji) MkBarraFondo else Color.LightGray.copy(alpha = 0.3f))
                                 .clickable {
@@ -607,7 +615,7 @@ fun PerfilScreen(
                                 },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = emoji, fontSize = 24.sp)
+                            Text(text = emoji, fontSize = 26.sp)
                         }
                     }
                 }
