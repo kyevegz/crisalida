@@ -26,8 +26,8 @@ App móvil (Android) de acompañamiento y emprendimiento para mujeres en situaci
 ## Credenciales de prueba
 | Modo | Seudónimo | PIN |
 |---|---|---|
-| Normal (app completa) | `camina5` | `231197` |
-| Camuflaje (galería de mariposas) | `camina5` | `980236` |
+| Normal (app completa) | `carmina6` | `231197` |
+| Camuflaje (galería de mariposas) | `carmina6` | `980236` |
 
 También puedes crear una cuenta nueva con **Crear cuenta**: eliges seudónimo, un PIN de 6 dígitos y un PIN de camuflaje, y respondes el radar de talentos (unos minutos).
 
