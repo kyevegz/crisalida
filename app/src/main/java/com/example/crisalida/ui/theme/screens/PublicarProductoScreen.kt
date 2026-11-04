@@ -47,9 +47,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.ui.screens.CrisalidaScaffold
-/* ──────────────────────────────────────────────────────────────
- * Colores medidos del mockup Subir Producto
- * ────────────────────────────────────────────────────────────── */
 private val MkTitulo = Color(0xFF7F284F)
 private val MkSubtitulo = Color(0xFF545454)
 private val MkFondoBotonVolver = Color(0xFFE2D4DA)
@@ -62,33 +59,28 @@ private val MkFondoCard = Color(0xFFFFFFFF)
 @Composable
 fun PublicarProductoScreen(
     onNavigate: (String) -> Unit,
-    publicacionId: String? = null,   // null = publicación nueva; con id = editar los detalles de esa publicación
-    onEditado: (() -> Unit)? = null  // al terminar de editar: regresa a la pantalla de donde vino
+    publicacionId: String? = null,
+    onEditado: (() -> Unit)? = null
 ) {
     val editando = publicacionId != null
     val scrollState = rememberScrollState()
 
-    // 0: Producto físico, 1: Servicio local
     var tipoPublicacion by remember { mutableIntStateOf(0) }
 
-    // las categorías vienen del servidor, así la app y la base siempre coinciden
     val categoriasCarga = rememberCarga(tipoPublicacion) {
         MarketplaceRepositorio.categorias(if (tipoPublicacion == 0) "producto" else "servicio")
     }
     val categoriasActuales = (categoriasCarga.estado as? Carga.Lista)?.datos?.categorias?.map { it.nombre } ?: emptyList()
 
-    // ninguna categoría seleccionada al inicio
     var categoriaSeleccionada by remember { mutableStateOf<String?>(null) }
 
-    // Campos de formulario limpios
     var tituloDescriptivo by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
     var costoInsumos by remember { mutableStateOf("") }
     var horasDedicacion by remember { mutableStateOf("") }
     var precioFinal by remember { mutableStateOf("") }
 
-    // Cálculo automático en tiempo real basado en insumos + $75/hr por hora de dedicación
-    var saltarSugerencia by remember { mutableStateOf(false) }   // al cargar un borrador/edición, no pisar el precio guardado
+    var saltarSugerencia by remember { mutableStateOf(false) }
     LaunchedEffect(costoInsumos, horasDedicacion) {
         if (saltarSugerencia) { saltarSugerencia = false; return@LaunchedEffect }
         val insumos = costoInsumos.toDoubleOrNull() ?: 0.0
@@ -99,16 +91,13 @@ fun PublicarProductoScreen(
         }
     }
 
-    // Modalidad de Servicio (Si es Servicio Local)
-    var modalidadServicio by remember { mutableIntStateOf(1) } // 1: En casa de vendedora, 2: A domicilio de compradora
-    var tipoCobroServicio by remember { mutableIntStateOf(1) } // 1: Por hora, 2: Por servicio fijo, 3: Por diseño / trabajo
+    var modalidadServicio by remember { mutableIntStateOf(1) }
+    var tipoCobroServicio by remember { mutableIntStateOf(1) }
 
-    // Opción de entrega (Si es Producto Físico)
-    var opcionEntrega by remember { mutableIntStateOf(1) } // 1: Domicilio, 2: Guía ciega, 3: Encargo previo
+    var opcionEntrega by remember { mutableIntStateOf(1) }
 
-    // Galería de imágenes
     val imagenesSeleccionadas = remember { mutableStateListOf<Uri>() }
-    val fotosExistentes = remember { mutableStateListOf<String>() }   // al editar: fotos que ya están en el servidor
+    val fotosExistentes = remember { mutableStateListOf<String>() }
     val launcherGaleria = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -119,18 +108,16 @@ fun PublicarProductoScreen(
 
     var mostrarDialogoVistaPrevia by remember { mutableStateOf(false) }
 
-    // Zona pública (lo único que ven las compradoras) y punto de entrega real (privado, se guarda cifrado)
     var zonaPublica by remember { mutableStateOf("") }
     var puntoEntrega by remember { mutableStateOf("") }
 
-    // Publicación
     val contexto = LocalContext.current
     val scope = rememberCoroutineScope()
     var publicando by remember { mutableStateOf(false) }
     var mensajePublicar by remember { mutableStateOf<String?>(null) }
     var publicacionCreada by remember { mutableStateOf(false) }
 
-    // ── Borrador (se guarda SOLO en este teléfono: sin fotos y sin la dirección privada) ──
+    //borrador se guarda solo en este teléfono, sin fotos y sin la dirección privada
     val prefs = remember { contexto.getSharedPreferences("crisalida_borradores", Context.MODE_PRIVATE) }
     var borradorRecuperado by remember { mutableStateOf(false) }
     var mensajeBorrador by remember { mutableStateOf<String?>(null) }
@@ -175,7 +162,6 @@ fun PublicarProductoScreen(
         }
     }
 
-    // ── Editar: se cargan los datos actuales de la publicación ──
     var cargandoEdicion by remember { mutableStateOf(editando) }
     LaunchedEffect(publicacionId) {
         if (publicacionId == null) return@LaunchedEffect
@@ -258,7 +244,7 @@ fun PublicarProductoScreen(
             when (val r = PublicacionesRepositorio.publicar(peticion)) {
                 is ResultadoApi.Error -> mensajePublicar = r.mensaje
                 is ResultadoApi.Exito -> {
-                    // Con la publicación creada, se suben las fotos (comprimidas, sin metadatos)
+                    //con la publicación creada, se suben las fotos comprimidas, sin metadatos
                     var fallidas = 0
                     for (uri in imagenesSeleccionadas.toList()) {
                         val bytes = withContext(Dispatchers.IO) { prepararFoto(contexto, uri) }
@@ -266,7 +252,7 @@ fun PublicarProductoScreen(
                         if (subida !is ResultadoApi.Exito) fallidas++
                     }
                     publicacionCreada = true
-                    prefs.edit().remove("publicacion").apply()   // ya se publicó: el borrador sobra
+                    prefs.edit().remove("publicacion").apply()
                     mensajePublicar = buildString {
                         append(if (r.datos.estado == "activo") "¡Tu publicación ya está visible en el marketplace!"
                         else "¡Listo! Tu publicación quedó en revisión; en cuanto la aprobemos se verá en el marketplace.")
@@ -295,7 +281,6 @@ fun PublicarProductoScreen(
         ) {
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Botón superior izquierdo "Mi catálogo"
             Surface(
                 onClick = { onNavigate("portafolio_completo") },
                 shape = RoundedCornerShape(18.dp),
@@ -325,17 +310,16 @@ fun PublicarProductoScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("📝 Recuperamos tu borrador.", fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkVerdeSugeridoTexto, modifier = Modifier.weight(1f))
+                        Text("📝 Recuperamos tu borrador.", fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkVerdeSugeridoTexto, modifier = Modifier.weight(1f))
                         TextButton(onClick = {
                             prefs.edit().remove("publicacion").apply(); limpiarFormulario(); borradorRecuperado = false
-                        }) { Text("Descartar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MkVerdeSugeridoTexto) }
+                        }) { Text("Descartar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkVerdeSugeridoTexto) }
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Alerta de Identidad
             Card(
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(containerColor = MkFondoAlertaRosa),
@@ -356,14 +340,13 @@ fun PublicarProductoScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(text = "Vendes con tu alias de protección", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MkTitulo)
                         Spacer(modifier = Modifier.height(2.dp))
-                        Text(text = "Recuerda que si te encuentras en situación de riesgo, tu nombre legal, ubicación y teléfono jamás serán expuestos.", fontFamily = JakartaSansFont, fontSize = 11.5.sp, lineHeight = 15.sp, color = MkSubtitulo)
+                        Text(text = "Recuerda que si te encuentras en situación de riesgo, tu nombre legal, ubicación y teléfono jamás serán expuestos.", fontFamily = JakartaSansFont, fontSize = 12.sp, lineHeight = 17.sp, color = MkSubtitulo)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Pestañas: Producto Físico vs Servicio Local
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -386,9 +369,7 @@ fun PublicarProductoScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // ========================================================
-            // BLOQUE 1: INFORMACIÓN GENERAL Y CATEGORÍAS
-            // ========================================================
+            //información general y categorías
             Card(
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = MkFondoCard),
@@ -423,7 +404,7 @@ fun PublicarProductoScreen(
                     Text(text = "Categoría (Selecciona una)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    // categorías del servidor, sin ninguna seleccionada al inicio
+                    //categorías del servidor
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         categoriasActuales.chunked(2).forEach { fila ->
                             Row(
@@ -487,14 +468,13 @@ fun PublicarProductoScreen(
                                         },
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(text = "✕", fontSize = 11.sp, color = Color.White)
+                                    Text(text = "✕", fontSize = 12.sp, color = Color.White)
                                 }
                             }
                         }
                         imagenesSeleccionadas.toList().forEach { uri ->
                             Box(modifier = Modifier.size(90.dp).clip(RoundedCornerShape(8.dp)).background(Color.LightGray)) {
                                 MiniaturaLocal(uri = uri, modifier = Modifier.fillMaxSize())
-                                // Toca la ✕ para quitar la foto
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
@@ -505,7 +485,7 @@ fun PublicarProductoScreen(
                                         .clickable { imagenesSeleccionadas.remove(uri) },
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(text = "✕", fontSize = 11.sp, color = Color.White)
+                                    Text(text = "✕", fontSize = 12.sp, color = Color.White)
                                 }
                             }
                         }
@@ -522,7 +502,7 @@ fun PublicarProductoScreen(
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Icon(imageVector = Icons.Default.Add, contentDescription = "Agregar", tint = MkTitulo, modifier = Modifier.size(24.dp))
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    Text(text = "+ Agregar", fontFamily = JakartaSansFont, fontSize = 11.sp, color = MkTitulo, fontWeight = FontWeight.Bold)
+                                    Text(text = "+ Agregar", fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkTitulo, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -546,9 +526,6 @@ fun PublicarProductoScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // ========================================================
-            // BLOQUE 2: COSTOS Y TARIFA DINÁMICA
-            // ========================================================
             Card(
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = MkFondoCard),
@@ -565,9 +542,9 @@ fun PublicarProductoScreen(
                     )
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Si es servicio local, permitimos elegir cómo cobra
+                    //si es servicio local, se permite elegir cómo cobra
                     if (tipoPublicacion == 1) {
-                        Text(text = "Esquema de cobro del servicio", fontFamily = JakartaSansFont, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MkTitulo)
+                        Text(text = "Esquema de cobro del servicio", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MkTitulo)
                         Spacer(modifier = Modifier.height(6.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             BotonEsquemaCobro("Por hora", tipoCobroServicio == 1, Modifier.weight(1f)) { tipoCobroServicio = 1 }
@@ -579,7 +556,7 @@ fun PublicarProductoScreen(
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = if (tipoPublicacion == 0) "Costo insumos" else "Materiales / Insumos", fontFamily = JakartaSansFont, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MkTitulo)
+                            Text(text = if (tipoPublicacion == 0) "Costo insumos" else "Materiales / Insumos", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MkTitulo)
                             Spacer(modifier = Modifier.height(4.dp))
                             OutlinedTextField(
                                 value = costoInsumos,
@@ -593,7 +570,7 @@ fun PublicarProductoScreen(
                         }
 
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "Dedicación (Horas)", fontFamily = JakartaSansFont, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MkTitulo)
+                            Text(text = "Dedicación (Horas)", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MkTitulo)
                             Spacer(modifier = Modifier.height(4.dp))
                             OutlinedTextField(
                                 value = horasDedicacion,
@@ -609,22 +586,21 @@ fun PublicarProductoScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Caja verde con Rango Justo Sugerido de IA
                     Row(
                         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(MkVerdeSugeridoFondo).padding(12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text(text = "🌱 Rango Justo Sugerido (IA)", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MkVerdeSugeridoTexto)
-                            Text(text = "Cubre insumos + \$75/hr base digna", fontFamily = JakartaSansFont, fontSize = 11.sp, color = MkVerdeSugeridoTexto)
+                            Text(text = "Rango Justo Sugerido", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MkVerdeSugeridoTexto)
+                            Text(text = "Cubre insumos + \$75/hr base digna", fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkVerdeSugeridoTexto)
                         }
                         Text(text = "Estimado automático", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkVerdeSugeridoTexto)
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    Text(text = "Precio final (Calculado o editable)", fontFamily = JakartaSansFont, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MkTitulo)
+                    Text(text = "Precio final (Calculado o editable)", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MkTitulo)
                     Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = precioFinal,
@@ -641,9 +617,6 @@ fun PublicarProductoScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // ========================================================
-            // BLOQUE 3: MODALIDAD DE ATENCIÓN / ENTREGA SEGURA
-            // ========================================================
             Card(
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = MkFondoCard),
@@ -665,27 +638,27 @@ fun PublicarProductoScreen(
                         else
                             "Define el entorno seguro donde se llevará a cabo el servicio:",
                         fontFamily = JakartaSansFont,
-                        fontSize = 12.sp,
+                        fontSize = 13.sp,
                         color = MkSubtitulo
                     )
                     Spacer(modifier = Modifier.height(14.dp))
 
                     if (tipoPublicacion == 0) {
-                        // Opciones para Producto Físico
+                        //oppciones para producto físico
                         OpcionEntregaItem("Recoger en domicilio", "Las compradoras pasarán al domicilio registrado.", "A domicilio", opcionEntrega == 1) { opcionEntrega = 1 }
                         Spacer(modifier = Modifier.height(10.dp))
                         OpcionEntregaItem("Guía Ciega Prepago (Paquetería)", "Etiqueta generada automáticamente con remitente anónimo a nombre de Crisálida.", "Recomendado", opcionEntrega == 2) { opcionEntrega = 2 }
                         Spacer(modifier = Modifier.height(10.dp))
                         OpcionEntregaItem("Bajo encargo previo (Tiempo artesanal)", "El cliente paga en custodia; dispones de hasta 48 hrs para preparar sin prisas.", "24h - 48h", opcionEntrega == 3) { opcionEntrega = 3 }
                     } else {
-                        // Opciones adaptadas para Servicio Local (Uñas, maquillaje, costura, etc.)
+                        //opciones adaptadas para servicio local
                         OpcionEntregaItem("Atención en casa de la vendedora", "La clienta acude a tu espacio de trabajo seguro.", "Espacio propio", modalidadServicio == 1) { modalidadServicio = 1 }
                         Spacer(modifier = Modifier.height(10.dp))
                         OpcionEntregaItem("Servicio a domicilio de la compradora", "Tú acudes al domicilio de la clienta (ej. maquillaje o peinado para eventos).", "A domicilio", modalidadServicio == 2) { modalidadServicio = 2 }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = "Zona pública (la verán las compradoras)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MkTitulo)
+                    Text(text = "Zona pública (la verán las compradoras)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
                     Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = zonaPublica,
@@ -698,7 +671,7 @@ fun PublicarProductoScreen(
                         textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
                     )
                     Spacer(modifier = Modifier.height(10.dp))
-                    Text(text = "Punto de entrega o dirección (solo tú la ves)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MkTitulo)
+                    Text(text = "Punto de entrega o dirección (solo tú la ves)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
                     Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = puntoEntrega,
@@ -714,11 +687,10 @@ fun PublicarProductoScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Botón Publicar
             Button(
                 onClick = { publicar() },
                 enabled = !publicando,
-                modifier = Modifier.fillMaxWidth().height(50.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MkBotonPublicar)
             ) {
@@ -730,22 +702,22 @@ fun PublicarProductoScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (!editando) OutlinedButton(
                     onClick = { guardarBorrador() },
-                    modifier = Modifier.weight(1f).height(42.dp),
+                    modifier = Modifier.weight(1f).heightIn(min = 42.dp),
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Icon(imageVector = Icons.Outlined.BookmarkBorder, contentDescription = null, tint = MkTitulo, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "Guardar Borrador", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MkTitulo)
+                    Text(text = "Guardar Borrador", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
                 }
 
                 OutlinedButton(
                     onClick = { mostrarDialogoVistaPrevia = true },
-                    modifier = Modifier.weight(1f).height(42.dp),
+                    modifier = Modifier.weight(1f).heightIn(min = 42.dp),
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Icon(imageVector = Icons.Outlined.Visibility, contentDescription = null, tint = MkTitulo, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "Vista Previa", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MkTitulo)
+                    Text(text = "Vista Previa", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
                 }
             }
 
@@ -793,7 +765,7 @@ fun PublicarProductoScreen(
             title = { Text("Vista previa", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo) },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    Text("Así verán tu publicación en el Marketplace con tu alias protegido.", fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkSubtitulo)
+                    Text("Así verán tu publicación en el Marketplace con tu alias protegido.", fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo)
                     Spacer(modifier = Modifier.height(10.dp))
                     Card(
                         shape = RoundedCornerShape(10.dp),
@@ -810,17 +782,17 @@ fun PublicarProductoScreen(
                                 when {
                                     nueva != null -> MiniaturaLocal(uri = nueva, modifier = Modifier.fillMaxSize())
                                     existente != null -> FotoRemota(ruta = existente, modifier = Modifier.fillMaxSize())
-                                    else -> Text("Sin foto", fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkSubtitulo)
+                                    else -> Text("Sin foto", fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo)
                                 }
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 "Vendedora: " + com.example.crisalida.data.SesionActual.seudonimo,
-                                fontFamily = JakartaSansFont, fontSize = 11.sp, color = MkTitulo
+                                fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkTitulo
                             )
                             Text(
                                 categoriaSeleccionada ?: "(elige una categoría)",
-                                fontFamily = JakartaSansFont, fontSize = 11.sp, color = MkSubtitulo
+                                fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkSubtitulo
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
@@ -832,7 +804,7 @@ fun PublicarProductoScreen(
                                 fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF1E681E)
                             )
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(entregaTxt, fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkSubtitulo)
+                            Text(entregaTxt, fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo)
                             if (descripcion.isNotBlank()) {
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(descripcion, fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = Color(0xFF333333))
@@ -861,7 +833,7 @@ private fun TabTipoPublicacion(
         color = if (seleccionado) Color.White else Color.Transparent,
         border = if (!seleccionado) BorderStroke(1.dp, Color(0xFFD3C5CD)) else null,
         shadowElevation = if (seleccionado) 2.dp else 0.dp,
-        modifier = modifier.height(44.dp)
+        modifier = modifier.heightIn(min = 44.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
@@ -882,10 +854,10 @@ private fun BotonEsquemaCobro(titulo: String, seleccionado: Boolean, modifier: M
         shape = RoundedCornerShape(8.dp),
         color = if (seleccionado) MkTitulo else Color(0xFFFAF8F8),
         border = BorderStroke(1.dp, if (seleccionado) MkTitulo else Color(0xFFE2D4DA)),
-        modifier = modifier.height(34.dp)
+        modifier = modifier.heightIn(min = 38.dp)
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-            Text(text = titulo, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = if (seleccionado) Color.White else MkTitulo)
+            Text(text = titulo, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = if (seleccionado) Color.White else MkTitulo)
         }
     }
 }
@@ -906,11 +878,11 @@ private fun OpcionEntregaItem(titulo: String, subtitulo: String, badge: String, 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text(text = titulo, fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MkTitulo)
                     Surface(shape = CircleShape, color = MkTitulo.copy(alpha = 0.1f)) {
-                        Text(text = badge, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 10.sp, color = MkTitulo, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
+                        Text(text = badge, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MkTitulo, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
                     }
                 }
                 Spacer(modifier = Modifier.height(2.dp))
-                Text(text = subtitulo, fontFamily = JakartaSansFont, fontSize = 11.5.sp, lineHeight = 15.sp, color = MkSubtitulo)
+                Text(text = subtitulo, fontFamily = JakartaSansFont, fontSize = 12.sp, lineHeight = 17.sp, color = MkSubtitulo)
             }
         }
     }

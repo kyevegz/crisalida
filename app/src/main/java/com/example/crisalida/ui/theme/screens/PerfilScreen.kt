@@ -18,6 +18,7 @@ import androidx.compose.material.icons.outlined.LocalFlorist
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material.icons.outlined.Verified
 import androidx.compose.material.icons.outlined.WorkspacePremium
@@ -28,8 +29,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
@@ -41,9 +45,6 @@ import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
 import kotlinx.coroutines.launch
 import com.example.crisalida.ui.screens.CrisalidaScaffold
-/* ──────────────────────────────────────────────────────────────
- * Colores medidos del mockup de Perfil y Tarjetas
- * ────────────────────────────────────────────────────────────── */
 private val MkTitulo = Color(0xFF7F284F)
 private val MkSubtitulo = Color(0xFF545454)
 private val MkBarraProgreso = Color(0xFFB82C67)
@@ -55,8 +56,8 @@ private val MkAmarilloEncargoTexto = Color(0xFF856404)
 private val MkGrisPausadoFondo = Color(0xFFE2D8DE)
 private val MkGrisPausadoTexto = Color(0xFF4A3B43)
 private val MkFondoCard = Color(0xFFFFFFFF)
-private val MkFondoItem = Color(0xFFEFE8EC) // Tono rosado claro de la card del portafolio
-
+private val MkFondoItem = Color(0xFFEFE8EC)
+//lista con todos los iconos para ponerse de foto de perfil
 private val Avatares = listOf("🐱", "🦋", "🌸", "🌿", "⭐", "🌙", "🪻", "🫐", "🌀","🍓","☕","🍊","🍋","🍒","🌽","🍄","🍄‍🟫","🌷","🌺","🌱","🍁","🍂","🫧","🌝","🌈","❄️","💧","💙","🖤","🩶","🤍","💚","💛","🧡","🤎","💜","🩷","❤️","🩵","💫","🔮","🪩","🪄","🪼","🦑","🪸","🦚","🐦‍🔥","🐣","🐧","🐌","🐝","🐲","🐸","🐶","🐺","🦝","🐮","🐷","🙉","👾","👽","👻","🐼","🐬","🦖","🐠","🐡","🐋","🦆","🐤","🐛","🐞")
 
 data class PublicacionPortafolio(
@@ -87,10 +88,12 @@ fun PerfilScreen(
 
     val scope = rememberCoroutineScope()
     var mostrarSelectorAvatar by remember { mutableStateOf(false) }
+    var mostrarConfiguracion by remember { mutableStateOf(false) }
+    val contexto = LocalContext.current
     var avatarSeleccionado by remember { mutableStateOf(SesionActual.avatar) }
     var mensajeInfo by remember { mutableStateOf<String?>(null) }
 
-    // ── Todo viene del servidor ──
+    // Todo viene del servidor
     val progreso = rememberProgreso()
     val datosProgreso = (progreso.estado as? Carga.Lista)?.datos
     val portafolio = rememberCarga(ProgresoRepositorio.version) { PublicacionesRepositorio.mias() }
@@ -126,7 +129,7 @@ fun PerfilScreen(
         ) {
             Spacer(modifier = Modifier.height(18.dp))
 
-            // Cabecera Perfil
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -169,7 +172,7 @@ fun PerfilScreen(
 
                 Spacer(modifier = Modifier.width(16.dp))
 
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = SesionActual.seudonimo,
                         fontFamily = OutfitFont,
@@ -198,6 +201,22 @@ fun PerfilScreen(
                         )
                     }
                 }
+
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(MkBarraFondo)
+                        .clickable { mostrarConfiguracion = true },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Settings,
+                        contentDescription = "Configuración",
+                        tint = MkTitulo,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -206,7 +225,7 @@ fun PerfilScreen(
                 MensajeError((progreso.estado as Carga.Falla).mensaje, progreso.recargar)
             }
 
-            // Tarjeta Nivel
+            //tarjeta del nivel
             Card(
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(containerColor = MkFondoCard),
@@ -260,14 +279,14 @@ fun PerfilScreen(
                                 else "¡Llegaste al nivel máximo!"
                             } ?: "",
                             fontFamily = JakartaSansFont,
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             color = MkSubtitulo
                         )
                         Text(
                             text = "${datosProgreso?.nivel?.porcentaje ?: 0}%",
                             fontFamily = JakartaSansFont,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             color = MkSubtitulo
                         )
                     }
@@ -276,7 +295,7 @@ fun PerfilScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ── ¿Cómo subo de nivel? ──
+            // apartado ¿Cómo subo de nivel?
             Card(
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(containerColor = MkFondoCard),
@@ -291,7 +310,7 @@ fun PerfilScreen(
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "Tu nivel sube con tus actividades completadas. Estas son las que cuentan:",
-                        fontFamily = JakartaSansFont, fontSize = 12.sp, lineHeight = 17.sp, color = MkSubtitulo
+                        fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = MkSubtitulo
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     val reglas = (reglasCarga.estado as? Carga.Lista)?.datos?.reglas ?: emptyMap()
@@ -301,8 +320,8 @@ fun PerfilScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Lo demás (publicar, registrar tus emociones, cuidar a Lilu) no sube de nivel, pero sí te da flores 🌸 para Lilu." +
-                                (reglas["nivel"]?.let { " Y cada vez que subes de nivel, ¡ganas $it flores de regalo!" } ?: ""),
-                        fontFamily = JakartaSansFont, fontSize = 12.sp, lineHeight = 17.sp, color = MkSubtitulo
+                            (reglas["nivel"]?.let { " Y cada vez que subes de nivel, ¡ganas $it flores de regalo!" } ?: ""),
+                        fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = MkSubtitulo
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     TextButton(onClick = { verTodosLosNiveles = !verTodosLosNiveles }, contentPadding = PaddingValues(0.dp)) {
@@ -313,7 +332,7 @@ fun PerfilScreen(
                     }
                     if (verTodosLosNiveles) {
                         val niveles = (nivelesCarga.estado as? Carga.Lista)?.datos?.niveles ?: emptyList()
-                        if (niveles.isEmpty()) Text("Cargando…", fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkSubtitulo)
+                        if (niveles.isEmpty()) Text("Cargando…", fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo)
                         niveles.forEach { n ->
                             val esActual = n.nivel == datosProgreso?.nivel?.nivel
                             Row(
@@ -327,12 +346,12 @@ fun PerfilScreen(
                             ) {
                                 Text(
                                     text = "Nivel ${n.nivel} · ${n.nombre}" + if (esActual) "  (tú)" else "",
-                                    fontFamily = JakartaSansFont, fontSize = 12.sp,
+                                    fontFamily = JakartaSansFont, fontSize = 13.sp,
                                     fontWeight = if (esActual) FontWeight.Bold else FontWeight.Normal, color = ColorTextoPrincipal
                                 )
                                 Text(
                                     text = if (n.actividadesRequeridas == 0) "al empezar" else "${n.actividadesRequeridas} actividades",
-                                    fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkSubtitulo
+                                    fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo
                                 )
                             }
                         }
@@ -342,7 +361,7 @@ fun PerfilScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ── Estadísticas en Dirección de Columna (Fiel al Mockup 15) ──
+            //apartado de estadísticas
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -356,7 +375,7 @@ fun PerfilScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Portafolio Personal
+            //portafolio personal
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -373,7 +392,7 @@ fun PerfilScreen(
                     Text(
                         text = "${publicacionesPortafolio.size} publicaciones registradas",
                         fontFamily = JakartaSansFont,
-                        fontSize = 12.sp,
+                        fontSize = 13.sp,
                         color = MkSubtitulo
                     )
                 }
@@ -390,7 +409,7 @@ fun PerfilScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Primeros 3 elementos del catálogo con el diseño exacto de la Card
+            //solo muestras 3 primeros publis del catálogo/portafolio
             when (val e = portafolio.estado) {
                 is Carga.Cargando -> IndicadorCargando()
                 is Carga.Falla -> MensajeError(e.mensaje, portafolio.recargar)
@@ -422,7 +441,7 @@ fun PerfilScreen(
 
             Button(
                 onClick = { onNavigate("publicar_producto") },
-                modifier = Modifier.fillMaxWidth().height(46.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF005524))
             ) {
@@ -434,7 +453,7 @@ fun PerfilScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Habilidades Radar de IA
+            //habilidades
             Text(
                 text = "Habilidades y talentos",
                 fontFamily = OutfitFont,
@@ -445,7 +464,7 @@ fun PerfilScreen(
             Text(
                 text = "Insignias desbloqueadas a partir de tus respuestas en tu registro.",
                 fontFamily = JakartaSansFont,
-                fontSize = 12.sp,
+                fontSize = 13.sp,
                 color = MkSubtitulo
             )
 
@@ -490,9 +509,9 @@ fun PerfilScreen(
                                 Text(
                                     text = hab.descripcion,
                                     fontFamily = JakartaSansFont,
-                                    fontSize = 12.sp,
+                                    fontSize = 13.sp,
                                     color = MkSubtitulo,
-                                    lineHeight = 16.sp
+                                    lineHeight = 18.sp
                                 )
                             }
                         }
@@ -502,7 +521,7 @@ fun PerfilScreen(
             Spacer(modifier = Modifier.height(20.dp))
             OutlinedButton(
                 onClick = onCerrarSesion,
-                modifier = Modifier.fillMaxWidth().height(46.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text("Cerrar sesión", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MkTitulo)
@@ -512,7 +531,7 @@ fun PerfilScreen(
         }
     }
 
-    // Diálogo de confirmación para Pausar / Reactivar publicación
+    //modal de confirmación para pausar / reactivar publicación
     if (publicacionSeleccionadaParaAccion != null && tipoAccionPendiente != null) {
         val pub = publicacionSeleccionadaParaAccion!!
         val esPausa = tipoAccionPendiente == "pausar"
@@ -564,7 +583,7 @@ fun PerfilScreen(
         )
     }
 
-    // Avisos (errores del servidor, publicaciones en revisión...)
+    //avisos
     mensajeInfo?.let { texto ->
         AlertDialog(
             onDismissRequest = { mensajeInfo = null },
@@ -579,7 +598,71 @@ fun PerfilScreen(
         )
     }
 
-    // Selector de Avatar
+    //config
+    if (mostrarConfiguracion) {
+        AlertDialog(
+            onDismissRequest = { mostrarConfiguracion = false },
+            title = {
+                Text(text = "Configuración", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo)
+            },
+            text = {
+                Column {
+                    Text(text = "Tamaño del texto", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Color.Black)
+                    Text(
+                        text = "Elige el que se te haga más cómodo de leer.",
+                        fontFamily = JakartaSansFont, fontSize = 14.sp, color = MkSubtitulo
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    AjustesTexto.opciones.forEach { (nombre, valor) ->
+                        val elegida = AjustesTexto.escala == valor
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { AjustesTexto.cambiar(contexto, valor) }
+                                .padding(vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = elegida,
+                                onClick = { AjustesTexto.cambiar(contexto, valor) },
+                                colors = RadioButtonDefaults.colors(selectedColor = MkTitulo)
+                            )
+                            Text(
+                                text = nombre,
+                                fontFamily = JakartaSansFont,
+                                fontWeight = if (elegida) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 16.sp,
+                                color = Color.Black
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MkFondoItem)
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = "Así se va a ver el texto de la app. Lilu te acompaña en cada paso.",
+                            fontFamily = JakartaSansFont, fontSize = 15.sp, color = Color.Black
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { mostrarConfiguracion = false }) {
+                    Text(text = "Listo", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo)
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(12.dp)
+        )
+    }
+
+    //selector de Avatar
     if (mostrarSelectorAvatar) {
         AlertDialog(
             onDismissRequest = { mostrarSelectorAvatar = false },
@@ -587,7 +670,7 @@ fun PerfilScreen(
                 Text(text = "Elige tu avatar predeterminado", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo)
             },
             text = {
-                // solo los emojis que el teléfono sabe dibujar (los más nuevos salen como cuadritos en Android viejo)
+                //solo los emojis que el teléfono sabe dibujar
                 val disponibles = remember { val pincel = android.graphics.Paint(); Avatares.filter { pincel.hasGlyph(it) } }
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(minSize = 52.dp),
@@ -631,7 +714,7 @@ fun PerfilScreen(
     }
 }
 
-/** Tarjeta de estadística en dirección de columna (Fiel al mockup 15) */
+//tarjeta de estadística
 @Composable
 private fun CardEstadisticaColumna(
     numero: String,
@@ -643,7 +726,7 @@ private fun CardEstadisticaColumna(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MkFondoCard),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = modifier.height(105.dp)
+        modifier = modifier.heightIn(min = 105.dp)
     ) {
         Column(
             modifier = Modifier
@@ -665,15 +748,16 @@ private fun CardEstadisticaColumna(
             Text(
                 text = etiqueta,
                 fontFamily = JakartaSansFont,
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 color = MkSubtitulo,
-                maxLines = 1
+                textAlign = TextAlign.Center,
+                maxLines = 2
             )
         }
     }
 }
 
-/** Tarjeta de publicación 100% fiel al mockup[cite: 14] con foto, botones y estado interactivo */
+//tarjeta de publicación
 @Composable
 fun ItemPortafolioCardFiel(
     pub: PublicacionPortafolio,
@@ -701,7 +785,7 @@ fun ItemPortafolioCardFiel(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.Top
             ) {
-                // Foto miniatura cuadrada (Fiel al mockup 14)
+                // Foto miniatura cuadrada
                 Box(
                     modifier = Modifier
                         .size(72.dp)
@@ -742,7 +826,7 @@ fun ItemPortafolioCardFiel(
                                 text = "• ${pub.estado}",
                                 fontFamily = JakartaSansFont,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 color = textoBadge,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                             )
@@ -750,7 +834,7 @@ fun ItemPortafolioCardFiel(
                         Text(
                             text = pub.detalleVentas,
                             fontFamily = JakartaSansFont,
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             color = MkSubtitulo
                         )
                     }
@@ -795,17 +879,18 @@ fun ItemPortafolioCardFiel(
                 Text(
                     text = pub.ubicacionDetalle,
                     fontFamily = JakartaSansFont,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     color = MkSubtitulo,
-                    maxLines = 1
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Botones inferiores (Fieles al mockup 14: Pedidos / Editar detalles / Pausa / Reactivar)
+            //botones inferiores
             if (estaPausado) {
-                // Si está pausado muestra un botón ancho de Reactivar y Editar Detalles
+                //si está pausado muestra un botón ancho de Reactivar y Editar Detalles
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -814,7 +899,7 @@ fun ItemPortafolioCardFiel(
                         onClick = onPausarClick,
                         modifier = Modifier
                             .weight(1.2f)
-                            .height(38.dp),
+                            .heightIn(min = 38.dp),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC5B8C2))
                     ) {
@@ -827,7 +912,7 @@ fun ItemPortafolioCardFiel(
                         onClick = onEditarClick,
                         modifier = Modifier
                             .weight(1.3f)
-                            .height(38.dp),
+                            .heightIn(min = 38.dp),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
                     ) {
@@ -837,18 +922,18 @@ fun ItemPortafolioCardFiel(
                     }
                 }
             } else {
-                // Si está activo o por encargo muestra: Pedidos(n), Editar detalles y el botón de Pausa
+                //si está activo o por encargo muestra: Pedidos(n), Editar detalles y el botón de Pausa
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Pedidos (no es botón interactivo de acción, indicador visual)
+                    //pedidos en curso
                     Surface(
                         shape = RoundedCornerShape(8.dp),
                         color = Color(0xFFDED2D9),
                         modifier = Modifier
-                            .height(38.dp)
+                            .heightIn(min = 38.dp)
                             .weight(0.9f)
                     ) {
                         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
@@ -856,27 +941,27 @@ fun ItemPortafolioCardFiel(
                                 text = "Pedidos (${pub.pedidosCount})",
                                 fontFamily = JakartaSansFont,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
+                                fontSize = 13.sp,
                                 color = MkTitulo
                             )
                         }
                     }
 
-                    // Botón Editar Detalles
+                    //btn editar detalles
                     OutlinedButton(
                         onClick = onEditarClick,
                         modifier = Modifier
-                            .height(38.dp)
+                            .heightIn(min = 38.dp)
                             .weight(1.3f),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
                     ) {
-                        Text(text = "Editar detalles", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MkTitulo)
+                        Text(text = "Editar detalles", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
                         Spacer(modifier = Modifier.width(2.dp))
                         Icon(imageVector = Icons.Outlined.Edit, contentDescription = null, tint = MkTitulo, modifier = Modifier.size(13.dp))
                     }
 
-                    // Botón de Pausar (Icono de pausa)
+                    //btn de pause
                     Surface(
                         onClick = onPausarClick,
                         shape = RoundedCornerShape(8.dp),

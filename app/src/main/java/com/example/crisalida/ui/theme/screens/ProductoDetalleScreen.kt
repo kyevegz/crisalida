@@ -35,7 +35,7 @@ private val PdGris = Color(0xFF545454)
 private val PdVerde = Color(0xFF1E681E)
 private val PdVino = Color(0xFF6B3045)
 
-/** Detalle de un producto o servicio del marketplace (estilo tienda en línea): fotos, precio, vendedora, entrega y descripción. */
+//detalle de producto o servicio
 @Composable
 fun ProductoDetalleScreen(
     publicacionId: String,
@@ -87,7 +87,6 @@ fun ProductoDetalleScreen(
 private fun Contenido(p: PublicacionDto, onComprar: () -> Unit, onEditar: () -> Unit) {
     var seleccionada by remember(p.id) { mutableIntStateOf(0) }
 
-    // Foto principal
     Box(
         modifier = Modifier.fillMaxWidth().height(260.dp).background(Color(0xFFD9D9D9)),
         contentAlignment = Alignment.Center
@@ -99,7 +98,7 @@ private fun Contenido(p: PublicacionDto, onComprar: () -> Unit, onEditar: () -> 
             alternativa = { Icon(Icons.Outlined.Image, contentDescription = null, tint = PdGris, modifier = Modifier.size(56.dp)) }
         )
     }
-    // Miniaturas (si hay más de una foto)
+    //miniaturas si hay más de una foto
     if (p.imagenes.size > 1) {
         LazyRow(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
@@ -121,7 +120,7 @@ private fun Contenido(p: PublicacionDto, onComprar: () -> Unit, onEditar: () -> 
     Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
         Text(
             if (p.tipo == "servicio") "Servicio · ${p.categoria}" else "Producto · ${p.categoria}",
-            fontFamily = JakartaSansFont, fontSize = 12.sp, color = PdGris
+            fontFamily = JakartaSansFont, fontSize = 13.sp, color = PdGris
         )
         Spacer(Modifier.height(4.dp))
         Text(p.titulo, fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 26.sp, lineHeight = 31.sp, color = Color.Black)
@@ -174,12 +173,12 @@ private fun Contenido(p: PublicacionDto, onComprar: () -> Unit, onEditar: () -> 
         Spacer(Modifier.height(10.dp))
         Text(
             "Por tu seguridad, la dirección exacta y el contacto no se muestran: todo se coordina dentro de la app.",
-            fontFamily = JakartaSansFont, fontSize = 12.sp, lineHeight = 17.sp, color = PdGris
+            fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = PdGris
         )
 
         Spacer(Modifier.height(18.dp))
         if (p.esMia) {
-            OutlinedButton(onClick = onEditar, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().height(48.dp)) {
+            OutlinedButton(onClick = onEditar, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                 Text("Esta es tu publicación · Editar detalles", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = ColorBotonEntrar)
             }
         } else {
@@ -187,7 +186,7 @@ private fun Contenido(p: PublicacionDto, onComprar: () -> Unit, onEditar: () -> 
                 onClick = onComprar,
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = PdVerde),
-                modifier = Modifier.fillMaxWidth().height(48.dp)
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
             ) {
                 Text(
                     if (p.tipo == "servicio") "Contratar" else if (p.porEncargo) "Hacer encargo" else "Comprar",
@@ -205,7 +204,7 @@ private fun Fila(icono: androidx.compose.ui.graphics.vector.ImageVector, titulo:
         Icon(icono, contentDescription = null, tint = PdGris, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(10.dp))
         Column {
-            Text(titulo, fontFamily = JakartaSansFont, fontSize = 11.sp, color = PdGris)
+            Text(titulo, fontFamily = JakartaSansFont, fontSize = 12.sp, color = PdGris)
             Text(valor, fontFamily = OutfitFont, fontWeight = FontWeight.Medium, fontSize = 15.sp, color = Color.Black)
         }
     }

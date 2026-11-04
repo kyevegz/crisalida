@@ -32,14 +32,14 @@ import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.SesionActual
 
-// Colores medidos del mockup (home.png)
+//Colores
 private val MkCrisalida = Color(0xFF9D4067)
 private val MkGrisInicio = Color(0xFF878686)
 private val MkMorado = Color(0xFFA47DAB)
 private val MkTextoEmergencia = Color(0xFFEFD6F3)
 private val MkRosaBarra = Color(0xFFD0A0B5)
 private val MkRosaIconos = Color(0xFFFFDEF7)
-private val MkSeleccionada = Color(0xFF62012A) // mismo vino del chip "Todos" del mockup
+private val MkSeleccionada = Color(0xFF62012A)
 
 @Composable
 fun CrisalidaScaffold(
@@ -48,7 +48,7 @@ fun CrisalidaScaffold(
 
 
     currentTitle: String,
-    selectedTab: Int, // 0: Retos, 1: Marketplace, 2: Inicio, 3: Bienestar, 4: Mascota, 5: Perfil
+    selectedTab: Int, // 0: Retos, 1: Marketplace, 2: Inicio, 3: Bienestar, 4: Mascota, 5: Perfil, son las opciones de la barrita inferior
     onNavigate: (String) -> Unit,
     content: @Composable (PaddingValues) -> Unit
 ) {
@@ -142,12 +142,11 @@ fun CrisalidaScaffold(
                         .height(84.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // La pestaña activa se resalta en vino oscuro; las demás quedan en rosa claro.
+                    // La pestaña activa se resalta en un color vino oscuro, las demás quedan en rosa claro.
                     BottomVectorTabItem("Retos", Icons.Outlined.TrackChanges, selectedTab == 0, Modifier.weight(1f)) { onNavigate("retos") }
                     BottomVectorTabItem("Marketplace", Icons.Outlined.Storefront, selectedTab == 1, Modifier.weight(1f)) { onNavigate("marketplace") }
                     BottomVectorTabItem("Inicio", Icons.Outlined.Home, selectedTab == 2, Modifier.weight(1f)) { onNavigate("home") }
                     BottomVectorTabItem("Bienestar diario", Icons.Outlined.EventAvailable, selectedTab == 3, Modifier.weight(1f)) { onNavigate("bienestar") }
-                    // Material no tiene mariposa; Spa (flor de loto) es lo más cercano de la librería.
                     BottomVectorTabItem("Mascota", Icons.Outlined.Spa, selectedTab == 4, Modifier.weight(1f)) { onNavigate("mascota") }
                     BottomVectorTabItem("Perfil", Icons.Filled.Person, selectedTab == 5, Modifier.weight(1f)) { onNavigate("perfil") }
                 }

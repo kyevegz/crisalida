@@ -25,9 +25,6 @@ import androidx.compose.ui.unit.sp
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.screens.CrisalidaScaffold
-/* ──────────────────────────────────────────────────────────────
- * Colores medidos del mockup Perfil/Portafolio (portafolio.png)
- * ────────────────────────────────────────────────────────────── */
 private val MkTitulo = Color(0xFF7F284F)
 private val MkSubtitulo = Color(0xFF545454)
 private val MkVerdeBoton = Color(0xFF005524)
@@ -58,7 +55,7 @@ fun PortafolioScreen(
 
     CrisalidaScaffold(
         currentTitle = "Perfil/portafolio",
-        selectedTab = 5, // Pestaña de Perfil
+        selectedTab = 5, //Pestaña de perfil
         onNavigate = onNavigate
     ) { innerPadding ->
         Column(
@@ -72,7 +69,6 @@ fun PortafolioScreen(
         ) {
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Botón superior izquierdo "Perfil" (Volver)
             Surface(
                 onClick = { onNavigate("perfil") },
                 shape = RoundedCornerShape(18.dp),
@@ -102,7 +98,6 @@ fun PortafolioScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Cabecera: Avatar, Nombre y Botón "+ Añadir nuevo producto"
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -158,7 +153,7 @@ fun PortafolioScreen(
                     Spacer(modifier = Modifier.height(6.dp))
                     Button(
                         onClick = { onNavigate("publicar_producto") },
-                        modifier = Modifier.height(38.dp),
+                        modifier = Modifier.heightIn(min = 38.dp),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MkVerdeBoton)
                     ) {
@@ -177,7 +172,6 @@ fun PortafolioScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Título de la sección Portafolio Personal
             Text(
                 text = "Portafolio personal",
                 fontFamily = OutfitFont,
@@ -194,7 +188,6 @@ fun PortafolioScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Listado completo de publicaciones reutilizando la misma Card del perfil
             when (val e = portafolio.estado) {
                 is Carga.Cargando -> IndicadorCargando()
                 is Carga.Falla -> MensajeError(e.mensaje, portafolio.recargar)
@@ -226,12 +219,11 @@ fun PortafolioScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Botón inferior "+ Añadir nuevo producto" (Fiel al mockup)
             Button(
                 onClick = { onNavigate("publicar_producto") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
+                    .heightIn(min = 48.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MkVerdeBoton)
             ) {
@@ -250,7 +242,6 @@ fun PortafolioScreen(
         }
     }
 
-    // Diálogo de confirmación para Pausar / Reactivar publicación
     if (publicacionSeleccionadaParaAccion != null && tipoAccionPendiente != null) {
         val pub = publicacionSeleccionadaParaAccion!!
         val esPausa = tipoAccionPendiente == "pausar"

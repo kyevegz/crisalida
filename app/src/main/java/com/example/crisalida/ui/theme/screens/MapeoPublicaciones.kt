@@ -3,19 +3,15 @@ package com.example.crisalida.ui.theme.screens
 import com.example.crisalida.data.PublicacionDto
 import java.util.Locale
 
-/* ================================================================
- * Convierte lo que manda el servidor (PublicacionDto) en los textos que
- * ya usan tus tarjetas. Un solo lugar para que Perfil, Portafolio y
- * Marketplace muestren lo mismo.
- * ================================================================ */
+//pasa lo del servidor a los textos que usan las tarjetas
 
 fun formatoPrecio(precio: Double): String = "$" + String.format(Locale.US, "%,.2f", precio)
 
-/** "$45.00 c/litro" */
+
 fun PublicacionDto.precioTexto(): String =
     formatoPrecio(precio) + (notaPrecio?.takeIf { it.isNotBlank() }?.let { " $it" } ?: "")
 
-/** Estado como lo muestran las tarjetas: Activo · Por encargo · Pausado · En revisión · Rechazado */
+//estado como lo ven las tarjetas
 fun PublicacionDto.estadoTexto(): String = when (estado) {
     "pausado" -> "Pausado"
     "en_revision" -> "En revisión"
@@ -23,11 +19,10 @@ fun PublicacionDto.estadoTexto(): String = when (estado) {
     else -> if (porEncargo) "Por encargo" else "Activo"
 }
 
-/** "8 vendidos" (productos) o "3 completados" (servicios) */
 fun PublicacionDto.ventasTexto(): String =
     if (tipo == "servicio") "$vendidos completados" else "$vendidos vendidos"
 
-/** Línea de entrega/modalidad que va debajo del precio en el portafolio (la usuaria ve su dirección real). */
+//línea de entrega debajo del precio
 fun PublicacionDto.detalleEntregaTexto(): String {
     val lugar = puntoEntrega?.takeIf { it.isNotBlank() } ?: zonaPublica?.takeIf { it.isNotBlank() }
     return if (tipo == "servicio") {
@@ -40,7 +35,7 @@ fun PublicacionDto.detalleEntregaTexto(): String {
     }
 }
 
-/** Línea pública de la tarjeta del marketplace: NUNCA la dirección real, solo la zona. */
+//la zona, nunca la dirección
 fun PublicacionDto.entregaPublicaTexto(): String {
     val zona = zonaPublica?.takeIf { it.isNotBlank() }
     return if (tipo == "servicio") {

@@ -18,14 +18,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.crisalida.ui.theme.ColorFondoApp
 import com.example.crisalida.ui.theme.ColorTextoPrincipal
+import com.example.crisalida.ui.theme.ConEscalaDeTexto
 import com.example.crisalida.ui.theme.OutfitFont
 import com.example.crisalida.ui.screens.CrisalidaScaffold
-import com.example.crisalida.ui.screens.RespirarLiluScreen
-/**
- * Navegación entre pestañas de la barra inferior:
- * una sola copia de cada pantalla en la pila, sin acumular historial y restaurando estado.
- * Usa "home" como base de la pila (después del login debes llegar a "home").
- */
+// navegación de la barra de abajo, sin acumular historial
 fun NavController.navigateToTab(route: String) {
     navigate(route) {
         popUpTo("home")
@@ -33,7 +29,6 @@ fun NavController.navigateToTab(route: String) {
     }
 }
 
-/** Pantalla provisional para pestañas que aún no existen (evita el crash por ruta inexistente). */
 @Composable
 fun PantallaPendiente(titulo: String, selectedTab: Int, onNavigate: (String) -> Unit) {
     CrisalidaScaffold(currentTitle = titulo, selectedTab = selectedTab, onNavigate = onNavigate) { innerPadding ->
@@ -54,60 +49,55 @@ fun PantallaPendiente(titulo: String, selectedTab: Int, onNavigate: (String) -> 
     }
 }
 
-/**
- * Rutas de las 6 pestañas. Llámala dentro de tu NavHost:
- *
- *   NavHost(navController, startDestination = "login") {
- *       composable("login") { ... }       // lo que ya tengas
- *       composable("registro") { ... }
- *       pantallasPrincipales(navController)
- *   }
- *
- * Si ya tienes composable("bienestar") o composable("mascota"), borra esas líneas de aquí.
- */
 fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
     val ir: (String) -> Unit = { navController.navigateToTab(it) }
-    // Pantallas de detalle: se apilan encima y «Volver» regresa a donde estabas (sin tocar la pila de pestañas)
+    //pantallas de detalle: se apilan encima y «Volver» regresa a donde se estaba antes
     val abrirReto: (String) -> Unit = { navController.navigate("reto_detalle/$it") }
     val abrirProducto: (String) -> Unit = { navController.navigate("producto_detalle/$it") }
     val editar: (String) -> Unit = { navController.navigate("editar_publicacion/$it") }
     val volver: () -> Unit = { navController.popBackStack() }
     val argId = listOf(navArgument("id") { type = NavType.StringType })
 
-    composable("retos") { RetosScreen(onNavigate = ir, onAbrirDetalle = abrirReto) }
-    composable("marketplace") { MarketplaceScreen(onNavigate = ir, onAbrirDetalle = abrirProducto) }
-    composable("home") { HomeScreen(onNavigate = ir, onAbrirReto = abrirReto) }
+    composable("retos") { ConEscalaDeTexto { RetosScreen(onNavigate = ir, onAbrirDetalle = abrirReto) } }
+    composable("marketplace") { ConEscalaDeTexto { MarketplaceScreen(onNavigate = ir, onAbrirDetalle = abrirProducto) } }
+    composable("home") { ConEscalaDeTexto { HomeScreen(onNavigate = ir, onAbrirReto = abrirReto) } }
     composable("bienestar") {
-        BienestarScreen(onNavigate = ir, onVerRegistros = { navController.navigate("bienestar_registros") })
+        ConEscalaDeTexto { BienestarScreen(onNavigate = ir, onVerRegistros = { navController.navigate("bienestar_registros") }) }
     }
-    composable("mascota") { MascotaScreen (onNavigate =  ir) }
+    composable("mascota") { ConEscalaDeTexto { MascotaScreen (onNavigate =  ir) } }
     composable("perfil") {
-        PerfilScreen(
-            onNavigate = ir, onEditar = editar,
-            onCerrarSesion = {
-                SesionActual.cerrar()
-                navController.navigate("login") { popUpTo(0) { inclusive = true } }
-            }
-        )
+        ConEscalaDeTexto {
+            PerfilScreen(
+                onNavigate = ir, onEditar = editar,
+                onCerrarSesion = {
+                    SesionActual.cerrar()
+                    navController.navigate("login") { popUpTo(0) { inclusive = true } }
+                }
+            )
+        }
     }
 
-    // Rutas de canje y complementos (cada ruta se registra UNA sola vez)
-    composable("respirar_lilu") { RespirarLiluScreen(onNavigate = ir) }
-    composable("portafolio_completo") { PortafolioScreen(onNavigate = ir, onEditar = editar) }
-    composable("publicar_producto") { PublicarProductoScreen(onNavigate = ir) }
+    composable("respirar_lilu") { ConEscalaDeTexto { RespirarLiluScreen(onNavigate = ir) } }
+    composable("portafolio_completo") { ConEscalaDeTexto { PortafolioScreen(onNavigate = ir, onEditar = editar) } }
+    composable("publicar_producto") { ConEscalaDeTexto { PublicarProductoScreen(onNavigate = ir) } }
 
-    // Detalles y edición
     composable("reto_detalle/{id}", arguments = argId) { entrada ->
-        RetoDetalleScreen(retoId = entrada.arguments?.getString("id").orEmpty(), onNavigate = ir, onVolver = volver)
+        ConEscalaDeTexto {
+            RetoDetalleScreen(retoId = entrada.arguments?.getString("id").orEmpty(), onNavigate = ir, onVolver = volver)
+        }
     }
     composable("producto_detalle/{id}", arguments = argId) { entrada ->
-        ProductoDetalleScreen(
-            publicacionId = entrada.arguments?.getString("id").orEmpty(),
-            onNavigate = ir, onVolver = volver, onEditar = editar
-        )
+        ConEscalaDeTexto {
+            ProductoDetalleScreen(
+                publicacionId = entrada.arguments?.getString("id").orEmpty(),
+                onNavigate = ir, onVolver = volver, onEditar = editar
+            )
+        }
     }
     composable("editar_publicacion/{id}", arguments = argId) { entrada ->
-        PublicarProductoScreen(onNavigate = ir, publicacionId = entrada.arguments?.getString("id").orEmpty(), onEditado = volver)
+        ConEscalaDeTexto {
+            PublicarProductoScreen(onNavigate = ir, publicacionId = entrada.arguments?.getString("id").orEmpty(), onEditado = volver)
+        }
     }
-    composable("bienestar_registros") { BienestarRegistrosScreen(onNavigate = ir, onVolver = volver) }
+    composable("bienestar_registros") { ConEscalaDeTexto { BienestarRegistrosScreen(onNavigate = ir, onVolver = volver) } }
 }

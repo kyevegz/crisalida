@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
 
-// ==================== DECLARACIÓN DE FUENTES LOCALES ====================
+// fuentes
 
 
 @Composable
@@ -44,7 +44,7 @@ fun RegisterScreen(
     var seudonimo by remember { mutableStateOf("") }
     var pinPrincipal by remember { mutableStateOf("") }
     var pinCamuflaje by remember { mutableStateOf("") }
-    var pinPrincipalVisible by remember { mutableStateOf(false) }   // ojito para ver/ocultar el PIN
+    var pinPrincipalVisible by remember { mutableStateOf(false) }
     var pinCamuflajeVisible by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
@@ -65,7 +65,6 @@ fun RegisterScreen(
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 1. TÍTULO PRINCIPAL: "Crisálida"
             Text(
                 text = "Crisálida",
                 fontFamily = OutfitFont,
@@ -76,7 +75,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 2. LOGOTIPO / MARIPOSA
             Image(
                 painter = painterResource(id = R.drawable.crisalida_logo),
                 contentDescription = "Logo Crisálida",
@@ -87,7 +85,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 3. TÍTULO CON LÍNEAS DIVISORIAS: "Regístrate"
             Row(
                 modifier = Modifier.fillMaxWidth(0.9f),
                 verticalAlignment = Alignment.CenterVertically,
@@ -114,7 +111,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 4. SUBTÍTULO Y DESCRIPCIÓN
             Text(
                 text = "Comienza tu camino hacia la independencia",
                 fontFamily = JakartaSansFont,
@@ -128,7 +124,7 @@ fun RegisterScreen(
                 text = "Cero requisitos invasivos. Tu identidad real nunca será revelada a terceros, familiares ni contratistas.",
                 fontFamily = JakartaSansFont,
                 fontWeight = FontWeight.Normal,
-                fontSize = 12.sp,
+                fontSize = 13.sp,
                 color = ColorTextoPrincipal,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 8.dp)
@@ -136,7 +132,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 5. CAMPO: ELIGE UN SEUDÓNIMO
             Column(modifier = Modifier.fillMaxWidth(0.95f)) {
                 Text(
                     text = "Elige un seudónimo",
@@ -156,7 +151,7 @@ fun RegisterScreen(
                     Text(
                         text = "Es preferible que no uses tu nombre real",
                         fontFamily = JakartaSansFont,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         color = ColorPlaceholder
                     )
                 }
@@ -165,7 +160,7 @@ fun RegisterScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp)
+                        .heightIn(min = 48.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(ColorCamposFondo)
                         .padding(horizontal = 16.dp),
@@ -198,7 +193,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 6. CAMPO: CREA TU PIN PRINCIPAL
             Column(modifier = Modifier.fillMaxWidth(0.95f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -229,7 +223,7 @@ fun RegisterScreen(
                     Text(
                         text = "Guarda y recuerda bien tu PIN de acceso",
                         fontFamily = JakartaSansFont,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         color = ColorPlaceholder
                     )
                 }
@@ -273,7 +267,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 7. CAMPO: CREA TU PIN DE CAMUFLAJE
             Column(modifier = Modifier.fillMaxWidth(0.95f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -304,7 +297,7 @@ fun RegisterScreen(
                     Text(
                         text = "Si alguien te exige abrir la app, ingresa este PIN alternativo y cargará una galería de mariposas.",
                         fontFamily = JakartaSansFont,
-                        fontSize = 10.sp,
+                        fontSize = 12.sp,
                         color = ColorPlaceholder
                     )
                 }
@@ -348,7 +341,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 8. TARJETA INFORMATIVA / ADVERTENCIA DE PRIVACIDAD
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.95f)
@@ -367,20 +359,19 @@ fun RegisterScreen(
                     Text(
                         text = "Podrás ingresar datos personales más adelante si así lo deseas, con la garantía de que estos, junto con tus reflexiones íntimas y registros de ventas se protegen con cifrado de extremo a extremo en tu dispositivo.",
                         fontFamily = JakartaSansFont,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         color = ColorTextoPrincipal,
-                        lineHeight = 15.sp
+                        lineHeight = 17.sp
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 9. TEXTO EXPLICATIVO ANTES DEL BOTÓN
             Text(
                 text = "Una vez hayas elegido un seudónimo y un PIN seguro, será momento de responder un formulario que te ayudará a conocer tus talentos y habilidades.",
                 fontFamily = JakartaSansFont,
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 color = ColorTextoPrincipal,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 12.dp)
@@ -392,13 +383,12 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // 10. BOTÓN "Siguiente"
             Button(
                 onClick = { onNextClick(seudonimo, pinPrincipal, pinCamuflaje) },
                 enabled = puedeContinuar,
                 modifier = Modifier
                     .fillMaxWidth(0.95f)
-                    .height(52.dp),
+                    .heightIn(min = 52.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = ColorBotonEntrar,
@@ -424,7 +414,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 11. ENLACE INFERIOR
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -433,7 +422,7 @@ fun RegisterScreen(
                 Text(
                     text = "¿Ya tienes una cuenta activa? ",
                     fontFamily = JakartaSansFont,
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     color = ColorTextoPrincipal
                 )
                 TextButton(
@@ -444,7 +433,7 @@ fun RegisterScreen(
                         text = "Inicia sesión aquí",
                         fontFamily = JakartaSansFont,
                         fontWeight = FontWeight.ExtraBold,
-                        fontSize = 12.sp,
+                        fontSize = 13.sp,
                         color = ColorTextoPrincipal
                     )
                 }

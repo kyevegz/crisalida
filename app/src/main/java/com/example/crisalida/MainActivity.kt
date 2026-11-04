@@ -15,8 +15,9 @@ import androidx.navigation.compose.rememberNavController
 import com.example.crisalida.data.AuthRepositorio
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
-import com.example.crisalida.ui.screens.LoginScreen
-import com.example.crisalida.ui.screens.RadarScreen
+import com.example.crisalida.ui.theme.screens.LoginScreen
+import com.example.crisalida.ui.theme.screens.RadarScreen
+import com.example.crisalida.ui.theme.ConEscalaDeTexto
 import com.example.crisalida.ui.theme.screens.RegisterScreen
 import com.example.crisalida.ui.theme.screens.GaleriaMariposasScreen
 import com.example.crisalida.ui.theme.screens.pantallasPrincipales
@@ -29,87 +30,93 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 val navController = rememberNavController()
-                val scope = rememberCoroutineScope()   // permite hacer llamadas al servidor sin trabar la pantalla
+                val scope = rememberCoroutineScope()   // para llamar al servidor sin trabar la pantalla
 
                 NavHost(navController = navController, startDestination = "login") {
 
-                    // ---------- LOGIN ----------
+                    // login
                     composable("login") {
                         var cargando by remember { mutableStateOf(false) }
                         var error by remember { mutableStateOf<String?>(null) }
 
-                        LoginScreen(
-                            cargando = cargando,
-                            error = error,
-                            onLoginClick = { seudonimo, pin ->
-                                scope.launch {
-                                    cargando = true
-                                    error = null
-                                    when (val resultado = AuthRepositorio.login(seudonimo, pin)) {
-                                        is ResultadoApi.Exito -> {
-                                            // PIN de camuflaje → galería falsa; PIN normal → la app real
-                                            val destino = if (resultado.datos.modo == "camuflaje") "camuflaje" else "home"
-                                            navController.navigate(destino) {
-                                                popUpTo("login") { inclusive = true }   // "atrás" ya no regresa al login
+                        ConEscalaDeTexto {
+                            LoginScreen(
+                                cargando = cargando,
+                                error = error,
+                                onLoginClick = { seudonimo, pin ->
+                                    scope.launch {
+                                        cargando = true
+                                        error = null
+                                        when (val resultado = AuthRepositorio.login(seudonimo, pin)) {
+                                            is ResultadoApi.Exito -> {
+                                                // pin de camuflaje abre la galería, pin normal abre la app
+                                                val destino = if (resultado.datos.modo == "camuflaje") "camuflaje" else "home"
+                                                navController.navigate(destino) {
+                                                    popUpTo("login") { inclusive = true }
+                                                }
                                             }
+                                            is ResultadoApi.Error -> error = resultado.mensaje
                                         }
-                                        is ResultadoApi.Error -> error = resultado.mensaje
+                                        cargando = false
                                     }
-                                    cargando = false
-                                }
-                            },
-                            onNavigateToRegister = { navController.navigate("register") }
-                        )
+                                },
+                                onNavigateToRegister = { navController.navigate("register") }
+                            )
+                        }
                     }
 
-                    // ---------- REGISTRO (paso 1: solo valida; la cuenta se crea al terminar el radar) ----------
+                    // registro (solo valida, la cuenta se crea al terminar el radar)
                     composable("register") {
                         var cargando by remember { mutableStateOf(false) }
                         var error by remember { mutableStateOf<String?>(null) }
 
-                        RegisterScreen(
-                            cargando = cargando,
-                            error = error,
-                            onNextClick = { seudonimo, pinPrincipal, pinCamuflaje ->
-                                scope.launch {
-                                    cargando = true
-                                    error = null
-                                    when (val resultado = AuthRepositorio.validarRegistro(seudonimo, pinPrincipal, pinCamuflaje)) {
-                                        is ResultadoApi.Exito -> navController.navigate("radar")   // sin cuenta todavía
-                                        is ResultadoApi.Error -> error = resultado.mensaje
+                        ConEscalaDeTexto {
+                            RegisterScreen(
+                                cargando = cargando,
+                                error = error,
+                                onNextClick = { seudonimo, pinPrincipal, pinCamuflaje ->
+                                    scope.launch {
+                                        cargando = true
+                                        error = null
+                                        when (val resultado = AuthRepositorio.validarRegistro(seudonimo, pinPrincipal, pinCamuflaje)) {
+                                            is ResultadoApi.Exito -> navController.navigate("radar")   // todavía sin cuenta
+                                            is ResultadoApi.Error -> error = resultado.mensaje
+                                        }
+                                        cargando = false
                                     }
-                                    cargando = false
-                                }
-                            },
-                            onNavigateToLogin = { navController.popBackStack() }
-                        )
+                                },
+                                onNavigateToLogin = { navController.popBackStack() }
+                            )
+                        }
                     }
 
-                    // ---------- RADAR DE TALENTOS ----------
+                    // radar de talentos
                     composable("radar") {
-                        RadarScreen(
-                            onTerminar = {
-                                // La cuenta ya se creó y la sesión está iniciada → entra a la app
-                                navController.navigate("home") {
-                                    popUpTo("login") { inclusive = true }   // ya no se puede volver al login/registro/radar
+                        ConEscalaDeTexto {
+                            RadarScreen(
+                                onTerminar = {
+                                    // ya se creó la cuenta y la sesión, con ello entra a la app
+                                    navController.navigate("home") {
+                                        popUpTo("login") { inclusive = true }   //ya no se regresa a login/registro/radar
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
 
-                    // ---------- GALERÍA DE MARIPOSAS (app de camuflaje) ----------
+                    //galería de mariposas (app de camuflaje)
                     composable("camuflaje") {
                         GaleriaMariposasScreen(
                             onCerrar = {
                                 SesionActual.cerrar()
                                 navController.navigate("login") {
-                                    popUpTo(0) { inclusive = true }   // vacía toda la pila: nada de «atrás»
+                                    popUpTo(0) { inclusive = true }
                                 }
                             }
                         )
                     }
 
-                    // ---------- home, retos, marketplace, bienestar, mascota, perfil, etc. ----------
+                    //home, retos, marketplace, bienestar, mascota, perfil, etc.
                     pantallasPrincipales(navController)
                 }
             }

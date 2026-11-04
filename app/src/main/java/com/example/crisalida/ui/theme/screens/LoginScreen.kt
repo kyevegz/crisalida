@@ -1,4 +1,4 @@
-package com.example.crisalida.ui.screens
+package com.example.crisalida.ui.theme.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -40,7 +40,7 @@ fun LoginScreen(
     val puedeEntrar = !cargando && seudonimo.isNotBlank() && pin.length == 6
     val foco = LocalFocusManager.current
 
-    // al completar los 6 dígitos entra sola, el botón sigue por si lo prefiere
+    //al completar los 6 dígitos entra sola, el botón sigue por si lo prefiere
     LaunchedEffect(pin) {
         if (puedeEntrar) {
             foco.clearFocus()
@@ -98,7 +98,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // CAMPO SEUDÓNIMO
+            //campo seudónimo
             Column(modifier = Modifier.fillMaxWidth(0.9f)) {
                 Text(
                     text = "Seudónimo",
@@ -112,7 +112,7 @@ fun LoginScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
+                        .heightIn(min = 52.dp)
                         .clip(RoundedCornerShape(10.dp))
                         .background(ColorCamposFondo)
                         .padding(horizontal = 16.dp),
@@ -145,7 +145,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // PIN CON CAJITAS Y OJITO (iconos de la librería Material, sin drawables propios)
+            //pin
             Column(modifier = Modifier.fillMaxWidth(0.9f)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -174,11 +174,11 @@ fun LoginScreen(
                         }
                     }
 
-                    TextButton(onClick = { /* "¿Olvidaste tu PIN?" — se hará más adelante */ }) {
+                    TextButton(onClick = {  }) {
                         Text(
                             text = "¿Olvidaste tu PIN?",
                             fontFamily = JakartaSansFont,
-                            fontSize = 12.sp,
+                            fontSize = 13.sp,
                             color = ColorTextoPrincipal
                         )
                     }
@@ -187,7 +187,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Box {
-                    // Campo invisible que recibe el teclado numérico
+                    // campo invisible que recibe el teclado
                     BasicTextField(
                         value = pin,
                         onValueChange = { if (it.length <= 6 && it.all(Char::isDigit)) pin = it },
@@ -230,13 +230,13 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(26.dp))
 
-            // BOTÓN ENTRAR
+            //botón entrar
             Button(
                 onClick = { onLoginClick(seudonimo, pin) },
                 enabled = puedeEntrar,
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
-                    .height(54.dp),
+                    .heightIn(min = 54.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = ColorBotonEntrar,
