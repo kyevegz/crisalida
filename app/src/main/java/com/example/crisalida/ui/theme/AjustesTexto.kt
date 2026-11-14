@@ -5,9 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 
@@ -35,13 +33,13 @@ object AjustesTexto {
     }
 }
 
-// aplica el tamaño elegido a toda la pantalla (y sus modales), con tope para que no se rompa
+// aplica el tamaño elegido a toda la pantalla (y sus modales), con tope para que no se rompa.
+// Las pantallas de acceso (login, registro, radar) ya soportan el 200 % del sistema, por eso piden tope = 2f
 @Composable
-fun ConEscalaDeTexto(contenido: @Composable () -> Unit) {
-    val context = LocalContext.current
-    remember(context) { AjustesTexto.cargar(context) }
+fun ConEscalaDeTexto(tope: Float = 1.6f, contenido: @Composable () -> Unit) {
+    // el tamaño guardado se carga una sola vez, al abrir la app (MainActivity.onCreate)
     val base = LocalDensity.current
-    val escalaFinal = (base.fontScale * AjustesTexto.escala).coerceAtMost(1.6f)
+    val escalaFinal = (base.fontScale * AjustesTexto.escala).coerceAtMost(tope)
     CompositionLocalProvider(LocalDensity provides Density(base.density, escalaFinal)) {
         contenido()
     }

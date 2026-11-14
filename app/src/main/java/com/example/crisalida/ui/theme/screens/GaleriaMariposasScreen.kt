@@ -4,6 +4,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -21,9 +23,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.crisalida.ui.theme.ConEscalaLimitada
 
 // la app "falsa" que se abre con el PIN de camuflaje
 // todo es local, no pide nada al servidor. Para salir: menú ⋮ > Cerrar galería
@@ -74,13 +78,16 @@ fun GaleriaMariposasScreen(onCerrar: () -> Unit) {
     var soloFavoritas by remember { mutableStateOf(false) }
     val visibles = if (soloFavoritas) Mariposas.filter { it.nombre in favoritas } else Mariposas
 
-    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFFBF8F3))) {
+    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFFBF8F3)).statusBarsPadding()) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 36.dp, bottom = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 12.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Galería de mariposas", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3D2C1E))
+                // título grande: crece poco para que "mariposas" no se parta en pantallas chicas
+                ConEscalaLimitada(tope = 1.3f) {
+                    Text("Galería de mariposas", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3D2C1E))
+                }
                 Text("${Mariposas.size} fotografías", fontSize = 13.sp, color = Color(0xFF8A7B6B))
             }
             Box {
@@ -94,12 +101,21 @@ fun GaleriaMariposasScreen(onCerrar: () -> Unit) {
 
         if (visibles.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Aún no tienes favoritas. Toca el ♥ en alguna mariposa.", color = Color(0xFF8A7B6B), fontSize = 14.sp)
+                Text(
+                    "Aún no tienes favoritas. Toca el ♥ en alguna mariposa.",
+                    color = Color(0xFF8A7B6B), fontSize = 14.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                )
             }
         } else {
             LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                contentPadding = PaddingValues(16.dp),
+                columns = GridCells.Adaptive(minSize = 130.dp),   // 2 columnas en 320 dp, más en pantallas anchas
+                // abajo se suma la barra de navegación del sistema para que la última fila no quede tapada
+                contentPadding = PaddingValues(
+                    start = 16.dp, top = 16.dp, end = 16.dp,
+                    bottom = 16.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                ),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize()
@@ -139,7 +155,8 @@ fun GaleriaMariposasScreen(onCerrar: () -> Unit) {
     abierta?.let { m ->
         Dialog(onDismissRequest = { abierta = null }) {
             Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                Column {
+                // con scroll: en horizontal o con texto grande el contenido no cabe y los botones quedaban fuera
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -153,7 +170,11 @@ fun GaleriaMariposasScreen(onCerrar: () -> Unit) {
                         Text(m.dato, fontSize = 14.sp, lineHeight = 20.sp, color = Color(0xFF4F4034))
                         Spacer(Modifier.height(12.dp))
                         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                            TextButton(onClick = { if (m.nombre in favoritas) favoritas.remove(m.nombre) else favoritas.add(m.nombre) }) {
+                            // el texto largo cede espacio para que "Cerrar" siempre se vea
+                            TextButton(
+                                onClick = { if (m.nombre in favoritas) favoritas.remove(m.nombre) else favoritas.add(m.nombre) },
+                                modifier = Modifier.weight(1f, fill = false)
+                            ) {
                                 Text(if (m.nombre in favoritas) "♥ Quitar de favoritas" else "♡ Marcar favorita", color = Color(0xFFD64572))
                             }
                             TextButton(onClick = { abierta = null }) { Text("Cerrar", color = Color(0xFF3D2C1E)) }
