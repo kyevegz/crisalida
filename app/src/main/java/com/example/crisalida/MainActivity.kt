@@ -17,6 +17,7 @@ import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.theme.screens.LoginScreen
 import com.example.crisalida.ui.theme.screens.RadarScreen
+import com.example.crisalida.ui.theme.AjustesTexto
 import com.example.crisalida.ui.theme.ConEscalaDeTexto
 import com.example.crisalida.ui.theme.screens.RegisterScreen
 import com.example.crisalida.ui.theme.screens.GaleriaMariposasScreen
@@ -27,6 +28,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AjustesTexto.cargar(applicationContext)   // tamaño de letra elegido, guardado en el teléfono
         setContent {
             MaterialTheme {
                 val navController = rememberNavController()
@@ -39,7 +41,7 @@ class MainActivity : ComponentActivity() {
                         var cargando by remember { mutableStateOf(false) }
                         var error by remember { mutableStateOf<String?>(null) }
 
-                        ConEscalaDeTexto {
+                        ConEscalaDeTexto(tope = 2f) {
                             LoginScreen(
                                 cargando = cargando,
                                 error = error,
@@ -70,7 +72,7 @@ class MainActivity : ComponentActivity() {
                         var cargando by remember { mutableStateOf(false) }
                         var error by remember { mutableStateOf<String?>(null) }
 
-                        ConEscalaDeTexto {
+                        ConEscalaDeTexto(tope = 2f) {
                             RegisterScreen(
                                 cargando = cargando,
                                 error = error,
@@ -92,7 +94,7 @@ class MainActivity : ComponentActivity() {
 
                     // radar de talentos
                     composable("radar") {
-                        ConEscalaDeTexto {
+                        ConEscalaDeTexto(tope = 2f) {
                             RadarScreen(
                                 onTerminar = {
                                     // ya se creó la cuenta y la sesión, con ello entra a la app

@@ -159,10 +159,14 @@ fun RadarScreen(onTerminar: () -> Unit) {
             .background(ColorFondoApp)
             .statusBarsPadding()
             .navigationBarsPadding()
+            .imePadding(),
+        contentAlignment = Alignment.TopCenter
     ) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .widthIn(max = 640.dp)   // en tablets u horizontal no se estira de lado a lado
+                .fillMaxSize(),
             contentPadding = PaddingValues(bottom = 40.dp)
         ) {
 
@@ -172,13 +176,16 @@ fun RadarScreen(onTerminar: () -> Unit) {
                         .fillMaxWidth()
                         .padding(start = 17.dp, end = 16.dp, top = 28.dp)
                 ) {
-                    Text(
-                        text = "Radar de talentos",
-                        fontFamily = OutfitFont,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 32.sp,
-                        color = MkTitulo
-                    )
+                    // título muy grande: crece poco para que "talentos" no se parta en pantallas chicas
+                    ConEscalaLimitada(tope = 1.3f) {
+                        Text(
+                            text = "Radar de talentos",
+                            fontFamily = OutfitFont,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 32.sp,
+                            color = MkTitulo
+                        )
+                    }
                     Text(
                         text = "Descubre tus superpoderes cotidianos a tu propio ritmo, sin tecnicismos ni formularios rígidos.",
                         fontFamily = OutfitFont,
@@ -249,7 +256,7 @@ fun RadarScreen(onTerminar: () -> Unit) {
                                             text = mensajeConNegrita(it.mensaje),
                                             fontFamily = OutfitFont,
                                             fontSize = 16.sp,
-                                            lineHeight = 18.sp,
+                                            lineHeight = 22.sp,
                                             color = Color.Black
                                         )
                                     }
@@ -270,7 +277,7 @@ fun RadarScreen(onTerminar: () -> Unit) {
                             subtitulo = "Las siguientes preguntas se generan dinámicamente según tus intereses",
                             paddingInferior = 20.dp,
 
-                        ) {
+                            ) {
                             b2.preguntas.forEachIndexed { i, p ->
                                 if (i > 0) Spacer(modifier = Modifier.height(40.dp))
                                 PreguntaView(
@@ -296,7 +303,7 @@ fun RadarScreen(onTerminar: () -> Unit) {
                                 text = "Después de este cuestionario, se harán saber los resultados detectados por el radar, esperando que sirvan como guía en este nuevo camino que haz emprendido <3.",
                                 fontFamily = OutfitFont,
                                 fontSize = 16.sp,
-                                lineHeight = 15.sp,
+                                lineHeight = 22.sp,
                                 color = Color.Black
                             )
                             //resumen de lo detectado
@@ -306,7 +313,7 @@ fun RadarScreen(onTerminar: () -> Unit) {
                                 fontFamily = OutfitFont,
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 14.sp,
-                                lineHeight = 16.sp,
+                                lineHeight = 20.sp,
                                 color = MkVino
                             )
                         }
@@ -351,7 +358,7 @@ private fun PreguntaView(
             fontFamily = OutfitFont,
             fontWeight = FontWeight.Medium,
             fontSize = 15.sp,
-            lineHeight = 13.sp,
+            lineHeight = 20.sp,
             color = MkTextoPregunta
         )
         Spacer(modifier = Modifier.height(5.dp))
@@ -535,13 +542,16 @@ private fun BloqueCard(
                         .background(MkBadge),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = numero,
-                        fontFamily = OutfitFont,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 26.sp,
-                        color = MkTitulo
-                    )
+                    // el número vive dentro de un círculo de 33 dp: no debe crecer con el texto
+                    ConEscalaLimitada(tope = 1f) {
+                        Text(
+                            text = numero,
+                            fontFamily = OutfitFont,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 26.sp,
+                            color = MkTitulo
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.width(7.dp))
                 Column(modifier = Modifier.padding(top = 2.dp)) {
@@ -550,14 +560,14 @@ private fun BloqueCard(
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Medium,
                         fontSize = 18.sp,
-                        lineHeight = 18.sp,
+                        lineHeight = 24.sp,
                         color = Color.Black
                     )
                     Text(
                         text = subtitulo,
                         fontFamily = OutfitFont,
                         fontSize = 14.sp,
-                        lineHeight = 14.sp,
+                        lineHeight = 19.sp,
                         color = MkGris
                     )
                 }
