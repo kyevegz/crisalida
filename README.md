@@ -12,7 +12,7 @@ App móvil (Android) de acompañamiento y emprendimiento para mujeres en situaci
 | Hospedaje del servidor | Render |
 
 ## Cómo instalar y usar la app
-1. Descarga el archivo **`crisalida.apk`** en un celular Android.
+1. Descarga el archivo **`crisalidaV1.apk`** desde la [última Release](https://github.com/kyevegz/crisalida/releases/latest) en un celular Android.
 2. Ábrelo y acepta **"Instalar apps de origen desconocido"** si el teléfono lo pide.
 3. Abre **Crisálida** e inicia sesión con las credenciales de prueba.
 4. Necesitas **conexión a internet**: la app consulta un servidor en la nube.
