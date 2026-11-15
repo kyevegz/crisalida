@@ -30,16 +30,21 @@ fun RegisterScreen(
     onNextClick: (String, String, String) -> Unit,
     onNavigateToLogin: () -> Unit,
     cargando: Boolean = false,   // true mientras se espera al servidor
-    error: String? = null        // mensaje a mostrar si algo falló
+    error: String? = null,       // mensaje a mostrar si algo falló
+    esCompradora: Boolean = false, // registro corto: sin radar, la cuenta se crea con este botón
+    onAvisoCambio: (Boolean, Boolean) -> Unit = { _, _ -> }   // casillas: (acepta aviso y términos, mayor de 18)
 ) {
     var seudonimo by remember { mutableStateOf("") }
     var pinPrincipal by remember { mutableStateOf("") }
     var pinCamuflaje by remember { mutableStateOf("") }
     var pinPrincipalVisible by remember { mutableStateOf(false) }
     var pinCamuflajeVisible by remember { mutableStateOf(false) }
+    var aceptaAviso by remember { mutableStateOf(false) }
+    var mayorDeEdad by remember { mutableStateOf(false) }
+    var avisoAbierto by remember { mutableStateOf<String?>(null) }   // AVISO_PRIVACIDAD o TERMINOS_DE_USO
 
     val puedeContinuar = !cargando && seudonimo.trim().length >= 3 &&
-            pinPrincipal.length == 6 && pinCamuflaje.length == 6
+            pinPrincipal.length == 6 && pinCamuflaje.length == 6 && aceptaAviso && mayorDeEdad
 
     // ContenedorAcceso: scroll, barras del sistema, teclado y ancho máximo (ver ComponentesAuth.kt)
     ContenedorAcceso {
@@ -111,6 +116,15 @@ fun RegisterScreen(
             color = ColorTextoPrincipal,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 8.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = if (esCompradora) "Te registras para comprar y publicar retos" else "Te registras para vender",
+            fontFamily = JakartaSansFont,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp,
+            color = ColorBotonEntrar,
+            textAlign = TextAlign.Center
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -216,10 +230,24 @@ fun RegisterScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // aviso de privacidad, términos y mayoría de edad: sin esto el servidor no crea la cuenta
+        CasillasAviso(
+            acepta = aceptaAviso,
+            onAcepta = { aceptaAviso = it; onAvisoCambio(aceptaAviso, mayorDeEdad) },
+            mayorDeEdad = mayorDeEdad,
+            onMayorDeEdad = { mayorDeEdad = it; onAvisoCambio(aceptaAviso, mayorDeEdad) },
+            onAbrir = { avisoAbierto = it }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Una vez hayas elegido un seudónimo y un PIN seguro, será momento de responder un formulario que te ayudará a conocer tus talentos y habilidades.",
+            text = if (esCompradora)
+                "Tu registro es corto: al terminar entrarás directo a la app."
+            else
+                "Una vez hayas elegido un seudónimo y un PIN seguro, será momento de responder un formulario que te ayudará a conocer tus talentos y habilidades.",
             fontFamily = JakartaSansFont,
             fontSize = 12.sp,
             color = ColorTextoPrincipal,
@@ -253,7 +281,7 @@ fun RegisterScreen(
                 )
             } else {
                 Text(
-                    text = "Siguiente",
+                    text = if (esCompradora) "Crear cuenta" else "Siguiente",
                     fontFamily = OutfitFont,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.ExtraBold,
@@ -270,6 +298,8 @@ fun RegisterScreen(
             onClick = onNavigateToLogin
         )
     }
+
+    avisoAbierto?.let { DialogoAviso(it) { avisoAbierto = null } }
 }
 
 // título del campo de PIN con el ojito; el texto cede espacio para que el ojito nunca se corte

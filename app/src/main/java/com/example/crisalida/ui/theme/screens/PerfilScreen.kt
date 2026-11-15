@@ -3,6 +3,8 @@ package com.example.crisalida.ui.theme.screens
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material.icons.outlined.Verified
 import androidx.compose.material.icons.outlined.WorkspacePremium
@@ -97,10 +100,10 @@ fun PerfilScreen(
     // Todo viene del servidor
     val progreso = rememberProgreso()
     val datosProgreso = (progreso.estado as? Carga.Lista)?.datos
-    val portafolio = rememberCarga(ProgresoRepositorio.version) { PublicacionesRepositorio.mias() }
-    val habilidadesCarga = rememberCarga { ProgresoRepositorio.habilidades() }
-    val nivelesCarga = rememberCarga { ProgresoRepositorio.niveles() }
-    val reglasCarga = rememberCarga { ProgresoRepositorio.reglas() }
+    val portafolio = rememberCarga(ProgresoRepositorio.version) { soloVendedora { PublicacionesRepositorio.mias() } }
+    val habilidadesCarga = rememberCarga { soloVendedora { ProgresoRepositorio.habilidades() } }
+    val nivelesCarga = rememberCarga { soloVendedora { ProgresoRepositorio.niveles() } }
+    val reglasCarga = rememberCarga { soloVendedora { ProgresoRepositorio.reglas() } }
     var verTodosLosNiveles by remember { mutableStateOf(false) }
 
     // Diálogos de confirmación para pausar/reactivar
@@ -144,7 +147,7 @@ fun PerfilScreen(
                         ) {
                             Text(text = avatarSeleccionado, fontSize = 50.sp)
                         }
-                        Box(
+                        if (!SesionActual.esCompradora) Box(   // el nivel es de la vendedora
                             modifier = Modifier
                                 .size(32.dp)
                                 .clip(CircleShape)
@@ -185,7 +188,7 @@ fun PerfilScreen(
                             )
                         }
                         Spacer(modifier = Modifier.height(4.dp))
-                        TextButton(
+                        if (!SesionActual.esCompradora) TextButton(
                             onClick = { mostrarSelectorAvatar = true },
                             contentPadding = PaddingValues(0.dp)
                         ) {
@@ -225,10 +228,15 @@ fun PerfilScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                if (progreso.estado is Carga.Falla) {
+                if (!SesionActual.esCompradora && progreso.estado is Carga.Falla) {
                     MensajeError((progreso.estado as Carga.Falla).mensaje, progreso.recargar)
                 }
 
+                // La compradora solo ve lo suyo: sus datos (arriba), mis compras y ajustes.
+                // Nivel, portafolio y habilidades son de la vendedora.
+                if (SesionActual.esCompradora) {
+                TarjetaMisCompras()
+                } else {
                 //tarjeta del nivel
                 Card(
                     shape = RoundedCornerShape(12.dp),
@@ -523,6 +531,7 @@ fun PerfilScreen(
                         }
                     }
                 }
+                }   // fin de lo que no ve la compradora
                 Spacer(modifier = Modifier.height(20.dp))
                 OutlinedButton(
                     onClick = onCerrarSesion,
@@ -977,5 +986,43 @@ private fun PreviewTarjetaPublicacion() {
             onPausarClick = {},
             onEditarClick = {}
         )
+    }
+}
+// "Mis compras" de la compradora. El proceso de compra todavía no está activo, así que por ahora está vacío.
+@Composable
+private fun TarjetaMisCompras() {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MkFondoCard),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Outlined.ShoppingBag,
+                    contentDescription = null,
+                    tint = MkTitulo,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Mis compras",
+                    fontFamily = OutfitFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = MkTitulo,
+                    modifier = Modifier.semantics { heading() }
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Aún no tienes compras. Cuando el proceso de compra esté activo, aquí verás tus pedidos.",
+                fontFamily = JakartaSansFont,
+                fontSize = 14.sp,
+                lineHeight = 19.sp,
+                color = MkSubtitulo
+            )
+        }
     }
 }

@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.example.crisalida.data.FotoRemota
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.ResultadoApi
+import com.example.crisalida.data.SesionActual
 import com.example.crisalida.data.RetoDto
 import com.example.crisalida.data.RetosRepositorio
 import com.example.crisalida.ui.theme.*
@@ -160,6 +161,8 @@ private fun ColumnScope.Contenido(
         Dato(Icons.Outlined.Storefront, "Lo pide", reto.contratista)
     }
 
+    // la compradora solo consulta el reto: sin texto de entrega ni botones para aceptarlo
+    if (!SesionActual.esCompradora) {
     Spacer(Modifier.height(10.dp))
     Text(
         "Al entregarlo, el contratista lo revisa. Cuando lo valide, el reto cuenta para tu nivel y ganas flores para Lilu.",
@@ -177,6 +180,7 @@ private fun ColumnScope.Contenido(
         "entregado" -> Boton("Esperando validación", false) {}
         "validado" -> Boton("Completado ✓", false) {}
         else -> Boton("Aceptar el reto", !ocupado, onAceptar)
+    }
     }
     Spacer(Modifier.height(28.dp))
 }

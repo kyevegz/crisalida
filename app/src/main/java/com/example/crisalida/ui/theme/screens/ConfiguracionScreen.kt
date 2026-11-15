@@ -1,12 +1,17 @@
 package com.example.crisalida.ui.theme.screens
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +27,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -29,20 +36,40 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.crisalida.data.AhorroDatos
+import com.example.crisalida.data.AlmacenamientoLocal
+import com.example.crisalida.data.BienestarRepositorio
+import com.example.crisalida.data.ResultadoApi
+import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.theme.AjustesTexto
+import com.example.crisalida.ui.theme.ColorBotonEntrar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.example.crisalida.ui.theme.ColorFondoApp
 import com.example.crisalida.ui.theme.ConEscalaLimitada
 import com.example.crisalida.ui.theme.JakartaSansFont
@@ -52,6 +79,10 @@ import com.example.crisalida.data.ProteccionPantalla
 private val MkTitulo = Color(0xFF7F284F)
 private val MkSubtitulo = Color(0xFF545454)
 private val MkFondoItem = Color(0xFFEFE8EC)
+private val MkExito = Color(0xFF2E7D32)
+
+// ⚠️ Correo de contacto y ayuda: cámbialo por el correo real del equipo antes de publicar la app.
+private const val CORREO_AYUDA = "ayuda@crisalida.example"
 
 // Configuración: se abre desde el engrane del Perfil. Las secciones Seguridad, Privacidad, Datos y
 // almacenamiento y Cuenta se irán llenando en sus propios issues; Apariencia ya tiene el tamaño de
@@ -120,11 +151,11 @@ private fun ContenidoConfiguracion(
             }
 
             SeccionConfiguracion("Privacidad") {
-                TextoProximamente("Aquí podrás ver y ajustar cómo se protege tu información.")
+                OpcionesPrivacidad(contexto)
             }
 
             SeccionConfiguracion("Datos y almacenamiento") {
-                TextoProximamente("Aquí podrás revisar los datos que guarda la app en tu teléfono.")
+                OpcionesDatosYAlmacenamiento(contexto)
             }
 
             SeccionConfiguracion("Cuenta") {
@@ -141,6 +172,8 @@ private fun ContenidoConfiguracion(
                     accion = "Abrir líneas de ayuda",
                     onClick = onAbrirAyuda
                 )
+                Spacer(modifier = Modifier.height(16.dp))
+                OpcionContacto(contexto)
             }
         }
     }
@@ -332,6 +365,263 @@ private fun FilaInterruptor(
             colors = SwitchDefaults.colors(checkedTrackColor = MkTitulo)
         )
     }
+}
+
+// subtítulo de una opción (TalkBack lo anuncia como encabezado)
+@Composable
+private fun TituloOpcion(texto: String) {
+    Text(
+        text = texto,
+        fontFamily = OutfitFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 17.sp,
+        color = Color.Black,
+        modifier = Modifier.semantics { heading() }
+    )
+}
+
+// Privacidad: usuarias bloqueadas, permisos del sistema, qué datos guardamos y el aviso con los términos
+@Composable
+private fun OpcionesPrivacidad(contexto: Context) {
+    var avisoAbierto by remember { mutableStateOf<String?>(null) }
+    var mensajePermisos by remember { mutableStateOf<String?>(null) }
+
+    TituloOpcion("Usuarias bloqueadas")
+    TextoProximamente("Aquí verás a las personas que bloquees y podrás desbloquearlas. Quien bloqueas no puede verte ni escribirte.")
+
+    Spacer(modifier = Modifier.height(20.dp))
+    TituloOpcion("Permisos de la app")
+    TextoProximamente("Aquí puedes ver y cambiar a qué puede acceder Crisálida: ubicación, cámara y fotos.")
+    Spacer(modifier = Modifier.height(8.dp))
+    BotonAccion(texto = "Abrir ajustes del teléfono") {
+        mensajePermisos = if (abrirAjustesDeLaApp(contexto)) null
+        else "No pudimos abrir los ajustes. Búscalos en Ajustes del teléfono → Apps → Crisálida → Permisos."
+    }
+    mensajePermisos?.let { MensajeResultado(it, false) }
+
+    Spacer(modifier = Modifier.height(20.dp))
+    TituloOpcion("Qué datos guardamos y para qué")
+    Spacer(modifier = Modifier.height(4.dp))
+    DatoConTitulo(
+        "Lo que guardamos: ",
+        if (SesionActual.esCompradora) "tu correo, tu municipio y tu localidad, si decides agregarlos."
+        else "tu correo, tu municipio y tu localidad, y lo que registras en tu bitácora."
+    )
+    DatoConTitulo(
+        "Para qué: ",
+        "para que puedas entrar a tu cuenta, ver recursos cerca de ti y recuperar tu información si cambias de teléfono."
+    )
+    DatoConTitulo("Lo que no hacemos: ", "no vendemos tus datos ni los compartimos con terceros.")
+
+    Spacer(modifier = Modifier.height(20.dp))
+    TituloOpcion("Aviso de privacidad y términos")
+    Spacer(modifier = Modifier.height(4.dp))
+    FilaNavegable("Aviso de privacidad", "Leer el aviso de privacidad") { avisoAbierto = AVISO_PRIVACIDAD }
+    FilaNavegable("Términos de uso", "Leer los términos de uso") { avisoAbierto = TERMINOS_DE_USO }
+
+    avisoAbierto?.let { DialogoAviso(it) { avisoAbierto = null } }
+}
+
+// "Lo que guardamos: texto" con el inicio en negritas
+@Composable
+private fun DatoConTitulo(titulo: String, texto: String) {
+    Text(
+        text = buildAnnotatedString {
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(titulo) }
+            append(texto)
+        },
+        fontFamily = JakartaSansFont,
+        fontSize = 14.sp,
+        lineHeight = 19.sp,
+        color = MkSubtitulo,
+        modifier = Modifier.padding(bottom = 6.dp)
+    )
+}
+
+// abre la pantalla de ajustes de ESTA app en el teléfono (ahí se cambian los permisos)
+private fun abrirAjustesDeLaApp(contexto: Context): Boolean = try {
+    contexto.startActivity(
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", contexto.packageName, null))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    )
+    true
+} catch (e: Exception) {
+    false
+}
+
+// Ayuda → Contacto: abre la app de correo con un mensaje en blanco para el equipo
+@Composable
+private fun OpcionContacto(contexto: Context) {
+    var mensaje by remember { mutableStateOf<String?>(null) }
+    TituloOpcion("Contacto")
+    TextoProximamente("¿Tienes dudas o algún problema con la app? Escríbenos. No incluyas tu PIN ni datos que no quieras compartir.")
+    Spacer(modifier = Modifier.height(8.dp))
+    BotonAccion(texto = "Escribir correo") {
+        mensaje = try {
+            contexto.startActivity(
+                Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", CORREO_AYUDA, null))
+                    .putExtra(Intent.EXTRA_SUBJECT, "Ayuda con Crisálida")
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+            null
+        } catch (e: Exception) {
+            "No encontramos una app de correo. Puedes escribirnos a $CORREO_AYUDA."
+        }
+    }
+    mensaje?.let { MensajeResultado(it, false) }
+}
+
+// Datos y almacenamiento: borrar el historial de bienestar (con confirmación) y limpiar la caché del teléfono
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun OpcionesDatosYAlmacenamiento(contexto: Context) {
+    val scope = rememberCoroutineScope()
+    var confirmando by remember { mutableStateOf(false) }
+    var borrando by remember { mutableStateOf(false) }
+    var mensajeHistorial by remember { mutableStateOf<Pair<String, Boolean>?>(null) }   // texto, ¿fue éxito?
+    var limpiando by remember { mutableStateOf(false) }
+    var mensajeCache by remember { mutableStateOf<String?>(null) }
+
+    // Ahorro de datos: con él activo las fotos no se descargan solas, se cargan al tocarlas.
+    // (El modo sin conexión no es un ajuste: se activa solo cuando se pierde la red.)
+    AhorroDatos.cargar(contexto)
+    FilaInterruptor(
+        titulo = "Ahorro de datos",
+        descripcion = "Las fotos no se descargan solas: toca una foto para verla. Útil si tienes pocos datos móviles. " +
+            "Se conserva aunque cierres la app.",
+        activado = AhorroDatos.activo,
+        onCambio = { AhorroDatos.cambiar(contexto, it) }
+    )
+
+    // La compradora no tiene bienestar emocional: no hay historial que borrar
+    if (!SesionActual.esCompradora) {
+        Spacer(modifier = Modifier.height(20.dp))
+        Text(
+            text = "Borrar mi historial",
+            fontFamily = OutfitFont,
+            fontWeight = FontWeight.Bold,
+            fontSize = 17.sp,
+            color = Color.Black,
+            modifier = Modifier.semantics { heading() }
+        )
+        TextoProximamente(
+            "Elimina todos los registros de tu bitácora y de tu bienestar. " +
+                "Tus flores, tu nivel y tu mascota no cambian."
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (!confirmando) {
+            BotonAccion(texto = "Borrar mi historial", habilitado = !borrando) {
+                mensajeHistorial = null
+                confirmando = true
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MkFondoItem)
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = "¿Borrar tu historial?",
+                    fontFamily = JakartaSansFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Color.Black,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+                )
+                Text(
+                    text = "Se eliminarán todos los registros de tu bitácora. Esta acción no se puede deshacer.",
+                    fontFamily = JakartaSansFont,
+                    fontSize = 14.sp,
+                    lineHeight = 19.sp,
+                    color = MkSubtitulo
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    BotonAccion(texto = if (borrando) "Borrando…" else "Sí, borrar", habilitado = !borrando) {
+                        borrando = true
+                        scope.launch {
+                            mensajeHistorial = when (val r = BienestarRepositorio.borrarHistorial()) {
+                                is ResultadoApi.Exito -> "Listo, tu historial se borró." to true
+                                is ResultadoApi.Error -> r.mensaje to false
+                            }
+                            borrando = false
+                            confirmando = false
+                        }
+                    }
+                    OutlinedButton(
+                        onClick = { confirmando = false },
+                        enabled = !borrando,
+                        modifier = Modifier.heightIn(min = 48.dp),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Cancelar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo)
+                    }
+                }
+            }
+        }
+        mensajeHistorial?.let { (texto, exito) -> MensajeResultado(texto, exito) }
+    }
+
+    Spacer(modifier = Modifier.height(20.dp))
+    Text(
+        text = "Limpiar caché",
+        fontFamily = OutfitFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 17.sp,
+        color = Color.Black,
+        modifier = Modifier.semantics { heading() }
+    )
+    TextoProximamente("Libera espacio en el teléfono. No borra tu cuenta ni tu información, y tu sesión sigue abierta.")
+    Spacer(modifier = Modifier.height(8.dp))
+    BotonAccion(texto = if (limpiando) "Limpiando…" else "Limpiar caché", habilitado = !limpiando) {
+        limpiando = true
+        mensajeCache = null
+        scope.launch {
+            val liberados = withContext(Dispatchers.IO) { AlmacenamientoLocal.limpiarCache(contexto) }
+            mensajeCache = if (liberados > 0)
+                "Listo, se liberaron ${AlmacenamientoLocal.formatoTamano(liberados)}. Tu sesión sigue abierta."
+            else
+                "Listo, tu caché ya estaba limpia. Tu sesión sigue abierta."
+            limpiando = false
+        }
+    }
+    mensajeCache?.let { MensajeResultado(it, true) }
+}
+
+// botón de acción de Configuración: al menos 48 dp de alto
+@Composable
+private fun BotonAccion(texto: String, habilitado: Boolean = true, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        enabled = habilitado,
+        modifier = Modifier.heightIn(min = 48.dp),
+        shape = RoundedCornerShape(8.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = ColorBotonEntrar)
+    ) {
+        Text(texto, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
+    }
+}
+
+// mensaje de resultado: TalkBack lo lee solo cuando aparece
+@Composable
+private fun MensajeResultado(texto: String, exito: Boolean) {
+    Text(
+        text = texto,
+        fontFamily = JakartaSansFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 14.sp,
+        lineHeight = 19.sp,
+        color = if (exito) MkExito else MkTitulo,
+        modifier = Modifier
+            .padding(top = 8.dp)
+            .semantics { liveRegion = LiveRegionMode.Polite }
+    )
 }
 
 // una opción de lista de selección única: toda la fila es el botón (TalkBack: «Grande, botón de selección,

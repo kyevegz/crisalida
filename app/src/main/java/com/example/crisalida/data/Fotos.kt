@@ -3,9 +3,28 @@ package com.example.crisalida.data
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import android.util.LruCache
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CloudDownload
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -31,6 +50,25 @@ import java.io.ByteArrayOutputStream
 private const val LADO_MAXIMO = 1280
 private const val BYTES_MAXIMOS = 380 * 1024
 
+// Las fotos de la cámara guardan su giro en los metadatos (EXIF) en lugar de girar los píxeles; hay que leerlo
+// antes de volver a codificar, porque al recomprimir esos metadatos se pierden y la foto quedaría de lado.
+private fun gradosDeGiro(contexto: Context, uri: Uri): Int = try {
+    contexto.contentResolver.openInputStream(uri)?.use { flujo ->
+        when (ExifInterface(flujo).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> 90
+            ExifInterface.ORIENTATION_ROTATE_180 -> 180
+            ExifInterface.ORIENTATION_ROTATE_270 -> 270
+            else -> 0
+        }
+    } ?: 0
+} catch (e: Exception) {
+    0
+}
+
+private fun girar(bmp: Bitmap, grados: Int): Bitmap =
+    if (grados == 0) bmp
+    else Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, Matrix().apply { postRotate(grados.toFloat()) }, true)
+
 /** Devuelve la foto como JPEG liviano, o null si no se pudo leer. Llámala en un hilo de fondo (Dispatchers.IO). */
 fun prepararFoto(contexto: Context, uri: Uri): ByteArray? {
     return try {
@@ -44,7 +82,8 @@ fun prepararFoto(contexto: Context, uri: Uri): ByteArray? {
 
         // 2) Decodificar reducida
         val opciones = BitmapFactory.Options().apply { inSampleSize = muestreo }
-        val original = resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opciones) } ?: return null
+        val sinGirar = resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opciones) } ?: return null
+        val original = girar(sinGirar, gradosDeGiro(contexto, uri))
 
         // 3) Ajustar al lado máximo
         val escala = LADO_MAXIMO.toFloat() / maxOf(original.width, original.height)
@@ -66,9 +105,16 @@ fun prepararFoto(contexto: Context, uri: Uri): ByteArray? {
 }
 
 private val cacheFotos = object : LruCache<String, ImageBitmap>(24) {}
+
+/** Vacía las fotos que la app guarda en memoria (se vuelven a descargar al verlas). Lo usa "Limpiar caché". */
+fun vaciarCacheFotos() = cacheFotos.evictAll()
 private val clienteFotos by lazy { OkHttpClient() }   // las fotos son públicas: no necesitan token
 
-/** Muestra la foto que está en [ruta] (por ejemplo "/imagenes/abc..."). Mientras carga, o si falla, muestra [alternativa]. */
+/**
+ * Muestra la foto que está en [ruta] (por ejemplo "/imagenes/abc..."). Mientras carga, o si falla, muestra [alternativa].
+ * Con el ahorro de datos activo la foto no se descarga sola: se ve [alternativa] con un icono de descarga y la foto
+ * se carga hasta que la usuaria la toca (las que ya estaban en memoria se muestran sin gastar datos).
+ */
 @Composable
 fun FotoRemota(
     ruta: String?,
@@ -76,9 +122,15 @@ fun FotoRemota(
     contentScale: ContentScale = ContentScale.Crop,
     alternativa: @Composable () -> Unit = {}
 ) {
-    val imagen by produceState<ImageBitmap?>(initialValue = ruta?.let { cacheFotos.get(it) }, key1 = ruta) {
+    val contexto = LocalContext.current
+    AhorroDatos.cargar(contexto)
+    var autorizada by remember(ruta) { mutableStateOf(false) }   // la usuaria tocó esta foto
+    val permitida = !AhorroDatos.activo || autorizada || (ruta != null && cacheFotos.get(ruta) != null)
+
+    val imagen by produceState<ImageBitmap?>(initialValue = ruta?.let { cacheFotos.get(it) }, key1 = ruta, key2 = permitida) {
         if (ruta == null) { value = null; return@produceState }
         cacheFotos.get(ruta)?.let { value = it; return@produceState }
+        if (!permitida) { value = null; return@produceState }   // ahorro de datos: no se descarga todavía
         value = withContext(Dispatchers.IO) {
             try {
                 val url = RetrofitCliente.BASE_URL.trimEnd('/') + "/" + ruta.trimStart('/')
@@ -95,6 +147,25 @@ fun FotoRemota(
     val cargada = imagen
     if (cargada != null) {
         Image(bitmap = cargada, contentDescription = null, modifier = modifier, contentScale = contentScale)
+    } else if (!permitida && ruta != null) {
+        // la foto espera a que la toquen (un icono en lugar de texto para que quepa hasta en miniaturas)
+        Box(
+            modifier = Modifier
+                .clickable(onClickLabel = "Cargar la foto", role = Role.Button) { autorizada = true }
+                .semantics { contentDescription = "Foto sin cargar por el ahorro de datos. Toca para verla" },
+            contentAlignment = Alignment.Center
+        ) {
+            alternativa()
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color(0x99000000)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Outlined.CloudDownload, contentDescription = null, tint = Color.White)
+            }
+        }
     } else {
         alternativa()
     }
@@ -108,7 +179,8 @@ fun MiniaturaLocal(uri: Uri, modifier: Modifier = Modifier) {
         value = withContext(Dispatchers.IO) {
             try {
                 val opciones = BitmapFactory.Options().apply { inSampleSize = 4 }
-                contexto.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opciones) }?.asImageBitmap()
+                contexto.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opciones) }
+                    ?.let { girar(it, gradosDeGiro(contexto, uri)) }?.asImageBitmap()
             } catch (e: Exception) {
                 null
             }

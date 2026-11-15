@@ -37,6 +37,18 @@ private fun RegistroPreview() {
 
 @PreviewAcceso
 @Composable
+private fun RegistroCompradoraPreview() {
+    RegisterScreen(onNextClick = { _, _, _ -> }, onNavigateToLogin = {}, esCompradora = true)
+}
+
+@PreviewAcceso
+@Composable
+private fun ElegirRolPreview() {
+    ElegirRolScreen(onElegir = {}, onNavigateToLogin = {})
+}
+
+@PreviewAcceso
+@Composable
 private fun GaleriaPreview() {
     GaleriaMariposasScreen(onCerrar = {})
 }

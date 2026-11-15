@@ -209,6 +209,9 @@ data class EntradaBienestar(
 data class EntradasBienestarResponse(val entradas: List<EntradaBienestar>)
 data class BorradoResponse(val borrada: Boolean)
 
+// respuesta de "borrar todo mi historial": cuántos registros se eliminaron
+data class HistorialBorradoResponse(val borradas: Int = 0)
+
 // ======================================================== REPOSITORIOS
 
 /** Se sube de número cada vez que la usuaria gana flores o avanza; las pantallas que muestran
@@ -307,4 +310,9 @@ object BienestarRepositorio {
         llamarApi { RetrofitCliente.api.entradasBienestar(subtipo) }
 
     suspend fun borrarEntrada(id: String): ResultadoApi<BorradoResponse> = llamarApi { RetrofitCliente.api.borrarEntradaBienestar(id) }
+
+    /** Borra TODO el historial de bienestar. No toca flores, nivel ni a Lilu (eso lo garantiza el servidor). */
+    suspend fun borrarHistorial(): ResultadoApi<HistorialBorradoResponse> =
+        llamarApi { RetrofitCliente.api.borrarHistorialBienestar() }
+            .also { if (it is ResultadoApi.Exito) ProgresoRepositorio.avisarCambio() }   // que las pantallas se recarguen vacías
 }

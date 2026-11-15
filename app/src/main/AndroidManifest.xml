@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- solo se pide cuando la usuaria toca «Tomar foto» al publicar -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- la cámara es opcional: sin ella la app se instala y se usa la galería -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <application
         android:usesCleartextTraffic="true"
         android:allowBackup="true"
@@ -25,6 +29,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- comparte con la app de cámara el archivo temporal donde deja la foto (ver res/xml/file_paths.xml) -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

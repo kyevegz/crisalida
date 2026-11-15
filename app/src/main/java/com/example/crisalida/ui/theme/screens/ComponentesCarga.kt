@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.ProgresoResponse
 import com.example.crisalida.data.ResultadoApi
+import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.theme.ColorBotonEntrar
 import com.example.crisalida.ui.theme.ColorTextoPrincipal
 import com.example.crisalida.ui.theme.JakartaSansFont
@@ -56,7 +57,14 @@ fun <T> rememberCarga(vararg claves: Any?, llamada: suspend () -> ResultadoApi<T
 // progreso (nivel, flores, Lilu), se refresca cuando gana flores
 @Composable
 fun rememberProgreso(): CargaRemota<ProgresoResponse> =
-    rememberCarga(ProgresoRepositorio.version) { ProgresoRepositorio.yo() }
+    rememberCarga(ProgresoRepositorio.version) { soloVendedora { ProgresoRepositorio.yo() } }
+
+/**
+ * El servidor solo abre algunas rutas (progreso, mis retos, portafolio...) a la vendedora.
+ * Si la compradora llegara a pedirlas, la app ni siquiera hace la llamada y no muestra un error técnico.
+ */
+suspend fun <T> soloVendedora(llamada: suspend () -> ResultadoApi<T>): ResultadoApi<T> =
+    if (SesionActual.esCompradora) ResultadoApi.Error("Esta sección no está disponible para tu cuenta.") else llamada()
 
 @Composable
 fun IndicadorCargando(modifier: Modifier = Modifier) {
