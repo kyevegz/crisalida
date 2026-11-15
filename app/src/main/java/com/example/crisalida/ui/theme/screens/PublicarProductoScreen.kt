@@ -1,5 +1,7 @@
 package com.example.crisalida.ui.theme.screens
 
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import android.content.Context
 import android.net.Uri
 import org.json.JSONObject
@@ -46,7 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.ui.theme.*
-import com.example.crisalida.ui.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
 private val MkTitulo = Color(0xFF7F284F)
 private val MkSubtitulo = Color(0xFF545454)
 private val MkFondoBotonVolver = Color(0xFFE2D4DA)
@@ -56,6 +58,7 @@ private val MkVerdeSugeridoTexto = Color(0xFF155724)
 private val MkBotonPublicar = Color(0xFF7A2E50)
 private val MkFondoCard = Color(0xFFFFFFFF)
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PublicarProductoScreen(
     onNavigate: (String) -> Unit,
@@ -270,458 +273,474 @@ fun PublicarProductoScreen(
         selectedTab = 1,
         onNavigate = onNavigate
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(ColorFondoApp)
-                .padding(innerPadding)
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.Start
-        ) {
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Surface(
-                onClick = { onNavigate("portafolio_completo") },
-                shape = RoundedCornerShape(18.dp),
-                color = MkFondoBotonVolver,
-                shadowElevation = 1.dp
+        ContenidoCentrado(innerPadding) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.Start
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Surface(
+                    onClick = { onNavigate("portafolio_completo") },
+                    shape = RoundedCornerShape(18.dp),
+                    color = MkFondoBotonVolver,
+                    shadowElevation = 1.dp
                 ) {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = MkTitulo, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "Mi catálogo", fontFamily = OutfitFont, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MkTitulo)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(text = "Marketplace", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 32.sp, color = MkTitulo)
-            Text(text = if (editando) "Editar los detalles de tu publicación" else "Publicar en Mercado Seguro", fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo)
-            if (cargandoEdicion) IndicadorCargando()
-            if (borradorRecuperado) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MkVerdeSugeridoFondo),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("📝 Recuperamos tu borrador.", fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkVerdeSugeridoTexto, modifier = Modifier.weight(1f))
-                        TextButton(onClick = {
-                            prefs.edit().remove("publicacion").apply(); limpiarFormulario(); borradorRecuperado = false
-                        }) { Text("Descartar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkVerdeSugeridoTexto) }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MkFondoAlertaRosa),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier.size(36.dp).clip(CircleShape).background(MkTitulo.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "🛡️", fontSize = 18.sp)
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = "Vendes con tu alias de protección", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MkTitulo)
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(text = "Recuerda que si te encuentras en situación de riesgo, tu nombre legal, ubicación y teléfono jamás serán expuestos.", fontFamily = JakartaSansFont, fontSize = 12.sp, lineHeight = 17.sp, color = MkSubtitulo)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                TabTipoPublicacion(
-                    titulo = "Producto físico",
-                    icono = Icons.Outlined.Storefront,
-                    seleccionado = tipoPublicacion == 0,
-                    modifier = Modifier.weight(1f),
-                    onClick = { if (!editando && tipoPublicacion != 0) { tipoPublicacion = 0; categoriaSeleccionada = null } }
-                )
-                TabTipoPublicacion(
-                    titulo = "Servicio local",
-                    icono = Icons.Outlined.LocalMall,
-                    seleccionado = tipoPublicacion == 1,
-                    modifier = Modifier.weight(1f),
-                    onClick = { if (!editando && tipoPublicacion != 1) { tipoPublicacion = 1; categoriaSeleccionada = null } }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            //información general y categorías
-            Card(
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = MkFondoCard),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "1. Información del ${if (tipoPublicacion == 0) "Producto" else "Servicio"}",
-                        fontFamily = OutfitFont,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = MkTitulo
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(text = "Título descriptivo", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    OutlinedTextField(
-                        value = tituloDescriptivo,
-                        onValueChange = { tituloDescriptivo = it },
-                        placeholder = { Text(if (tipoPublicacion == 0) "Ej. Mermelada artesanal" else "Ej. Maquillaje a domicilio o Uñas acrílicas", fontFamily = JakartaSansFont, fontSize = 13.sp) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8), focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
-                        textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(text = "Categoría (Selecciona una)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    //categorías del servidor
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        categoriasActuales.chunked(2).forEach { fila ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                fila.forEach { cat ->
-                                    val isSelected = categoriaSeleccionada == cat
-                                    Surface(
-                                        onClick = { categoriaSeleccionada = cat },
-                                        shape = RoundedCornerShape(16.dp),
-                                        color = if (isSelected) MkTitulo else ColorCamposFondo.copy(alpha = 0.5f),
-                                        modifier = Modifier.weight(1f).heightIn(min = 36.dp)
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)) {
-                                            Text(
-                                                text = cat,
-                                                fontFamily = JakartaSansFont,
-                                                fontSize = 11.sp,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                color = if (isSelected) Color.White else ColorTextoPrincipal,
-                                                maxLines = 1,
-                                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                                            )
-                                        }
-                                    }
-                                }
-                                if (fila.size == 1) {
-                                    Spacer(modifier = Modifier.weight(1f))
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(text = "Fotografías (hasta 3)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
-                    Spacer(modifier = Modifier.height(8.dp))
-
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        fotosExistentes.toList().forEach { ruta ->
-                            Box(modifier = Modifier.size(90.dp).clip(RoundedCornerShape(8.dp)).background(Color.LightGray)) {
-                                FotoRemota(ruta = ruta, modifier = Modifier.fillMaxSize())
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(3.dp)
-                                        .size(22.dp)
-                                        .clip(RoundedCornerShape(11.dp))
-                                        .background(Color(0xAA000000))
-                                        .clickable {
-                                            scope.launch {
-                                                when (val r = PublicacionesRepositorio.borrarFoto(publicacionId.orEmpty(), ruta)) {
-                                                    is ResultadoApi.Exito -> fotosExistentes.remove(ruta)
-                                                    is ResultadoApi.Error -> mensajePublicar = r.mensaje
-                                                }
-                                            }
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(text = "✕", fontSize = 12.sp, color = Color.White)
-                                }
-                            }
-                        }
-                        imagenesSeleccionadas.toList().forEach { uri ->
-                            Box(modifier = Modifier.size(90.dp).clip(RoundedCornerShape(8.dp)).background(Color.LightGray)) {
-                                MiniaturaLocal(uri = uri, modifier = Modifier.fillMaxSize())
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(3.dp)
-                                        .size(22.dp)
-                                        .clip(RoundedCornerShape(11.dp))
-                                        .background(Color(0xAA000000))
-                                        .clickable { imagenesSeleccionadas.remove(uri) },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(text = "✕", fontSize = 12.sp, color = Color.White)
-                                }
-                            }
-                        }
-                        if (imagenesSeleccionadas.size + fotosExistentes.size < 3) {
-                            Box(
-                                modifier = Modifier
-                                    .size(90.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .border(1.dp, MkTitulo.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                                    .background(Color(0xFFFAF8F8))
-                                    .clickable { launcherGaleria.launch("image/*") },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(imageVector = Icons.Default.Add, contentDescription = "Agregar", tint = MkTitulo, modifier = Modifier.size(24.dp))
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(text = "+ Agregar", fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkTitulo, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(text = "Descripción", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    OutlinedTextField(
-                        value = descripcion,
-                        onValueChange = { descripcion = it },
-                        placeholder = { Text("Detalla los materiales, duración o lo que incluye tu servicio...", fontFamily = JakartaSansFont, fontSize = 13.sp) },
-                        modifier = Modifier.fillMaxWidth().height(100.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8), focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
-                        textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Card(
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = MkFondoCard),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "2. Costos y Tarifas",
-                        fontFamily = OutfitFont,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = MkTitulo
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    //si es servicio local, se permite elegir cómo cobra
-                    if (tipoPublicacion == 1) {
-                        Text(text = "Esquema de cobro del servicio", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MkTitulo)
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            BotonEsquemaCobro("Por hora", tipoCobroServicio == 1, Modifier.weight(1f)) { tipoCobroServicio = 1 }
-                            BotonEsquemaCobro("Servicio fijo", tipoCobroServicio == 2, Modifier.weight(1f)) { tipoCobroServicio = 2 }
-                            BotonEsquemaCobro("Por diseño", tipoCobroServicio == 3, Modifier.weight(1f)) { tipoCobroServicio = 3 }
-                        }
-                        Spacer(modifier = Modifier.height(14.dp))
-                    }
-
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(text = if (tipoPublicacion == 0) "Costo insumos" else "Materiales / Insumos", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MkTitulo)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            OutlinedTextField(
-                                value = costoInsumos,
-                                onValueChange = { costoInsumos = it },
-                                placeholder = { Text("\$ 0.00", fontFamily = JakartaSansFont, fontSize = 13.sp) },
-                                singleLine = true,
-                                shape = RoundedCornerShape(8.dp),
-                                colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8)),
-                                textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp)
-                            )
-                        }
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "Dedicación (Horas)", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MkTitulo)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            OutlinedTextField(
-                                value = horasDedicacion,
-                                onValueChange = { horasDedicacion = it },
-                                placeholder = { Text("Ej. 1.5", fontFamily = JakartaSansFont, fontSize = 13.sp) },
-                                singleLine = true,
-                                shape = RoundedCornerShape(8.dp),
-                                colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8)),
-                                textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(MkVerdeSugeridoFondo).padding(12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column {
-                            Text(text = "Rango Justo Sugerido", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MkVerdeSugeridoTexto)
-                            Text(text = "Cubre insumos + \$75/hr base digna", fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkVerdeSugeridoTexto)
-                        }
-                        Text(text = "Estimado automático", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkVerdeSugeridoTexto)
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = MkTitulo, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(text = "Mi catálogo", fontFamily = OutfitFont, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MkTitulo)
                     }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(text = "Precio final (Calculado o editable)", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MkTitulo)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    OutlinedTextField(
-                        value = precioFinal,
-                        onValueChange = { precioFinal = it },
-                        placeholder = { Text("\$ 0.00 MXN", fontFamily = JakartaSansFont, fontSize = 14.sp) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8)),
-                        textStyle = TextStyle(fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MkTitulo)
-                    )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-            Card(
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = MkFondoCard),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = if (tipoPublicacion == 0) "3. Entrega Neutral & Segura" else "3. Modalidad de Atención Segura",
-                        fontFamily = OutfitFont,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = MkTitulo
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = if (tipoPublicacion == 0)
-                            "Protege tu hogar. Selecciona cómo harás llegar el producto a tu compradora sin exponerte:"
-                        else
-                            "Define el entorno seguro donde se llevará a cabo el servicio:",
-                        fontFamily = JakartaSansFont,
-                        fontSize = 13.sp,
-                        color = MkSubtitulo
-                    )
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    if (tipoPublicacion == 0) {
-                        //oppciones para producto físico
-                        OpcionEntregaItem("Recoger en domicilio", "Las compradoras pasarán al domicilio registrado.", "A domicilio", opcionEntrega == 1) { opcionEntrega = 1 }
-                        Spacer(modifier = Modifier.height(10.dp))
-                        OpcionEntregaItem("Guía Ciega Prepago (Paquetería)", "Etiqueta generada automáticamente con remitente anónimo a nombre de Crisálida.", "Recomendado", opcionEntrega == 2) { opcionEntrega = 2 }
-                        Spacer(modifier = Modifier.height(10.dp))
-                        OpcionEntregaItem("Bajo encargo previo (Tiempo artesanal)", "El cliente paga en custodia; dispones de hasta 48 hrs para preparar sin prisas.", "24h - 48h", opcionEntrega == 3) { opcionEntrega = 3 }
-                    } else {
-                        //opciones adaptadas para servicio local
-                        OpcionEntregaItem("Atención en casa de la vendedora", "La clienta acude a tu espacio de trabajo seguro.", "Espacio propio", modalidadServicio == 1) { modalidadServicio = 1 }
-                        Spacer(modifier = Modifier.height(10.dp))
-                        OpcionEntregaItem("Servicio a domicilio de la compradora", "Tú acudes al domicilio de la clienta (ej. maquillaje o peinado para eventos).", "A domicilio", modalidadServicio == 2) { modalidadServicio = 2 }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(text = "Zona pública (la verán las compradoras)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    OutlinedTextField(
-                        value = zonaPublica,
-                        onValueChange = { if (it.length <= 80) zonaPublica = it },
-                        placeholder = { Text("Ej. Centro de Irapuato (solo colonia o zona)", fontFamily = JakartaSansFont, fontSize = 13.sp) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8), focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
-                        textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
-                    )
+                ConEscalaLimitada(tope = 1.3f) {
+                    Text(text = "Marketplace", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 32.sp, color = MkTitulo)
+                }
+                Text(text = if (editando) "Editar los detalles de tu publicación" else "Publicar en Mercado Seguro", fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo)
+                if (cargandoEdicion) IndicadorCargando()
+                if (borradorRecuperado) {
                     Spacer(modifier = Modifier.height(10.dp))
-                    Text(text = "Punto de entrega o dirección (solo tú la ves)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    OutlinedTextField(
-                        value = puntoEntrega,
-                        onValueChange = { if (it.length <= 200) puntoEntrega = it },
-                        placeholder = { Text("Opcional. Se guarda cifrada y nunca se muestra al público", fontFamily = JakartaSansFont, fontSize = 13.sp) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8), focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
-                        textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MkVerdeSugeridoFondo),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text("📝 Recuperamos tu borrador.", fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkVerdeSugeridoTexto, modifier = Modifier.weight(1f))
+                            TextButton(onClick = {
+                                prefs.edit().remove("publicacion").apply(); limpiarFormulario(); borradorRecuperado = false
+                            }) { Text("Descartar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkVerdeSugeridoTexto) }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MkFondoAlertaRosa),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier.size(36.dp).clip(CircleShape).background(MkTitulo.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = "🛡️", fontSize = 18.sp)
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "Vendes con tu alias de protección", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MkTitulo)
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(text = "Recuerda que si te encuentras en situación de riesgo, tu nombre legal, ubicación y teléfono jamás serán expuestos.", fontFamily = JakartaSansFont, fontSize = 12.sp, lineHeight = 17.sp, color = MkSubtitulo)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TabTipoPublicacion(
+                        titulo = "Producto físico",
+                        icono = Icons.Outlined.Storefront,
+                        seleccionado = tipoPublicacion == 0,
+                        modifier = Modifier.weight(1f),
+                        onClick = { if (!editando && tipoPublicacion != 0) { tipoPublicacion = 0; categoriaSeleccionada = null } }
+                    )
+                    TabTipoPublicacion(
+                        titulo = "Servicio local",
+                        icono = Icons.Outlined.LocalMall,
+                        seleccionado = tipoPublicacion == 1,
+                        modifier = Modifier.weight(1f),
+                        onClick = { if (!editando && tipoPublicacion != 1) { tipoPublicacion = 1; categoriaSeleccionada = null } }
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-            Button(
-                onClick = { publicar() },
-                enabled = !publicando,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MkBotonPublicar)
-            ) {
-                Text(text = if (publicando) (if (editando) "Guardando…" else "Publicando…") else if (editando) "Guardar cambios" else if (tipoPublicacion == 0) "Publicar Producto" else "Publicar Servicio", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                if (!editando) OutlinedButton(
-                    onClick = { guardarBorrador() },
-                    modifier = Modifier.weight(1f).heightIn(min = 42.dp),
-                    shape = RoundedCornerShape(10.dp)
+                //información general y categorías
+                Card(
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = MkFondoCard),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(imageVector = Icons.Outlined.BookmarkBorder, contentDescription = null, tint = MkTitulo, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "Guardar Borrador", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "1. Información del ${if (tipoPublicacion == 0) "Producto" else "Servicio"}",
+                            fontFamily = OutfitFont,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = MkTitulo
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(text = "Título descriptivo", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedTextField(
+                            value = tituloDescriptivo,
+                            onValueChange = { tituloDescriptivo = it },
+                            placeholder = { Text(if (tipoPublicacion == 0) "Ej. Mermelada artesanal" else "Ej. Maquillaje a domicilio o Uñas acrílicas", fontFamily = JakartaSansFont, fontSize = 13.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8), focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
+                            textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Text(text = "Categoría (Selecciona una)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        //categorías del servidor
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            categoriasActuales.chunked(2).forEach { fila ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(IntrinsicSize.Min),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    fila.forEach { cat ->
+                                        val isSelected = categoriaSeleccionada == cat
+                                        Surface(
+                                            onClick = { categoriaSeleccionada = cat },
+                                            shape = RoundedCornerShape(16.dp),
+                                            color = if (isSelected) MkTitulo else ColorCamposFondo.copy(alpha = 0.5f),
+                                            modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 36.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)) {
+                                                Text(
+                                                    text = cat,
+                                                    fontFamily = JakartaSansFont,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                    color = if (isSelected) Color.White else ColorTextoPrincipal,
+                                                    maxLines = 2,
+                                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                                )
+                                            }
+                                        }
+                                    }
+                                    if (fila.size == 1) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(text = "Fotografías (hasta 3)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            fotosExistentes.toList().forEach { ruta ->
+                                Box(modifier = Modifier.size(90.dp).clip(RoundedCornerShape(8.dp)).background(Color.LightGray)) {
+                                    FotoRemota(ruta = ruta, modifier = Modifier.fillMaxSize())
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(3.dp)
+                                            .size(22.dp)
+                                            .clip(RoundedCornerShape(11.dp))
+                                            .background(Color(0xAA000000))
+                                            .clickable {
+                                                scope.launch {
+                                                    when (val r = PublicacionesRepositorio.borrarFoto(publicacionId.orEmpty(), ruta)) {
+                                                        is ResultadoApi.Exito -> fotosExistentes.remove(ruta)
+                                                        is ResultadoApi.Error -> mensajePublicar = r.mensaje
+                                                    }
+                                                }
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(text = "✕", fontSize = 12.sp, color = Color.White)
+                                    }
+                                }
+                            }
+                            imagenesSeleccionadas.toList().forEach { uri ->
+                                Box(modifier = Modifier.size(90.dp).clip(RoundedCornerShape(8.dp)).background(Color.LightGray)) {
+                                    MiniaturaLocal(uri = uri, modifier = Modifier.fillMaxSize())
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(3.dp)
+                                            .size(22.dp)
+                                            .clip(RoundedCornerShape(11.dp))
+                                            .background(Color(0xAA000000))
+                                            .clickable { imagenesSeleccionadas.remove(uri) },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(text = "✕", fontSize = 12.sp, color = Color.White)
+                                    }
+                                }
+                            }
+                            if (imagenesSeleccionadas.size + fotosExistentes.size < 3) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(90.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .border(1.dp, MkTitulo.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                                        .background(Color(0xFFFAF8F8))
+                                        .clickable { launcherGaleria.launch("image/*") },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(imageVector = Icons.Default.Add, contentDescription = "Agregar", tint = MkTitulo, modifier = Modifier.size(24.dp))
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(text = "+ Agregar", fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkTitulo, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(text = "Descripción", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedTextField(
+                            value = descripcion,
+                            onValueChange = { descripcion = it },
+                            placeholder = { Text("Detalla los materiales, duración o lo que incluye tu servicio...", fontFamily = JakartaSansFont, fontSize = 13.sp) },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8), focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
+                            textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
+                        )
+                    }
                 }
 
-                OutlinedButton(
-                    onClick = { mostrarDialogoVistaPrevia = true },
-                    modifier = Modifier.weight(1f).heightIn(min = 42.dp),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Icon(imageVector = Icons.Outlined.Visibility, contentDescription = null, tint = MkTitulo, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "Vista Previa", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
-                }
-            }
+                Spacer(modifier = Modifier.height(20.dp))
 
-            Spacer(modifier = Modifier.height(36.dp))
+                Card(
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = MkFondoCard),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "2. Costos y Tarifas",
+                            fontFamily = OutfitFont,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = MkTitulo
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        //si es servicio local, se permite elegir cómo cobra
+                        if (tipoPublicacion == 1) {
+                            Text(text = "Esquema de cobro del servicio", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MkTitulo)
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(IntrinsicSize.Min),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                BotonEsquemaCobro("Por hora", tipoCobroServicio == 1, Modifier.weight(1f)) { tipoCobroServicio = 1 }
+                                BotonEsquemaCobro("Servicio fijo", tipoCobroServicio == 2, Modifier.weight(1f)) { tipoCobroServicio = 2 }
+                                BotonEsquemaCobro("Por diseño", tipoCobroServicio == 3, Modifier.weight(1f)) { tipoCobroServicio = 3 }
+                            }
+                            Spacer(modifier = Modifier.height(14.dp))
+                        }
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(text = if (tipoPublicacion == 0) "Costo insumos" else "Materiales / Insumos", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MkTitulo)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                OutlinedTextField(
+                                    value = costoInsumos,
+                                    onValueChange = { costoInsumos = it },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                    placeholder = { Text("\$ 0.00", fontFamily = JakartaSansFont, fontSize = 13.sp) },
+                                    singleLine = true,
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8)),
+                                    textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp)
+                                )
+                            }
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(text = "Dedicación (Horas)", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MkTitulo)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                OutlinedTextField(
+                                    value = horasDedicacion,
+                                    onValueChange = { horasDedicacion = it },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                    placeholder = { Text("Ej. 1.5", fontFamily = JakartaSansFont, fontSize = 13.sp) },
+                                    singleLine = true,
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8)),
+                                    textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(MkVerdeSugeridoFondo).padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(text = "Rango Justo Sugerido", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MkVerdeSugeridoTexto)
+                                Text(text = "Cubre insumos + \$75/hr base digna", fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkVerdeSugeridoTexto)
+                            }
+                            Text(text = "Estimado automático", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, textAlign = androidx.compose.ui.text.style.TextAlign.End, color = MkVerdeSugeridoTexto, modifier = Modifier.padding(start = 8.dp))
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Text(text = "Precio final (Calculado o editable)", fontFamily = JakartaSansFont, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MkTitulo)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedTextField(
+                            value = precioFinal,
+                            onValueChange = { precioFinal = it },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            placeholder = { Text("\$ 0.00 MXN", fontFamily = JakartaSansFont, fontSize = 14.sp) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8)),
+                            textStyle = TextStyle(fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MkTitulo)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Card(
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = MkFondoCard),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = if (tipoPublicacion == 0) "3. Entrega Neutral & Segura" else "3. Modalidad de Atención Segura",
+                            fontFamily = OutfitFont,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = MkTitulo
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = if (tipoPublicacion == 0)
+                                "Protege tu hogar. Selecciona cómo harás llegar el producto a tu compradora sin exponerte:"
+                            else
+                                "Define el entorno seguro donde se llevará a cabo el servicio:",
+                            fontFamily = JakartaSansFont,
+                            fontSize = 13.sp,
+                            color = MkSubtitulo
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        if (tipoPublicacion == 0) {
+                            //oppciones para producto físico
+                            OpcionEntregaItem("Recoger en domicilio", "Las compradoras pasarán al domicilio registrado.", "A domicilio", opcionEntrega == 1) { opcionEntrega = 1 }
+                            Spacer(modifier = Modifier.height(10.dp))
+                            OpcionEntregaItem("Guía Ciega Prepago (Paquetería)", "Etiqueta generada automáticamente con remitente anónimo a nombre de Crisálida.", "Recomendado", opcionEntrega == 2) { opcionEntrega = 2 }
+                            Spacer(modifier = Modifier.height(10.dp))
+                            OpcionEntregaItem("Bajo encargo previo (Tiempo artesanal)", "El cliente paga en custodia; dispones de hasta 48 hrs para preparar sin prisas.", "24h - 48h", opcionEntrega == 3) { opcionEntrega = 3 }
+                        } else {
+                            //opciones adaptadas para servicio local
+                            OpcionEntregaItem("Atención en casa de la vendedora", "La clienta acude a tu espacio de trabajo seguro.", "Espacio propio", modalidadServicio == 1) { modalidadServicio = 1 }
+                            Spacer(modifier = Modifier.height(10.dp))
+                            OpcionEntregaItem("Servicio a domicilio de la compradora", "Tú acudes al domicilio de la clienta (ej. maquillaje o peinado para eventos).", "A domicilio", modalidadServicio == 2) { modalidadServicio = 2 }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(text = "Zona pública (la verán las compradoras)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedTextField(
+                            value = zonaPublica,
+                            onValueChange = { if (it.length <= 80) zonaPublica = it },
+                            placeholder = { Text("Ej. Centro de Irapuato (solo colonia o zona)", fontFamily = JakartaSansFont, fontSize = 13.sp) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8), focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
+                            textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(text = "Punto de entrega o dirección (solo tú la ves)", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedTextField(
+                            value = puntoEntrega,
+                            onValueChange = { if (it.length <= 200) puntoEntrega = it },
+                            placeholder = { Text("Opcional. Se guarda cifrada y nunca se muestra al público", fontFamily = JakartaSansFont, fontSize = 13.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8), focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
+                            textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = { publicar() },
+                    enabled = !publicando,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MkBotonPublicar)
+                ) {
+                    Text(text = if (publicando) (if (editando) "Guardando…" else "Publicando…") else if (editando) "Guardar cambios" else if (tipoPublicacion == 0) "Publicar Producto" else "Publicar Servicio", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (!editando) OutlinedButton(
+                        onClick = { guardarBorrador() },
+                        modifier = Modifier.weight(1f).heightIn(min = 42.dp),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(imageVector = Icons.Outlined.BookmarkBorder, contentDescription = null, tint = MkTitulo, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = "Guardar Borrador", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
+                    }
+
+                    OutlinedButton(
+                        onClick = { mostrarDialogoVistaPrevia = true },
+                        modifier = Modifier.weight(1f).heightIn(min = 42.dp),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(imageVector = Icons.Outlined.Visibility, contentDescription = null, tint = MkTitulo, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = "Vista Previa", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(36.dp))
+            }
         }
     }
 
@@ -729,7 +748,7 @@ fun PublicarProductoScreen(
         AlertDialog(
             onDismissRequest = { mensajeBorrador = null },
             title = { Text("Borrador", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo) },
-            text = { Text(texto, fontFamily = JakartaSansFont, color = MkSubtitulo) },
+            text = { Text(texto, fontFamily = JakartaSansFont, color = MkSubtitulo, modifier = Modifier.verticalScroll(rememberScrollState())) },
             confirmButton = { Button(onClick = { mensajeBorrador = null }, colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)) { Text("Aceptar", color = Color.White) } },
             containerColor = Color.White, shape = RoundedCornerShape(12.dp)
         )
@@ -738,7 +757,7 @@ fun PublicarProductoScreen(
     mensajePublicar?.let { texto ->
         AlertDialog(
             onDismissRequest = { mensajePublicar = null; if (publicacionCreada) { if (editando && onEditado != null) onEditado() else onNavigate("portafolio_completo") } },
-            text = { Text(texto, fontFamily = JakartaSansFont, color = MkSubtitulo) },
+            text = { Text(texto, fontFamily = JakartaSansFont, color = MkSubtitulo, modifier = Modifier.verticalScroll(rememberScrollState())) },
             confirmButton = {
                 Button(
                     onClick = { mensajePublicar = null; if (publicacionCreada) { if (editando && onEditado != null) onEditado() else onNavigate("portafolio_completo") } },
@@ -854,10 +873,10 @@ private fun BotonEsquemaCobro(titulo: String, seleccionado: Boolean, modifier: M
         shape = RoundedCornerShape(8.dp),
         color = if (seleccionado) MkTitulo else Color(0xFFFAF8F8),
         border = BorderStroke(1.dp, if (seleccionado) MkTitulo else Color(0xFFE2D4DA)),
-        modifier = modifier.heightIn(min = 38.dp)
+        modifier = modifier.fillMaxHeight().heightIn(min = 38.dp)
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-            Text(text = titulo, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = if (seleccionado) Color.White else MkTitulo)
+            Text(text = titulo, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(horizontal = 4.dp), color = if (seleccionado) Color.White else MkTitulo)
         }
     }
 }
@@ -876,7 +895,7 @@ private fun OpcionEntregaItem(titulo: String, subtitulo: String, badge: String, 
             Spacer(modifier = Modifier.width(6.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = titulo, fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MkTitulo)
+                    Text(text = titulo, fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MkTitulo, modifier = Modifier.weight(1f).padding(end = 8.dp))
                     Surface(shape = CircleShape, color = MkTitulo.copy(alpha = 0.1f)) {
                         Text(text = badge, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MkTitulo, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
                     }
@@ -885,5 +904,37 @@ private fun OpcionEntregaItem(titulo: String, subtitulo: String, badge: String, 
                 Text(text = subtitulo, fontFamily = JakartaSansFont, fontSize = 12.sp, lineHeight = 17.sp, color = MkSubtitulo)
             }
         }
+    }
+}
+// Para revisar sin emulador (Preview: 320 dp, texto al 200 %, horizontal)
+@PreviewResponsivo
+@Composable
+private fun PreviewControlesPublicar() {
+    Column(
+        modifier = Modifier
+            .background(ColorFondoApp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            BotonEsquemaCobro("Por hora", true, Modifier.weight(1f)) {}
+            BotonEsquemaCobro("Servicio fijo", false, Modifier.weight(1f)) {}
+            BotonEsquemaCobro("Por diseño", false, Modifier.weight(1f)) {}
+        }
+        OpcionEntregaItem(
+            "Guía Ciega Prepago (Paquetería)",
+            "Etiqueta generada automáticamente con remitente anónimo a nombre de Crisálida.",
+            "Recomendado", true
+        ) {}
+        OpcionEntregaItem(
+            "Bajo encargo previo (Tiempo artesanal)",
+            "El cliente paga en custodia; dispones de hasta 48 hrs para preparar sin prisas.",
+            "24h - 48h", false
+        ) {}
     }
 }

@@ -1,5 +1,7 @@
 package com.example.crisalida.ui.theme.screens
 
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,14 +19,18 @@ import com.example.crisalida.ui.theme.ColorFondoApp
 // no se estira de lado a lado, se queda centrado
 private val AnchoMaximoLectura = 640.dp
 
-// fondo de la pantalla + contenido centrado con ancho máximo. Va dentro del Scaffold: recibe su innerPadding
+// fondo de la pantalla + contenido centrado con ancho máximo. Va dentro del Scaffold: recibe su innerPadding.
+// Además sube el contenido por encima del teclado (imePadding): con edge-to-edge, Android ya no
+// redimensiona la ventana, así que sin esto el teclado tapa los formularios.
 @Composable
 fun ContenidoCentrado(innerPadding: PaddingValues, contenido: @Composable () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(ColorFondoApp)
-            .padding(innerPadding),
+            .padding(innerPadding)
+            .consumeWindowInsets(innerPadding)
+            .imePadding(),
         contentAlignment = Alignment.TopCenter
     ) {
         Box(modifier = Modifier.widthIn(max = AnchoMaximoLectura).fillMaxSize()) {

@@ -1,5 +1,7 @@
 package com.example.crisalida.ui.theme.screens
 
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -44,7 +46,7 @@ import com.example.crisalida.data.PublicacionesRepositorio
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
 import kotlinx.coroutines.launch
-import com.example.crisalida.ui.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
 private val MkTitulo = Color(0xFF7F284F)
 private val MkSubtitulo = Color(0xFF545454)
 private val MkBarraProgreso = Color(0xFFB82C67)
@@ -118,83 +120,292 @@ fun PerfilScreen(
         selectedTab = 5,
         onNavigate = onNavigate
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(ColorFondoApp)
-                .padding(innerPadding)
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.Start
-        ) {
-            Spacer(modifier = Modifier.height(18.dp))
-
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+        ContenidoCentrado(innerPadding) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.Start
             ) {
-                Box(contentAlignment = Alignment.BottomEnd) {
-                    Box(
-                        modifier = Modifier
-                            .size(110.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF8A6D9E)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = avatarSeleccionado, fontSize = 50.sp)
-                    }
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .background(Color.White)
-                            .padding(2.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
+                Spacer(modifier = Modifier.height(18.dp))
+
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(contentAlignment = Alignment.BottomEnd) {
                         Box(
                             modifier = Modifier
-                                .fillMaxSize()
+                                .size(110.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF2E7D32)),
+                                .background(Color(0xFF8A6D9E)),
                             contentAlignment = Alignment.Center
                         ) {
+                            Text(text = avatarSeleccionado, fontSize = 50.sp)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(Color.White)
+                                .padding(2.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF2E7D32)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = datosProgreso?.nivel?.nivel?.toString() ?: "–",
+                                    fontFamily = OutfitFont,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    color = Color.White
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        ConEscalaLimitada(tope = 1.3f) {
                             Text(
-                                text = datosProgreso?.nivel?.nivel?.toString() ?: "–",
+                                text = SesionActual.seudonimo,
                                 fontFamily = OutfitFont,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                                color = Color.White
+                                fontSize = 28.sp,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                color = MkTitulo
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        TextButton(
+                            onClick = { mostrarSelectorAvatar = true },
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Edit,
+                                contentDescription = null,
+                                tint = MkTitulo,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Editar avatar",
+                                fontFamily = JakartaSansFont,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = MkTitulo
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(MkBarraFondo)
+                            .clickable { mostrarConfiguracion = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Settings,
+                            contentDescription = "Configuración",
+                            tint = MkTitulo,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (progreso.estado is Carga.Falla) {
+                    MensajeError((progreso.estado as Carga.Falla).mensaje, progreso.recargar)
+                }
+
+                //tarjeta del nivel
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MkFondoCard),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.LocalFlorist,
+                                contentDescription = null,
+                                tint = MkTitulo,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = datosProgreso?.let { "Nivel ${it.nivel.nivel}: ${it.nivel.nombre}" } ?: "Cargando tu nivel…",
+                                fontFamily = OutfitFont,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = MkTitulo
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(CircleShape)
+                                .background(MkBarraFondo)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(((datosProgreso?.nivel?.porcentaje ?: 0) / 100f).coerceIn(0f, 1f))
+                                    .fillMaxHeight()
+                                    .clip(CircleShape)
+                                    .background(MkBarraProgreso)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 8.dp),
+                                text = datosProgreso?.nivel?.let { n ->
+                                    if (n.siguienteNombre != null) "Próximo nivel: ${n.siguienteNombre} • ${n.actividades}/${n.actividadesSiguiente} actividades"
+                                    else "¡Llegaste al nivel máximo!"
+                                } ?: "",
+                                fontFamily = JakartaSansFont,
+                                fontSize = 12.sp,
+                                color = MkSubtitulo
+                            )
+                            Text(
+                                text = "${datosProgreso?.nivel?.porcentaje ?: 0}%",
+                                fontFamily = JakartaSansFont,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = MkSubtitulo
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = SesionActual.seudonimo,
-                        fontFamily = OutfitFont,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 28.sp,
-                        color = MkTitulo
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    TextButton(
-                        onClick = { mostrarSelectorAvatar = true },
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Edit,
-                            contentDescription = null,
-                            tint = MkTitulo,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
+                // apartado ¿Cómo subo de nivel?
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MkFondoCard),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Editar avatar",
+                            text = "¿Cómo subo de nivel?",
+                            fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MkTitulo
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Tu nivel sube con tus actividades completadas. Estas son las que cuentan:",
+                            fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = MkSubtitulo
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        val reglas = (reglasCarga.estado as? Carga.Lista)?.datos?.reglas ?: emptyMap()
+                        Text("-  Cada venta completada (cuando la compradora confirma que recibió su pedido)", fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = ColorTextoPrincipal)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("-  Cada microrreto que el contratista valida como bien hecho", fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = ColorTextoPrincipal)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Lo demás (publicar, registrar tus emociones, cuidar a Lilu) no sube de nivel, pero sí te da flores 🌸 para Lilu." +
+                                    (reglas["nivel"]?.let { " Y cada vez que subes de nivel, ¡ganas $it flores de regalo!" } ?: ""),
+                            fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = MkSubtitulo
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TextButton(onClick = { verTodosLosNiveles = !verTodosLosNiveles }, contentPadding = PaddingValues(0.dp)) {
+                            Text(
+                                text = if (verTodosLosNiveles) "Ocultar los niveles ▲" else "Ver los 10 niveles ▼",
+                                fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo
+                            )
+                        }
+                        if (verTodosLosNiveles) {
+                            val niveles = (nivelesCarga.estado as? Carga.Lista)?.datos?.niveles ?: emptyList()
+                            if (niveles.isEmpty()) Text("Cargando…", fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo)
+                            niveles.forEach { n ->
+                                val esActual = n.nivel == datosProgreso?.nivel?.nivel
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 2.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(if (esActual) MkBarraFondo else Color.Transparent)
+                                        .padding(horizontal = 8.dp, vertical = 5.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(end = 8.dp),
+                                        text = "Nivel ${n.nivel} · ${n.nombre}" + if (esActual) "  (tú)" else "",
+                                        fontFamily = JakartaSansFont, fontSize = 13.sp,
+                                        fontWeight = if (esActual) FontWeight.Bold else FontWeight.Normal, color = ColorTextoPrincipal
+                                    )
+                                    Text(
+                                        text = if (n.actividadesRequeridas == 0) "al empezar" else "${n.actividadesRequeridas} actividades",
+                                        fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                //apartado de estadísticas
+                DisposicionEstadisticas { m ->
+                    CardEstadisticaColumna(numero = datosProgreso?.estadisticas?.retosCompletados?.toString() ?: "–", etiqueta = "Retos completados", icon = Icons.Outlined.WorkspacePremium, modifier = m)
+                    CardEstadisticaColumna(numero = datosProgreso?.estadisticas?.calificacionPromedio?.let { String.format(java.util.Locale.US, "%.1f", it) } ?: "–", etiqueta = "${datosProgreso?.estadisticas?.ventasCompletadas ?: 0} ventas", icon = Icons.Outlined.StarBorder, modifier = m)
+                    CardEstadisticaColumna(numero = datosProgreso?.lilu?.flores?.toString() ?: "–", etiqueta = "Flores", icon = Icons.Outlined.LocalFlorist, modifier = m)
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                //portafolio personal
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Portafolio personal",
+                            fontFamily = OutfitFont,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 24.sp,
+                            color = MkTitulo
+                        )
+                        Text(
+                            text = "${publicacionesPortafolio.size} publicaciones registradas",
                             fontFamily = JakartaSansFont,
+                            fontSize = 13.sp,
+                            color = MkSubtitulo
+                        )
+                    }
+                    TextButton(onClick = { onNavigate("portafolio_completo") }) {
+                        Text(
+                            text = "Ver más >>",
+                            fontFamily = OutfitFont,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             color = MkTitulo
@@ -202,332 +413,128 @@ fun PerfilScreen(
                     }
                 }
 
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(MkBarraFondo)
-                        .clickable { mostrarConfiguracion = true },
-                    contentAlignment = Alignment.Center
+                Spacer(modifier = Modifier.height(10.dp))
+
+                //solo muestras 3 primeros publis del catálogo/portafolio
+                when (val e = portafolio.estado) {
+                    is Carga.Cargando -> IndicadorCargando()
+                    is Carga.Falla -> MensajeError(e.mensaje, portafolio.recargar)
+                    is Carga.Lista -> if (publicacionesPortafolio.isEmpty()) {
+                        Text(
+                            text = "Aún no has publicado nada. ¡Anímate a subir tu primer producto o servicio!",
+                            fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo
+                        )
+                    }
+                }
+
+                publicacionesPortafolio.take(3).forEach { pub ->
+                    ItemPortafolioCardFiel(
+                        pub = pub,
+                        onPausarClick = {
+                            if (pub.estado == "En revisión" || pub.estado == "Rechazado") {
+                                mensajeInfo = if (pub.estado == "En revisión")
+                                    "Tu publicación está en revisión. Cuando la aprobemos aparecerá en el marketplace."
+                                else "Esta publicación no fue aprobada, así que no se puede pausar ni reactivar."
+                            } else {
+                                publicacionSeleccionadaParaAccion = pub
+                                tipoAccionPendiente = if (pub.estado == "Pausado") "reactivar" else "pausar"
+                            }
+                        },
+                        onEditarClick = { onEditar(pub.id) }
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
+
+                Button(
+                    onClick = { onNavigate("publicar_producto") },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF005524))
                 ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Settings,
-                        contentDescription = "Configuración",
-                        tint = MkTitulo,
-                        modifier = Modifier.size(26.dp)
+                    Text(
+                        text = "+  Añadir nuevo producto",
+                        fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-            if (progreso.estado is Carga.Falla) {
-                MensajeError((progreso.estado as Carga.Falla).mensaje, progreso.recargar)
-            }
-
-            //tarjeta del nivel
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MkFondoCard),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.LocalFlorist,
-                            contentDescription = null,
-                            tint = MkTitulo,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = datosProgreso?.let { "Nivel ${it.nivel.nivel}: ${it.nivel.nombre}" } ?: "Cargando tu nivel…",
-                            fontFamily = OutfitFont,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = MkTitulo
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(CircleShape)
-                            .background(MkBarraFondo)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(((datosProgreso?.nivel?.porcentaje ?: 0) / 100f).coerceIn(0f, 1f))
-                                .fillMaxHeight()
-                                .clip(CircleShape)
-                                .background(MkBarraProgreso)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = datosProgreso?.nivel?.let { n ->
-                                if (n.siguienteNombre != null) "Próximo nivel: ${n.siguienteNombre} • ${n.actividades}/${n.actividadesSiguiente} actividades"
-                                else "¡Llegaste al nivel máximo!"
-                            } ?: "",
-                            fontFamily = JakartaSansFont,
-                            fontSize = 12.sp,
-                            color = MkSubtitulo
-                        )
-                        Text(
-                            text = "${datosProgreso?.nivel?.porcentaje ?: 0}%",
-                            fontFamily = JakartaSansFont,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp,
-                            color = MkSubtitulo
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // apartado ¿Cómo subo de nivel?
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MkFondoCard),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "¿Cómo subo de nivel?",
-                        fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MkTitulo
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Tu nivel sube con tus actividades completadas. Estas son las que cuentan:",
-                        fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = MkSubtitulo
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    val reglas = (reglasCarga.estado as? Carga.Lista)?.datos?.reglas ?: emptyMap()
-                    Text("-  Cada venta completada (cuando la compradora confirma que recibió su pedido)", fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = ColorTextoPrincipal)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("-  Cada microrreto que el contratista valida como bien hecho", fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = ColorTextoPrincipal)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Lo demás (publicar, registrar tus emociones, cuidar a Lilu) no sube de nivel, pero sí te da flores 🌸 para Lilu." +
-                            (reglas["nivel"]?.let { " Y cada vez que subes de nivel, ¡ganas $it flores de regalo!" } ?: ""),
-                        fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = MkSubtitulo
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TextButton(onClick = { verTodosLosNiveles = !verTodosLosNiveles }, contentPadding = PaddingValues(0.dp)) {
-                        Text(
-                            text = if (verTodosLosNiveles) "Ocultar los niveles ▲" else "Ver los 10 niveles ▼",
-                            fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo
-                        )
-                    }
-                    if (verTodosLosNiveles) {
-                        val niveles = (nivelesCarga.estado as? Carga.Lista)?.datos?.niveles ?: emptyList()
-                        if (niveles.isEmpty()) Text("Cargando…", fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo)
-                        niveles.forEach { n ->
-                            val esActual = n.nivel == datosProgreso?.nivel?.nivel
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 2.dp)
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(if (esActual) MkBarraFondo else Color.Transparent)
-                                    .padding(horizontal = 8.dp, vertical = 5.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "Nivel ${n.nivel} · ${n.nombre}" + if (esActual) "  (tú)" else "",
-                                    fontFamily = JakartaSansFont, fontSize = 13.sp,
-                                    fontWeight = if (esActual) FontWeight.Bold else FontWeight.Normal, color = ColorTextoPrincipal
-                                )
-                                Text(
-                                    text = if (n.actividadesRequeridas == 0) "al empezar" else "${n.actividadesRequeridas} actividades",
-                                    fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            //apartado de estadísticas
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                CardEstadisticaColumna(numero = datosProgreso?.estadisticas?.retosCompletados?.toString() ?: "–", etiqueta = "Retos completados", icon = Icons.Outlined.WorkspacePremium, modifier = Modifier.weight(1f))
-                Spacer(modifier = Modifier.width(8.dp))
-                CardEstadisticaColumna(numero = datosProgreso?.estadisticas?.calificacionPromedio?.let { String.format(java.util.Locale.US, "%.1f", it) } ?: "–", etiqueta = "${datosProgreso?.estadisticas?.ventasCompletadas ?: 0} ventas", icon = Icons.Outlined.StarBorder, modifier = Modifier.weight(1f))
-                Spacer(modifier = Modifier.width(8.dp))
-                CardEstadisticaColumna(numero = datosProgreso?.lilu?.flores?.toString() ?: "–", etiqueta = "Flores", icon = Icons.Outlined.LocalFlorist, modifier = Modifier.weight(1f))
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            //portafolio personal
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                Column {
-                    Text(
-                        text = "Portafolio personal",
-                        fontFamily = OutfitFont,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 24.sp,
-                        color = MkTitulo
-                    )
-                    Text(
-                        text = "${publicacionesPortafolio.size} publicaciones registradas",
-                        fontFamily = JakartaSansFont,
-                        fontSize = 13.sp,
-                        color = MkSubtitulo
-                    )
-                }
-                TextButton(onClick = { onNavigate("portafolio_completo") }) {
-                    Text(
-                        text = "Ver más >>",
-                        fontFamily = OutfitFont,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = MkTitulo
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            //solo muestras 3 primeros publis del catálogo/portafolio
-            when (val e = portafolio.estado) {
-                is Carga.Cargando -> IndicadorCargando()
-                is Carga.Falla -> MensajeError(e.mensaje, portafolio.recargar)
-                is Carga.Lista -> if (publicacionesPortafolio.isEmpty()) {
-                    Text(
-                        text = "Aún no has publicado nada. ¡Anímate a subir tu primer producto o servicio!",
-                        fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo
-                    )
-                }
-            }
-
-            publicacionesPortafolio.take(3).forEach { pub ->
-                ItemPortafolioCardFiel(
-                    pub = pub,
-                    onPausarClick = {
-                        if (pub.estado == "En revisión" || pub.estado == "Rechazado") {
-                            mensajeInfo = if (pub.estado == "En revisión")
-                                "Tu publicación está en revisión. Cuando la aprobemos aparecerá en el marketplace."
-                            else "Esta publicación no fue aprobada, así que no se puede pausar ni reactivar."
-                        } else {
-                            publicacionSeleccionadaParaAccion = pub
-                            tipoAccionPendiente = if (pub.estado == "Pausado") "reactivar" else "pausar"
-                        }
-                    },
-                    onEditarClick = { onEditar(pub.id) }
-                )
-                Spacer(modifier = Modifier.height(14.dp))
-            }
-
-            Button(
-                onClick = { onNavigate("publicar_producto") },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF005524))
-            ) {
+                //habilidades
                 Text(
-                    text = "+  Añadir nuevo producto",
-                    fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White
+                    text = "Habilidades y talentos",
+                    fontFamily = OutfitFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    color = MkTitulo
                 )
-            }
+                Text(
+                    text = "Insignias desbloqueadas a partir de tus respuestas en tu registro.",
+                    fontFamily = JakartaSansFont,
+                    fontSize = 13.sp,
+                    color = MkSubtitulo
+                )
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-            //habilidades
-            Text(
-                text = "Habilidades y talentos",
-                fontFamily = OutfitFont,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                color = MkTitulo
-            )
-            Text(
-                text = "Insignias desbloqueadas a partir de tus respuestas en tu registro.",
-                fontFamily = JakartaSansFont,
-                fontSize = 13.sp,
-                color = MkSubtitulo
-            )
+                when (val e = habilidadesCarga.estado) {
+                    is Carga.Cargando -> IndicadorCargando()
+                    is Carga.Falla -> MensajeError(e.mensaje, habilidadesCarga.recargar)
+                    is Carga.Lista -> {}
+                }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            when (val e = habilidadesCarga.estado) {
-                is Carga.Cargando -> IndicadorCargando()
-                is Carga.Falla -> MensajeError(e.mensaje, habilidadesCarga.recargar)
-                is Carga.Lista -> {}
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                habilidadesInsignias.forEach { hab ->
-                    Card(
-                        shape = RoundedCornerShape(10.dp),
-                        colors = CardDefaults.cardColors(containerColor = MkFondoCard),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    habilidadesInsignias.forEach { hab ->
+                        Card(
+                            shape = RoundedCornerShape(10.dp),
+                            colors = CardDefaults.cardColors(containerColor = MkFondoCard),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(MkBarraFondo),
-                                contentAlignment = Alignment.Center
+                            Row(
+                                modifier = Modifier.padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(text = "🎖️", fontSize = 18.sp)
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = hab.titulo,
-                                    fontFamily = OutfitFont,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
-                                    color = MkTitulo
-                                )
-                                Text(
-                                    text = hab.descripcion,
-                                    fontFamily = JakartaSansFont,
-                                    fontSize = 13.sp,
-                                    color = MkSubtitulo,
-                                    lineHeight = 18.sp
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(MkBarraFondo),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(text = "🎖️", fontSize = 18.sp)
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = hab.titulo,
+                                        fontFamily = OutfitFont,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp,
+                                        color = MkTitulo
+                                    )
+                                    Text(
+                                        text = hab.descripcion,
+                                        fontFamily = JakartaSansFont,
+                                        fontSize = 13.sp,
+                                        color = MkSubtitulo,
+                                        lineHeight = 18.sp
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
-            Spacer(modifier = Modifier.height(20.dp))
-            OutlinedButton(
-                onClick = onCerrarSesion,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text("Cerrar sesión", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MkTitulo)
-            }
+                Spacer(modifier = Modifier.height(20.dp))
+                OutlinedButton(
+                    onClick = onCerrarSesion,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Cerrar sesión", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MkTitulo)
+                }
 
-            Spacer(modifier = Modifier.height(36.dp))
+                Spacer(modifier = Modifier.height(36.dp))
+            }
         }
     }
 
@@ -606,7 +613,7 @@ fun PerfilScreen(
                 Text(text = "Configuración", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo)
             },
             text = {
-                Column {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     Text(text = "Tamaño del texto", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Color.Black)
                     Text(
                         text = "Elige el que se te haga más cómodo de leer.",
@@ -758,6 +765,7 @@ private fun CardEstadisticaColumna(
 }
 
 //tarjeta de publicación
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ItemPortafolioCardFiel(
     pub: PublicacionPortafolio,
@@ -813,10 +821,11 @@ fun ItemPortafolioCardFiel(
 
                 // Información principal
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(
+                    FlowRow(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        itemVerticalAlignment = Alignment.CenterVertically
                     ) {
                         Surface(
                             shape = CircleShape,
@@ -846,6 +855,8 @@ fun ItemPortafolioCardFiel(
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                         color = Color.Black
                     )
                     Text(
@@ -942,7 +953,9 @@ fun ItemPortafolioCardFiel(
                                 fontFamily = JakartaSansFont,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
-                                color = MkTitulo
+                                textAlign = TextAlign.Center,
+                                color = MkTitulo,
+                                modifier = Modifier.padding(horizontal = 6.dp)
                             )
                         }
                     }
@@ -981,5 +994,53 @@ fun ItemPortafolioCardFiel(
                 }
             }
         }
+    }
+}
+// las tres estadísticas van en una fila; si la pantalla es angosta (< 360 dp) o el texto está muy
+// grande, van una debajo de otra para que sus etiquetas no se corten
+@Composable
+private fun DisposicionEstadisticas(tarjetas: @Composable (Modifier) -> Unit) {
+    val apretado = LocalConfiguration.current.screenWidthDp < 360 || LocalDensity.current.fontScale > 1.3f
+    if (apretado) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            tarjetas(Modifier.fillMaxWidth())
+        }
+    } else {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            tarjetas(Modifier.weight(1f))
+        }
+    }
+}
+
+// Para revisar sin emulador (Preview: 320 dp, texto al 200 %, horizontal)
+@PreviewResponsivo
+@Composable
+private fun PreviewTarjetaPublicacion() {
+    Column(
+        modifier = Modifier
+            .background(ColorFondoApp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        DisposicionEstadisticas { m ->
+            CardEstadisticaColumna(numero = "4", etiqueta = "Retos completados", icon = Icons.Outlined.WorkspacePremium, modifier = m)
+            CardEstadisticaColumna(numero = "4.8", etiqueta = "12 ventas", icon = Icons.Outlined.StarBorder, modifier = m)
+            CardEstadisticaColumna(numero = "230", etiqueta = "Flores", icon = Icons.Outlined.LocalFlorist, modifier = m)
+        }
+        ItemPortafolioCardFiel(
+            pub = PublicacionPortafolio(
+                id = "1", titulo = "Mermelada artesanal de fresa y frutos rojos", precio = "$85.00 MXN",
+                estado = "Por encargo", detalleVentas = "12 ventas", ubicacionDetalle = "Recoge en Centro de Irapuato",
+                pedidosCount = 3
+            ),
+            onPausarClick = {},
+            onEditarClick = {}
+        )
     }
 }

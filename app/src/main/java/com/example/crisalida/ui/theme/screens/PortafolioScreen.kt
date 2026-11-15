@@ -1,5 +1,6 @@
 package com.example.crisalida.ui.theme.screens
 
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.background
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.PublicacionesRepositorio
@@ -24,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.SesionActual
-import com.example.crisalida.ui.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
 private val MkTitulo = Color(0xFF7F284F)
 private val MkSubtitulo = Color(0xFF545454)
 private val MkVerdeBoton = Color(0xFF005524)
@@ -58,187 +59,193 @@ fun PortafolioScreen(
         selectedTab = 5, //Pestaña de perfil
         onNavigate = onNavigate
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(ColorFondoApp)
-                .padding(innerPadding)
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.Start
-        ) {
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Surface(
-                onClick = { onNavigate("perfil") },
-                shape = RoundedCornerShape(18.dp),
-                color = MkFondoBotonVolver,
-                shadowElevation = 1.dp
+        ContenidoCentrado(innerPadding) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.Start
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Surface(
+                    onClick = { onNavigate("perfil") },
+                    shape = RoundedCornerShape(18.dp),
+                    color = MkFondoBotonVolver,
+                    shadowElevation = 1.dp
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Volver",
-                        tint = MkTitulo,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Perfil",
-                        fontFamily = OutfitFont,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp,
-                        color = MkTitulo
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                // Avatar con su nivel actual
-                Box(contentAlignment = Alignment.BottomEnd) {
-                    Box(
-                        modifier = Modifier
-                            .size(90.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF8A6D9E)),
-                        contentAlignment = Alignment.Center
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = avatarActual, fontSize = 40.sp)
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver",
+                            tint = MkTitulo,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Perfil",
+                            fontFamily = OutfitFont,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            color = MkTitulo
+                        )
                     }
-                    Box(
-                        modifier = Modifier
-                            .size(28.dp)
-                            .clip(CircleShape)
-                            .background(Color.White)
-                            .padding(2.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Avatar con su nivel actual
+                    Box(contentAlignment = Alignment.BottomEnd) {
                         Box(
                             modifier = Modifier
-                                .fillMaxSize()
+                                .size(90.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF2E7D32)),
+                                .background(Color(0xFF8A6D9E)),
                             contentAlignment = Alignment.Center
                         ) {
+                            Text(text = avatarActual, fontSize = 40.sp)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color.White)
+                                .padding(2.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF2E7D32)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = nivelActual?.toString() ?: "–",
+                                    fontFamily = OutfitFont,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = Color.White
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        ConEscalaLimitada(tope = 1.3f) {
                             Text(
-                                text = nivelActual?.toString() ?: "–",
+                                text = progreso?.seudonimo ?: SesionActual.seudonimo,
                                 fontFamily = OutfitFont,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
+                                fontSize = 24.sp,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                color = MkTitulo
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Button(
+                            onClick = { onNavigate("publicar_producto") },
+                            modifier = Modifier.heightIn(min = 38.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MkVerdeBoton)
+                        ) {
+                            Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Añadir nuevo producto",
+                                fontFamily = OutfitFont,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
                                 color = Color.White
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                Column(modifier = Modifier.weight(1f)) {
+                ConEscalaLimitada(tope = 1.3f) {
                     Text(
-                        text = progreso?.seudonimo ?: SesionActual.seudonimo,
+                        text = "Portafolio personal",
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 24.sp,
+                        fontSize = 28.sp,
                         color = MkTitulo
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Button(
-                        onClick = { onNavigate("publicar_producto") },
-                        modifier = Modifier.heightIn(min = 38.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MkVerdeBoton)
-                    ) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
+                }
+                Text(
+                    text = "${publicacionesPortafolio.size} publicaciones registradas",
+                    fontFamily = JakartaSansFont,
+                    fontSize = 13.sp,
+                    color = MkSubtitulo
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                when (val e = portafolio.estado) {
+                    is Carga.Cargando -> IndicadorCargando()
+                    is Carga.Falla -> MensajeError(e.mensaje, portafolio.recargar)
+                    is Carga.Lista -> if (publicacionesPortafolio.isEmpty()) {
                         Text(
-                            text = "Añadir nuevo producto",
-                            fontFamily = OutfitFont,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            color = Color.White
+                            text = "Aún no has publicado nada. ¡Anímate a subir tu primer producto o servicio!",
+                            fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo
                         )
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                publicacionesPortafolio.forEach { pub ->
+                    ItemPortafolioCardFiel(
+                        pub = pub,
+                        onPausarClick = {
+                            if (pub.estado == "En revisión" || pub.estado == "Rechazado") {
+                                mensajeInfo = if (pub.estado == "En revisión")
+                                    "Tu publicación está en revisión. Cuando la aprobemos aparecerá en el marketplace."
+                                else "Esta publicación no fue aprobada, así que no se puede pausar ni reactivar."
+                            } else {
+                                publicacionSeleccionadaParaAccion = pub
+                                tipoAccionPendiente = if (pub.estado == "Pausado") "reactivar" else "pausar"
+                            }
+                        },
+                        onEditarClick = { onEditar(pub.id) }
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
 
-            Text(
-                text = "Portafolio personal",
-                fontFamily = OutfitFont,
-                fontWeight = FontWeight.Bold,
-                fontSize = 28.sp,
-                color = MkTitulo
-            )
-            Text(
-                text = "${publicacionesPortafolio.size} publicaciones registradas",
-                fontFamily = JakartaSansFont,
-                fontSize = 13.sp,
-                color = MkSubtitulo
-            )
+                Spacer(modifier = Modifier.height(10.dp))
 
-            Spacer(modifier = Modifier.height(14.dp))
-
-            when (val e = portafolio.estado) {
-                is Carga.Cargando -> IndicadorCargando()
-                is Carga.Falla -> MensajeError(e.mensaje, portafolio.recargar)
-                is Carga.Lista -> if (publicacionesPortafolio.isEmpty()) {
+                Button(
+                    onClick = { onNavigate("publicar_producto") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MkVerdeBoton)
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Aún no has publicado nada. ¡Anímate a subir tu primer producto o servicio!",
-                        fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo
+                        text = "Añadir nuevo producto",
+                        fontFamily = OutfitFont,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color.White
                     )
                 }
+
+                Spacer(modifier = Modifier.height(36.dp))
             }
-
-            publicacionesPortafolio.forEach { pub ->
-                ItemPortafolioCardFiel(
-                    pub = pub,
-                    onPausarClick = {
-                        if (pub.estado == "En revisión" || pub.estado == "Rechazado") {
-                            mensajeInfo = if (pub.estado == "En revisión")
-                                "Tu publicación está en revisión. Cuando la aprobemos aparecerá en el marketplace."
-                            else "Esta publicación no fue aprobada, así que no se puede pausar ni reactivar."
-                        } else {
-                            publicacionSeleccionadaParaAccion = pub
-                            tipoAccionPendiente = if (pub.estado == "Pausado") "reactivar" else "pausar"
-                        }
-                    },
-                    onEditarClick = { onEditar(pub.id) }
-                )
-                Spacer(modifier = Modifier.height(14.dp))
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Button(
-                onClick = { onNavigate("publicar_producto") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MkVerdeBoton)
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Añadir nuevo producto",
-                    fontFamily = OutfitFont,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = Color.White
-                )
-            }
-
-            Spacer(modifier = Modifier.height(36.dp))
         }
     }
 
