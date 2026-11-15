@@ -46,6 +46,7 @@ import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.FotoRemota
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.PublicacionesRepositorio
+import com.example.crisalida.data.DatosPersonalesRepositorio
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
 import kotlinx.coroutines.launch
@@ -105,6 +106,10 @@ fun PerfilScreen(
     val nivelesCarga = rememberCarga { soloVendedora { ProgresoRepositorio.niveles() } }
     val reglasCarga = rememberCarga { soloVendedora { ProgresoRepositorio.reglas() } }
     var verTodosLosNiveles by remember { mutableStateOf(false) }
+    // ¿faltan datos opcionales (correo, municipio, localidad)? Si la consulta falla no se muestra nada
+    val datosPersonales = rememberCarga(ProgresoRepositorio.version) { DatosPersonalesRepositorio.mios() }
+    val faltanDatos = (datosPersonales.estado as? Carga.Lista)?.datos
+        ?.let { it.correo == null || it.municipio == null || it.localidad == null } == true
 
     // Diálogos de confirmación para pausar/reactivar
     var publicacionSeleccionadaParaAccion by remember { mutableStateOf<PublicacionPortafolio?>(null) }
@@ -232,6 +237,10 @@ fun PerfilScreen(
                     MensajeError((progreso.estado as Carga.Falla).mensaje, progreso.recargar)
                 }
 
+                if (faltanDatos) {
+                    TarjetaCompletarDatos(onAbrirConfiguracion)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
                 // La compradora solo ve lo suyo: sus datos (arriba), mis compras y ajustes.
                 // Nivel, portafolio y habilidades son de la vendedora.
                 if (SesionActual.esCompradora) {
@@ -1023,6 +1032,45 @@ private fun TarjetaMisCompras() {
                 lineHeight = 19.sp,
                 color = MkSubtitulo
             )
+        }
+    }
+}
+
+// invitación a completar los datos opcionales; lleva a Configuración, donde está la sección Cuenta
+@Composable
+private fun TarjetaCompletarDatos(onAbrir: () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MkFondoCard),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Completa tus datos",
+                fontFamily = OutfitFont,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = MkTitulo,
+                modifier = Modifier.semantics { heading() }
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "Tu correo te ayuda a recuperar tu PIN. Tu municipio y tu localidad sirven para que otras usuarias sepan de dónde eres y para buscar productos cerca. Todo es opcional.",
+                fontFamily = JakartaSansFont,
+                fontSize = 14.sp,
+                lineHeight = 19.sp,
+                color = MkSubtitulo
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Button(
+                onClick = onAbrir,
+                modifier = Modifier.heightIn(min = 48.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)
+            ) {
+                Text("Completar mis datos", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = Color.White)
+            }
         }
     }
 }

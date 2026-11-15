@@ -24,6 +24,7 @@ import com.example.crisalida.ui.theme.screens.AvisoPendienteScreen
 import com.example.crisalida.ui.theme.screens.CompletarDatosScreen
 import com.example.crisalida.ui.theme.screens.ElegirRolScreen
 import com.example.crisalida.ui.theme.screens.ModoDatos
+import com.example.crisalida.ui.theme.screens.PuertaCorreo
 import com.example.crisalida.ui.theme.screens.LoginScreen
 import com.example.crisalida.ui.theme.screens.RadarScreen
 import com.example.crisalida.ui.theme.screens.VigilanteInactividad
@@ -177,13 +178,21 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // solo el correo, antes de publicar retos (lo abrirá la pantalla de publicar retos cuando exista)
-                    composable("completar_correo") {
+                    // puerta del correo: antes de publicar un reto se pide el correo si la usuaria no lo tiene.
+                    // Uso: navController.navigate("requiere_correo/<ruta de publicar reto>")
+                    composable(
+                        "requiere_correo/{destino}",
+                        arguments = listOf(navArgument("destino") { type = NavType.StringType })
+                    ) { entrada ->
+                        val destino = entrada.arguments?.getString("destino").orEmpty()
                         ConEscalaDeTexto(tope = 2f) {
-                            CompletarDatosScreen(
-                                modo = ModoDatos.CORREO_PARA_RETOS,
-                                onTerminar = { navController.popBackStack() },
-                                onOmitir = { navController.popBackStack() }
+                            PuertaCorreo(
+                                onListo = {
+                                    navController.navigate(destino) {
+                                        popUpTo("requiere_correo/{destino}") { inclusive = true }
+                                    }
+                                },
+                                onCancelar = { navController.popBackStack() }
                             )
                         }
                     }

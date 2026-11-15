@@ -314,3 +314,21 @@ private fun CompletarDatosPreview() {
 private fun CompletarCorreoPreview() {
     CompletarDatosScreen(modo = ModoDatos.CORREO_PARA_RETOS, onTerminar = {}, onOmitir = {})
 }
+
+/**
+ * Puerta para publicar retos: si la usuaria ya tiene correo guardado, pasa de largo ([onListo] al instante);
+ * si no, le pide el correo (con la explicación de para qué se usa) y pasa cuando lo guarda.
+ * Se abre con la ruta "requiere_correo/{destino}": la pantalla de publicar retos solo tiene que navegar
+ * a "requiere_correo/publicar_reto" (o a su ruta) y la puerta la deja pasar cuando haya correo.
+ */
+@Composable
+fun PuertaCorreo(onListo: () -> Unit, onCancelar: () -> Unit) {
+    var tieneCorreo by remember { mutableStateOf<Boolean?>(null) }   // null: todavía se está revisando
+    LaunchedEffect(Unit) { tieneCorreo = DatosPersonalesRepositorio.tieneCorreo() }
+    LaunchedEffect(tieneCorreo) { if (tieneCorreo == true) onListo() }
+
+    when (tieneCorreo) {
+        null, true -> ContenedorAcceso { CircularProgressIndicator(color = ColorBotonEntrar) }
+        false -> CompletarDatosScreen(modo = ModoDatos.CORREO_PARA_RETOS, onTerminar = onListo, onOmitir = onCancelar)
+    }
+}
