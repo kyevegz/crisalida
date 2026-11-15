@@ -65,33 +65,33 @@ fun RetoDetalleScreen(
 
     CrisalidaScaffold(currentTitle = "Detalle del reto", selectedTab = 0, onNavigate = onNavigate) { innerPadding ->
         ContenidoCentrado(innerPadding) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            BarraVolver("Volver al tablero", onVolver)
-            when (val e = carga.estado) {
-                is Carga.Cargando -> IndicadorCargando()
-                is Carga.Falla -> MensajeError(e.mensaje, carga.recargar)
-                is Carga.Lista -> {
-                    val reto = e.datos
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 20.dp)
-                    ) {
-                        Contenido(reto, ocupado, onAceptar = {
-                            ejecutar({ RetosRepositorio.aceptar(reto.retoId) },
-                                "¡Reto aceptado! Lo encuentras en «Mis retos». Cuando termines, márcalo como entregado.")
-                        }, onEntregar = {
-                            ejecutar({ RetosRepositorio.entregar(reto.aceptacionId.orEmpty()) },
-                                "¡Entregado! Cuando el contratista lo valide, recibirás tus flores.")
-                        }, onSoltar = {
-                            ejecutar({ RetosRepositorio.abandonar(reto.aceptacionId.orEmpty()) },
-                                "Soltaste el reto. Volvió al tablero para otra persona.")
-                        })
+            Column(modifier = Modifier.fillMaxSize()) {
+                BarraVolver("Volver al tablero", onVolver)
+                when (val e = carga.estado) {
+                    is Carga.Cargando -> IndicadorCargando()
+                    is Carga.Falla -> ErrorDeCarga(e, carga.recargar, "No podemos abrir este reto ni aceptarlo sin conexión.")
+                    is Carga.Lista -> {
+                        val reto = e.datos
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .verticalScroll(rememberScrollState())
+                                .padding(horizontal = 20.dp)
+                        ) {
+                            Contenido(reto, ocupado, onAceptar = {
+                                ejecutar({ RetosRepositorio.aceptar(reto.retoId) },
+                                    "¡Reto aceptado! Lo encuentras en «Mis retos». Cuando termines, márcalo como entregado.")
+                            }, onEntregar = {
+                                ejecutar({ RetosRepositorio.entregar(reto.aceptacionId.orEmpty()) },
+                                    "¡Entregado! Cuando el contratista lo valide, recibirás tus flores.")
+                            }, onSoltar = {
+                                ejecutar({ RetosRepositorio.abandonar(reto.aceptacionId.orEmpty()) },
+                                    "Soltaste el reto. Volvió al tablero para otra persona.")
+                            })
+                        }
                     }
                 }
             }
-        }
         }
     }
 
@@ -163,24 +163,24 @@ private fun ColumnScope.Contenido(
 
     // la compradora solo consulta el reto: sin texto de entrega ni botones para aceptarlo
     if (!SesionActual.esCompradora) {
-    Spacer(Modifier.height(10.dp))
-    Text(
-        "Al entregarlo, el contratista lo revisa. Cuando lo valide, el reto cuenta para tu nivel y ganas flores para Lilu.",
-        fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = RetoGris
-    )
+        Spacer(Modifier.height(10.dp))
+        Text(
+            "Al entregarlo, el contratista lo revisa. Cuando lo valide, el reto cuenta para tu nivel y ganas flores para Lilu.",
+            fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = RetoGris
+        )
 
-    Spacer(Modifier.height(18.dp))
-    when (reto.miEstado) {
-        "aceptado" -> {
-            Boton("Marcar como entregado", !ocupado, onEntregar)
-            TextButton(onClick = onSoltar, enabled = !ocupado, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                Text("Soltar este reto", fontFamily = OutfitFont, fontSize = 14.sp, color = RetoGris)
+        Spacer(Modifier.height(18.dp))
+        when (reto.miEstado) {
+            "aceptado" -> {
+                Boton("Marcar como entregado", !ocupado, onEntregar)
+                TextButton(onClick = onSoltar, enabled = !ocupado, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                    Text("Soltar este reto", fontFamily = OutfitFont, fontSize = 14.sp, color = RetoGris)
+                }
             }
+            "entregado" -> Boton("Esperando validación", false) {}
+            "validado" -> Boton("Completado ✓", false) {}
+            else -> Boton("Aceptar el reto", !ocupado, onAceptar)
         }
-        "entregado" -> Boton("Esperando validación", false) {}
-        "validado" -> Boton("Completado ✓", false) {}
-        else -> Boton("Aceptar el reto", !ocupado, onAceptar)
-    }
     }
     Spacer(Modifier.height(28.dp))
 }

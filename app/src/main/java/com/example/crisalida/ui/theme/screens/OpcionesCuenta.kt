@@ -62,7 +62,7 @@ fun OpcionesCuenta() {
     TituloCuenta("Mis datos")
     when (val e = carga.estado) {
         is Carga.Cargando -> IndicadorCargando()
-        is Carga.Falla -> MensajeError(e.mensaje, carga.recargar)
+        is Carga.Falla -> ErrorDeCarga(e, carga.recargar, "No podemos mostrar ni cambiar tus datos de contacto sin conexión.")
         is Carga.Lista -> {
             FilaCorreo(e.datos, carga.recargar)
             Spacer(modifier = Modifier.height(16.dp))

@@ -145,7 +145,7 @@ fun MarketplaceScreen(
             item(span = { GridItemSpan(maxLineSpan) }) {
                 when (val e = catalogo.estado) {
                     is Carga.Cargando -> IndicadorCargando()
-                    is Carga.Falla -> MensajeError(e.mensaje, catalogo.recargar)
+                    is Carga.Falla -> ErrorDeCarga(e, catalogo.recargar, "No podemos mostrar los productos y servicios sin conexión.")
                     is Carga.Lista -> if (productosFiltrados.isEmpty()) {
                         Text(
                             text = "Todavía no hay publicaciones en este rubro.",

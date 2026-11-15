@@ -77,7 +77,7 @@ fun MascotaScreen(
                 Spacer(modifier = Modifier.height(18.dp))
 
                 if (progreso.estado is Carga.Falla) {
-                    MensajeError((progreso.estado as Carga.Falla).mensaje, progreso.recargar)
+                    ErrorDeCarga(progreso.estado as Carga.Falla, progreso.recargar, "Lilu necesita internet para mostrar tus flores y tu avance.")
                 }
 
                 ConEscalaLimitada(tope = 1.3f) {

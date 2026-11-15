@@ -10,7 +10,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.produceState
@@ -18,9 +22,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.crisalida.data.EstadoConexion
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.ProgresoResponse
 import com.example.crisalida.data.ResultadoApi
@@ -35,7 +41,7 @@ import com.example.crisalida.ui.theme.JakartaSansFont
 sealed interface Carga<out T> {
     object Cargando : Carga<Nothing>
     data class Lista<T>(val datos: T) : Carga<T>
-    data class Falla(val mensaje: String) : Carga<Nothing>
+    data class Falla(val mensaje: String, val sinConexion: Boolean = false) : Carga<Nothing>
 }
 
 class CargaRemota<T>(val estado: Carga<T>, val recargar: () -> Unit)
@@ -48,8 +54,13 @@ fun <T> rememberCarga(vararg claves: Any?, llamada: suspend () -> ResultadoApi<T
         value = Carga.Cargando
         value = when (val r = llamada()) {
             is ResultadoApi.Exito -> Carga.Lista(r.datos)
-            is ResultadoApi.Error -> Carga.Falla(r.mensaje)
+            is ResultadoApi.Error -> Carga.Falla(r.mensaje, r.sinConexion)
         }
+    }
+    // si falló por falta de internet, se vuelve a pedir solo cuando regrese la conexión
+    val enLinea = EstadoConexion.enLinea
+    LaunchedEffect(enLinea) {
+        if (enLinea && (estado as? Carga.Falla)?.sinConexion == true) intento++
     }
     return CargaRemota(estado) { intento++ }
 }
@@ -90,12 +101,46 @@ fun MensajeError(mensaje: String, onReintentar: (() -> Unit)? = null, modifier: 
     }
 }
 
+/**
+ * Error de una carga. Si fue por falta de internet NO se muestra nada técnico: se explica qué no se puede hacer
+ * ahora (queNoSePuede) y que se actualizará solo al volver la conexión. Si fue otro error, se muestra su mensaje.
+ */
+@Composable
+fun ErrorDeCarga(
+    falla: Carga.Falla,
+    onReintentar: (() -> Unit)? = null,
+    queNoSePuede: String = "Necesitas internet para ver esto.",
+    modifier: Modifier = Modifier
+) {
+    if (!falla.sinConexion) {
+        MensajeError(falla.mensaje, onReintentar, modifier)
+        return
+    }
+    Column(
+        modifier.fillMaxWidth().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(Icons.Outlined.CloudOff, contentDescription = null, tint = ColorTextoPrincipal)
+        Text("Sin conexión", fontFamily = JakartaSansFont, fontWeight = FontWeight.SemiBold, fontSize = 15.sp,
+            color = ColorTextoPrincipal, textAlign = TextAlign.Center)
+        Text("$queNoSePuede Se actualizará solo cuando vuelvas a tener internet.", fontFamily = JakartaSansFont,
+            fontSize = 13.sp, color = ColorTextoPrincipal, textAlign = TextAlign.Center)
+        if (onReintentar != null) {
+            Spacer(Modifier.height(4.dp))
+            Button(onClick = onReintentar, colors = ButtonDefaults.buttonColors(containerColor = ColorBotonEntrar)) {
+                Text("Reintentar", fontFamily = JakartaSansFont, fontSize = 13.sp)
+            }
+        }
+    }
+}
+
 // muestra cargando / error / contenido según la carga
 @Composable
 fun <T> CargaRemota<T>.Mostrar(modifier: Modifier = Modifier, contenido: @Composable (T) -> Unit) {
     when (val e = estado) {
         is Carga.Cargando -> IndicadorCargando(modifier)
-        is Carga.Falla -> MensajeError(e.mensaje, recargar, modifier)
+        is Carga.Falla -> ErrorDeCarga(e, recargar, modifier = modifier)
         is Carga.Lista -> contenido(e.datos)
     }
 }

@@ -300,7 +300,7 @@ object RetrofitCliente {
 
 sealed class ResultadoApi<out T> {
     data class Exito<T>(val datos: T) : ResultadoApi<T>()
-    data class Error(val mensaje: String) : ResultadoApi<Nothing>()
+    data class Error(val mensaje: String, val sinConexion: Boolean = false) : ResultadoApi<Nothing>()
 }
 
 /** Envuelve cualquier llamada: devuelve Exito(datos) o Error("mensaje listo para mostrar"). */
@@ -316,7 +316,7 @@ suspend fun <T> llamarApi(llamada: suspend () -> Response<T>): ResultadoApi<T> {
     } catch (e: CancellationException) {
         throw e   // si Android cancela la tarea, no es un error que mostrar
     } catch (e: IOException) {
-        ResultadoApi.Error("No hay conexión con el servidor. Revisa tu internet.")
+        ResultadoApi.Error("Sin conexión. Revisa tu internet e inténtalo de nuevo.", sinConexion = true)
     } catch (e: Exception) {
         ResultadoApi.Error("Ocurrió un error inesperado. Intenta de nuevo.")
     }
