@@ -8,6 +8,23 @@ import android.media.ExifInterface
 import android.net.Uri
 import android.util.LruCache
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CloudDownload
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -93,7 +110,11 @@ private val cacheFotos = object : LruCache<String, ImageBitmap>(24) {}
 fun vaciarCacheFotos() = cacheFotos.evictAll()
 private val clienteFotos by lazy { OkHttpClient() }   // las fotos son públicas: no necesitan token
 
-/** Muestra la foto que está en [ruta] (por ejemplo "/imagenes/abc..."). Mientras carga, o si falla, muestra [alternativa]. */
+/**
+ * Muestra la foto que está en [ruta] (por ejemplo "/imagenes/abc..."). Mientras carga, o si falla, muestra [alternativa].
+ * Con el ahorro de datos activo la foto no se descarga sola: se ve [alternativa] con un icono de descarga y la foto
+ * se carga hasta que la usuaria la toca (las que ya estaban en memoria se muestran sin gastar datos).
+ */
 @Composable
 fun FotoRemota(
     ruta: String?,
@@ -101,9 +122,15 @@ fun FotoRemota(
     contentScale: ContentScale = ContentScale.Crop,
     alternativa: @Composable () -> Unit = {}
 ) {
-    val imagen by produceState<ImageBitmap?>(initialValue = ruta?.let { cacheFotos.get(it) }, key1 = ruta) {
+    val contexto = LocalContext.current
+    AhorroDatos.cargar(contexto)
+    var autorizada by remember(ruta) { mutableStateOf(false) }   // la usuaria tocó esta foto
+    val permitida = !AhorroDatos.activo || autorizada || (ruta != null && cacheFotos.get(ruta) != null)
+
+    val imagen by produceState<ImageBitmap?>(initialValue = ruta?.let { cacheFotos.get(it) }, key1 = ruta, key2 = permitida) {
         if (ruta == null) { value = null; return@produceState }
         cacheFotos.get(ruta)?.let { value = it; return@produceState }
+        if (!permitida) { value = null; return@produceState }   // ahorro de datos: no se descarga todavía
         value = withContext(Dispatchers.IO) {
             try {
                 val url = RetrofitCliente.BASE_URL.trimEnd('/') + "/" + ruta.trimStart('/')
@@ -120,6 +147,25 @@ fun FotoRemota(
     val cargada = imagen
     if (cargada != null) {
         Image(bitmap = cargada, contentDescription = null, modifier = modifier, contentScale = contentScale)
+    } else if (!permitida && ruta != null) {
+        // la foto espera a que la toquen (un icono en lugar de texto para que quepa hasta en miniaturas)
+        Box(
+            modifier = Modifier
+                .clickable(onClickLabel = "Cargar la foto", role = Role.Button) { autorizada = true }
+                .semantics { contentDescription = "Foto sin cargar por el ahorro de datos. Toca para verla" },
+            contentAlignment = Alignment.Center
+        ) {
+            alternativa()
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color(0x99000000)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Outlined.CloudDownload, contentDescription = null, tint = Color.White)
+            }
+        }
     } else {
         alternativa()
     }

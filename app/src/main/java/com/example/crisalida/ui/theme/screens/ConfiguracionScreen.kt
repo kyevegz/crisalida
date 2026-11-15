@@ -54,6 +54,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.crisalida.data.AhorroDatos
 import com.example.crisalida.data.AlmacenamientoLocal
 import com.example.crisalida.data.BienestarRepositorio
 import com.example.crisalida.data.ResultadoApi
@@ -366,15 +367,16 @@ private fun OpcionesDatosYAlmacenamiento(contexto: Context) {
     var limpiando by remember { mutableStateOf(false) }
     var mensajeCache by remember { mutableStateOf<String?>(null) }
 
-    // Ahorro de datos: llega en su propio issue
-    Text(
-        text = "Ahorro de datos",
-        fontFamily = OutfitFont,
-        fontWeight = FontWeight.Bold,
-        fontSize = 17.sp,
-        color = Color.Black
+    // Ahorro de datos: con él activo las fotos no se descargan solas, se cargan al tocarlas.
+    // (El modo sin conexión no es un ajuste: se activa solo cuando se pierde la red.)
+    AhorroDatos.cargar(contexto)
+    FilaInterruptor(
+        titulo = "Ahorro de datos",
+        descripcion = "Las fotos no se descargan solas: toca una foto para verla. Útil si tienes pocos datos móviles. " +
+            "Se conserva aunque cierres la app.",
+        activado = AhorroDatos.activo,
+        onCambio = { AhorroDatos.cambiar(contexto, it) }
     )
-    TextoProximamente("Aquí podrás cargar menos imágenes y evitar descargas automáticas.")
 
     // La compradora no tiene bienestar emocional: no hay historial que borrar
     if (!SesionActual.esCompradora) {
