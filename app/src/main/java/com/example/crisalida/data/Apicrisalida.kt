@@ -97,6 +97,18 @@ interface ApiService {
     @POST("auth/login")
     suspend fun login(@Body datos: LoginRequest): Response<SesionResponse>
 
+    @GET("perfil/datos")
+    suspend fun misDatos(): Response<DatosPersonalesResponse>
+
+    @PUT("perfil/datos")
+    suspend fun guardarUbicacion(@Body datos: UbicacionRequest): Response<DatosPersonalesResponse>
+
+    @POST("perfil/correo")
+    suspend fun guardarCorreo(@Body datos: CorreoRequest): Response<CorreoGuardadoResponse>
+
+    @POST("perfil/correo/verificar")
+    suspend fun verificarCorreo(@Body datos: CodigoCorreoRequest): Response<CorreoVerificadoResponse>
+
     @POST("auth/aceptar-aviso")
     suspend fun aceptarAviso(@Body datos: AceptarAvisoRequest): Response<AvisoAceptadoResponse>
 

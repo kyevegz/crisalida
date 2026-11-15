@@ -21,7 +21,10 @@ import com.example.crisalida.data.ROL_VENDEDORA
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.theme.screens.AvisoPendienteScreen
+import com.example.crisalida.ui.theme.screens.CompletarDatosScreen
 import com.example.crisalida.ui.theme.screens.ElegirRolScreen
+import com.example.crisalida.ui.theme.screens.ModoDatos
+import com.example.crisalida.ui.theme.screens.PuertaCorreo
 import com.example.crisalida.ui.theme.screens.LoginScreen
 import com.example.crisalida.ui.theme.screens.RadarScreen
 import com.example.crisalida.ui.theme.screens.VigilanteInactividad
@@ -142,7 +145,7 @@ class MainActivity : ComponentActivity() {
                                             is ResultadoApi.Exito -> {
                                                 if (rol == ROL_COMPRADORA) {
                                                     when (val cuenta = AuthRepositorio.completarRegistroCompradora()) {
-                                                        is ResultadoApi.Exito -> navController.navigate("home") {
+                                                        is ResultadoApi.Exito -> navController.navigate("completar_datos") {
                                                             popUpTo("login") { inclusive = true }   // ya no se regresa a login/registro
                                                         }
                                                         is ResultadoApi.Error -> error = cuenta.mensaje
@@ -157,6 +160,39 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 onNavigateToLogin = { navController.popBackStack("login", false) }
+                            )
+                        }
+                    }
+
+                    // datos opcionales tras el registro (correo, municipio y localidad); se pueden omitir
+                    composable("completar_datos") {
+                        val entrarALaApp = {
+                            navController.navigate("home") { popUpTo("completar_datos") { inclusive = true } }
+                        }
+                        ConEscalaDeTexto(tope = 2f) {
+                            CompletarDatosScreen(
+                                modo = ModoDatos.REGISTRO,
+                                onTerminar = { entrarALaApp() },
+                                onOmitir = { entrarALaApp() }
+                            )
+                        }
+                    }
+
+                    // puerta del correo: antes de publicar un reto se pide el correo si la usuaria no lo tiene.
+                    // Uso: navController.navigate("requiere_correo/<ruta de publicar reto>")
+                    composable(
+                        "requiere_correo/{destino}",
+                        arguments = listOf(navArgument("destino") { type = NavType.StringType })
+                    ) { entrada ->
+                        val destino = entrada.arguments?.getString("destino").orEmpty()
+                        ConEscalaDeTexto(tope = 2f) {
+                            PuertaCorreo(
+                                onListo = {
+                                    navController.navigate(destino) {
+                                        popUpTo("requiere_correo/{destino}") { inclusive = true }
+                                    }
+                                },
+                                onCancelar = { navController.popBackStack() }
                             )
                         }
                     }
@@ -197,8 +233,8 @@ class MainActivity : ComponentActivity() {
                         ConEscalaDeTexto(tope = 2f) {
                             RadarScreen(
                                 onTerminar = {
-                                    // ya se creó la cuenta y la sesión, con ello entra a la app
-                                    navController.navigate("home") {
+                                    // ya se creó la cuenta y la sesión: antes de entrar se invita a completar datos opcionales
+                                    navController.navigate("completar_datos") {
                                         popUpTo("login") { inclusive = true }   //ya no se regresa a login/registro/radar
                                     }
                                 }
