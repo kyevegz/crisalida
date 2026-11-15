@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -26,6 +27,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -45,6 +48,7 @@ import com.example.crisalida.ui.theme.ConEscalaLimitada
 import com.example.crisalida.ui.theme.JakartaSansFont
 import com.example.crisalida.ui.theme.OutfitFont
 import com.example.crisalida.data.InactividadSesion
+import com.example.crisalida.data.ProteccionPantalla
 private val MkTitulo = Color(0xFF7F284F)
 private val MkSubtitulo = Color(0xFF545454)
 private val MkFondoItem = Color(0xFFEFE8EC)
@@ -103,6 +107,14 @@ private fun ContenidoConfiguracion(
 
             SeccionConfiguracion("Seguridad") {
                 OpcionesInactividad(contexto)
+                Spacer(modifier = Modifier.height(16.dp))
+                FilaInterruptor(
+                    titulo = "Bloquear capturas de pantalla",
+                    descripcion = "Impide capturar o grabar la pantalla en Bienestar, Perfil y Configuración. " +
+                        "En «apps recientes» el contenido de la app siempre se oculta.",
+                    activado = ProteccionPantalla.bloquearCapturas,
+                    onCambio = { ProteccionPantalla.cambiar(contexto, it) }
+                )
                 Spacer(modifier = Modifier.height(16.dp))
                 TextoProximamente("Aquí podrás cambiar tu PIN y administrar tu código de recuperación.")
             }
@@ -278,6 +290,47 @@ private fun OpcionesInactividad(contexto: Context) {
                 onClick = { `InactividadSesion`.cambiar(contexto, minutos) }
             )
         }
+    }
+}
+
+// interruptor con título y explicación: toda la fila es el interruptor (TalkBack lo anuncia como un solo
+// elemento: «Bloquear capturas de pantalla, interruptor, activado»)
+@Composable
+private fun FilaInterruptor(
+    titulo: String,
+    descripcion: String,
+    activado: Boolean,
+    onCambio: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .toggleable(value = activado, onValueChange = onCambio, role = Role.Switch),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+            Text(
+                text = titulo,
+                fontFamily = OutfitFont,
+                fontWeight = FontWeight.Bold,
+                fontSize = 17.sp,
+                color = Color.Black
+            )
+            Text(
+                text = descripcion,
+                fontFamily = JakartaSansFont,
+                fontSize = 14.sp,
+                lineHeight = 19.sp,
+                color = MkSubtitulo
+            )
+        }
+        Switch(
+            checked = activado,
+            onCheckedChange = null, // el cambio lo maneja toda la fila
+            colors = SwitchDefaults.colors(checkedTrackColor = MkTitulo)
+        )
     }
 }
 
