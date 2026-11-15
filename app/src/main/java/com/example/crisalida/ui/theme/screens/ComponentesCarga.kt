@@ -57,7 +57,7 @@ fun <T> rememberCarga(vararg claves: Any?, llamada: suspend () -> ResultadoApi<T
 // progreso (nivel, flores, Lilu), se refresca cuando gana flores
 @Composable
 fun rememberProgreso(): CargaRemota<ProgresoResponse> =
-    rememberCarga(ProgresoRepositorio.version) { soloVendedora { ProgresoRepositorio.yo() } }
+    rememberCarga(ProgresoRepositorio.version) { ProgresoRepositorio.yo() }
 
 /**
  * El servidor solo abre algunas rutas (progreso, mis retos, portafolio...) a la vendedora.

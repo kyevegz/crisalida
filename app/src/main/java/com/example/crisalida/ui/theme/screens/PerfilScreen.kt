@@ -9,6 +9,8 @@ import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -19,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.LocalFlorist
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Pause
@@ -89,7 +92,8 @@ fun PerfilScreen(
     onNavigate: (String) -> Unit,
     onEditar: (String) -> Unit = {},
     onAbrirConfiguracion: () -> Unit = {},
-    onCerrarSesion: () -> Unit = {}
+    onCerrarSesion: () -> Unit = {},
+    onPublicarReto: () -> Unit = {}   // la compradora publica retos desde su Perfil
 ) {
     val scrollState = rememberScrollState()
 
@@ -152,7 +156,7 @@ fun PerfilScreen(
                         ) {
                             Text(text = avatarSeleccionado, fontSize = 50.sp)
                         }
-                        if (!SesionActual.esCompradora) Box(   // el nivel es de la vendedora
+                        Box(
                             modifier = Modifier
                                 .size(32.dp)
                                 .clip(CircleShape)
@@ -193,7 +197,7 @@ fun PerfilScreen(
                             )
                         }
                         Spacer(modifier = Modifier.height(4.dp))
-                        if (!SesionActual.esCompradora) TextButton(
+                        TextButton(
                             onClick = { mostrarSelectorAvatar = true },
                             contentPadding = PaddingValues(0.dp)
                         ) {
@@ -244,7 +248,7 @@ fun PerfilScreen(
                 // La compradora solo ve lo suyo: sus datos (arriba), mis compras y ajustes.
                 // Nivel, portafolio y habilidades son de la vendedora.
                 if (SesionActual.esCompradora) {
-                TarjetaMisCompras()
+                ContenidoPerfilCompradora(onPublicarReto = onPublicarReto)
                 } else {
                 //tarjeta del nivel
                 Card(
@@ -997,42 +1001,194 @@ private fun PreviewTarjetaPublicacion() {
         )
     }
 }
-// "Mis compras" de la compradora. El proceso de compra todavía no está activo, así que por ahora está vacío.
+// Un reto que la compradora publicó (para la lista «Mis retos»)
+data class RetoPublicadoUi(
+    val titulo: String,
+    val precio: String,
+    val categoria: String,
+    val estado: String,         // Activo, Validando, Completado
+    val fechaLimite: String,    // ya con formato: «15/11/2026 a las 23:59»
+    val imagenRuta: String? = null
+)
+
+// Perfil de la compradora: pestañas «Mis retos» y «Mis compras».
+// [retos] llegará del servidor cuando exista «mis retos publicados» (por ahora la lista va vacía).
 @Composable
-private fun TarjetaMisCompras() {
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MkFondoCard),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth()
+private fun ContenidoPerfilCompradora(
+    onPublicarReto: () -> Unit,
+    retos: List<RetoPublicadoUi> = emptyList()
+) {
+    var pestana by remember { mutableIntStateOf(0) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MkBarraFondo)
+            .selectableGroup()
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Outlined.ShoppingBag,
-                    contentDescription = null,
-                    tint = MkTitulo,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
+        listOf("Mis retos", "Mis compras").forEachIndexed { i, texto ->
+            val seleccionada = pestana == i
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(if (seleccionada) Color(0xFF7A1F4A) else Color.Transparent)
+                    .selectable(selected = seleccionada, onClick = { pestana = i }, role = Role.Tab),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
-                    text = "Mis compras",
+                    text = texto,
                     fontFamily = OutfitFont,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = MkTitulo,
-                    modifier = Modifier.semantics { heading() }
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                    color = if (seleccionada) Color.White else MkSubtitulo
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+    Spacer(modifier = Modifier.height(20.dp))
+
+    if (pestana == 0) {
+        Text(
+            text = "Mis retos",
+            fontFamily = OutfitFont,
+            fontWeight = FontWeight.Bold,
+            fontSize = 28.sp,
+            color = MkTitulo,
+            modifier = Modifier.semantics { heading() }
+        )
+        Text(
+            text = "${retos.size} microrretos publicados",
+            fontFamily = JakartaSansFont,
+            fontSize = 13.sp,
+            color = MkSubtitulo
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        if (retos.isEmpty()) {
             Text(
-                text = "Aún no tienes compras. Cuando el proceso de compra esté activo, aquí verás tus pedidos.",
+                text = "Aún no has publicado microrretos. Cuando publiques uno, lo verás aquí.",
                 fontFamily = JakartaSansFont,
                 fontSize = 14.sp,
                 lineHeight = 19.sp,
                 color = MkSubtitulo
             )
         }
+        retos.forEach { reto ->
+            TarjetaRetoPublicado(reto)
+            Spacer(modifier = Modifier.height(14.dp))
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Button(
+            onClick = onPublicarReto,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            shape = RoundedCornerShape(8.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF005524))
+        ) {
+            Text(
+                text = "+  Añadir nuevo reto",
+                fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White
+            )
+        }
+    } else {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Outlined.ShoppingBag,
+                contentDescription = null,
+                tint = MkTitulo,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Mis compras",
+                fontFamily = OutfitFont,
+                fontWeight = FontWeight.Bold,
+                fontSize = 28.sp,
+                color = MkTitulo,
+                modifier = Modifier.semantics { heading() }
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        // El proceso de compra todavía no está activo, así que por ahora está vacío
+        Text(
+            text = "Aún no tienes compras. Cuando el proceso de compra esté activo, aquí verás tus pedidos.",
+            fontFamily = JakartaSansFont,
+            fontSize = 14.sp,
+            lineHeight = 19.sp,
+            color = MkSubtitulo
+        )
+    }
+}
+
+@Composable
+private fun TarjetaRetoPublicado(reto: RetoPublicadoUi) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFE9E1EA)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(10.dp)) {
+            Row {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFFD9D9D9))
+                ) {
+                    FotoRemota(ruta = reto.imagenRuta, modifier = Modifier.fillMaxSize())
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(Color(0xFFB7DDB0))
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(reto.categoria, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color(0xFF1B3F11))
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(reto.estado, fontFamily = JakartaSansFont, fontSize = 11.sp, color = MkSubtitulo)
+                    }
+                    Text(
+                        text = reto.titulo,
+                        fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp,
+                        color = Color.Black, maxLines = 2, overflow = TextOverflow.Ellipsis
+                    )
+                    Text(reto.precio, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.Black)
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Color(0xFFD3C8D6))
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Outlined.Event, contentDescription = "Fecha límite", tint = Color.Black, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(reto.fechaLimite, fontFamily = JakartaSansFont, fontSize = 13.sp, color = Color.Black)
+            }
+        }
+    }
+}
+
+@PreviewResponsivo
+@Composable
+private fun PreviewPerfilCompradora() {
+    Column(modifier = Modifier.background(Color(0xFFF2F0EF)).padding(16.dp)) {
+        ContenidoPerfilCompradora(
+            onPublicarReto = {},
+            retos = listOf(
+                RetoPublicadoUi("Captura y orden de 35 contactos en Excel", "\$150.00", "Categoría", "Completado", "15/11/2026 a las 23:59"),
+                RetoPublicadoUi("Captura y orden de 35 contactos en Excel", "\$150.00", "Categoría", "Activo", "15/11/2026 a las 23:59")
+            )
+        )
     }
 }
 
