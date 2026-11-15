@@ -21,6 +21,7 @@ import com.example.crisalida.data.ROL_VENDEDORA
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.theme.screens.AvisoPendienteScreen
+import com.example.crisalida.ui.theme.screens.CodigoRecuperacionScreen
 import com.example.crisalida.ui.theme.screens.CompletarDatosScreen
 import com.example.crisalida.ui.theme.screens.ElegirRolScreen
 import com.example.crisalida.ui.theme.screens.ModoDatos
@@ -145,7 +146,7 @@ class MainActivity : ComponentActivity() {
                                             is ResultadoApi.Exito -> {
                                                 if (rol == ROL_COMPRADORA) {
                                                     when (val cuenta = AuthRepositorio.completarRegistroCompradora()) {
-                                                        is ResultadoApi.Exito -> navController.navigate("completar_datos") {
+                                                        is ResultadoApi.Exito -> navController.navigate("codigo_recuperacion") {
                                                             popUpTo("login") { inclusive = true }   // ya no se regresa a login/registro
                                                         }
                                                         is ResultadoApi.Error -> error = cuenta.mensaje
@@ -160,6 +161,21 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 onNavigateToLogin = { navController.popBackStack("login", false) }
+                            )
+                        }
+                    }
+
+                    // código de recuperación: se muestra una sola vez; sin confirmar que se guardó no se avanza
+                    composable("codigo_recuperacion") {
+                        ConEscalaDeTexto(tope = 2f) {
+                            CodigoRecuperacionScreen(
+                                codigo = AuthRepositorio.codigoRecuperacion,
+                                onFinalizar = {
+                                    AuthRepositorio.limpiarCodigoRecuperacion()   // ya no queda en memoria
+                                    navController.navigate("completar_datos") {
+                                        popUpTo("codigo_recuperacion") { inclusive = true }
+                                    }
+                                }
                             )
                         }
                     }
@@ -233,8 +249,8 @@ class MainActivity : ComponentActivity() {
                         ConEscalaDeTexto(tope = 2f) {
                             RadarScreen(
                                 onTerminar = {
-                                    // ya se creó la cuenta y la sesión: antes de entrar se invita a completar datos opcionales
-                                    navController.navigate("completar_datos") {
+                                    // ya se creó la cuenta y la sesión: lo primero es mostrar el código de recuperación
+                                    navController.navigate("codigo_recuperacion") {
                                         popUpTo("login") { inclusive = true }   //ya no se regresa a login/registro/radar
                                     }
                                 }
