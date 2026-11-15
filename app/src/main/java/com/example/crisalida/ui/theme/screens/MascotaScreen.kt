@@ -1,5 +1,8 @@
 package com.example.crisalida.ui.theme.screens
 
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -30,7 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.ProgresoRepositorio
-import com.example.crisalida.ui.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
 private val MkTitulo = Color(0xFF9D4067)
 private val MkSubtitulo = Color(0xFF545454)
 private val MkVerdeBoton = Color(0xFF1E681E)
@@ -57,258 +60,164 @@ fun MascotaScreen(
     val reglas = (reglasCarga.estado as? Carga.Lista)?.datos?.reglas ?: emptyMap()
     fun flores(clave: String, porDefecto: Int) = reglas[clave] ?: porDefecto
     val maxBienestar = flores("bienestar_emocion", 5) + flores("bienestar_monitoreo", 3) +
-        flores("bienestar_reflexion", 8) + flores("bienestar_bitacora", 12)
+            flores("bienestar_reflexion", 8) + flores("bienestar_bitacora", 12)
 
     CrisalidaScaffold(
         currentTitle = "Mascota",
         selectedTab = 4, //esto es lo que resalta la pestaña donde se encuentra en la barrita de navegación
         onNavigate = onNavigate
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(ColorFondoApp)
-                .padding(innerPadding)
-                .verticalScroll(scrollState)
-                .padding(horizontal = 18.dp),
-            horizontalAlignment = Alignment.Start
-        ) {
-            Spacer(modifier = Modifier.height(18.dp))
-
-            if (progreso.estado is Carga.Falla) {
-                MensajeError((progreso.estado as Carga.Falla).mensaje, progreso.recargar)
-            }
-
-            Text(
-                text = "Tu camino a florecer",
-                fontFamily = OutfitFont,
-                fontWeight = FontWeight.Bold,
-                fontSize = 32.sp,
-                color = MkTitulo
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Cada paso tuyo cuenta. Tu esfuerzo no caduca, se acumula, no hay penalizaciones ni retrocesos.",
-                fontFamily = JakartaSansFont,
-                fontSize = 13.5.sp,
-                lineHeight = 18.sp,
-                color = MkSubtitulo
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MkFondoCard),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
+        ContenidoCentrado(innerPadding) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 18.dp),
+                horizontalAlignment = Alignment.Start
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Spacer(modifier = Modifier.height(18.dp))
+
+                if (progreso.estado is Carga.Falla) {
+                    MensajeError((progreso.estado as Carga.Falla).mensaje, progreso.recargar)
+                }
+
+                ConEscalaLimitada(tope = 1.3f) {
+                    Text(
+                        text = "Tu camino a florecer",
+                        fontFamily = OutfitFont,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 32.sp,
+                        color = MkTitulo
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Cada paso tuyo cuenta. Tu esfuerzo no caduca, se acumula, no hay penalizaciones ni retrocesos.",
+                    fontFamily = JakartaSansFont,
+                    fontSize = 13.5.sp,
+                    lineHeight = 18.sp,
+                    color = MkSubtitulo
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                TarjetaLilu(
+                    etapa = lilu?.etapa,
+                    etapaNombre = lilu?.etapaNombre,
+                    flores = lilu?.flores ?: 0,
+                    floresSiguiente = lilu?.floresSiguiente,
+                    siguienteNombre = lilu?.siguienteNombre,
+                    porcentaje = lilu?.porcentaje ?: 0,
+                    cargado = lilu != null,
+                    onRespirar = { onNavigate("respirar_lilu") }
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MkVerdeCeroPerdida)
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(130.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFEFE6EB)),
+                            .background(MkVerdeCeroPerdidaTexto.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Image(
-                            painter = painterResource(id = when (lilu?.etapa) { 2 -> R.drawable.lilu_larva; 3 -> R.drawable.lilu_mariposa; else -> R.drawable.lilu_huevo }),
-                            contentDescription = "Lilu",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
+                        Icon(
+                            imageVector = Icons.Outlined.Shield,
+                            contentDescription = "Escudo",
+                            tint = MkVerdeCeroPerdidaTexto,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(
-                        text = lilu?.let { "Lilu • ${it.etapaNombre}" } ?: "Lilu",
-                        fontFamily = OutfitFont,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = MkTitulo
-                    )
-                    Text(
-                        text = when (lilu?.etapa) {
-                            1 -> "Lilu descansa en su huevo, esperando crecer contigo"
-                            2 -> "Lilu ya salió y crece con cada paso tuyo"
-                            3 -> "¡Lilu ya tiene alas! Sigue floreciendo con ella"
-                            else -> "Cargando a Lilu…"
-                        },
-                        fontFamily = JakartaSansFont,
-                        fontSize = 13.sp,
-                        color = MkSubtitulo
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(12.dp)
-                                .clip(CircleShape)
-                                .background(MkBarraFondo)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(((lilu?.porcentaje ?: 0) / 100f).coerceIn(0f, 1f))
-                                    .fillMaxHeight()
-                                    .clip(CircleShape)
-                                    .background(MkBarraProgreso)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "${lilu?.flores ?: 0} flores",
-                                fontFamily = JakartaSansFont,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                                color = MkTitulo
-                            )
-                            Text(
-                                text = lilu?.let { if (it.floresSiguiente != null) "Meta: ${it.floresSiguiente} flores (${it.siguienteNombre})" else "¡Etapa máxima!" } ?: "",
-                                fontFamily = JakartaSansFont,
-                                fontSize = 13.sp,
-                                color = MkSubtitulo
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-
-                    Button(
-                        onClick = { onNavigate("respirar_lilu") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 44.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MkVerdeBoton)
-                    ) {
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Respirar con Lilu",
+                            text = "Cero pérdida",
                             fontFamily = OutfitFont,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 17.sp,
-                            color = Color.White
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = MkVerdeCeroPerdidaTexto
+                        )
+                        Text(
+                            text = "En caso de inactividad, el progreso seguirá igual, tus datos 100% intactos.",
+                            fontFamily = JakartaSansFont,
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp,
+                            color = MkVerdeCeroPerdidaTexto
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+
+                Text(
+                    text = "Cómo obtener flores",
+                    fontFamily = OutfitFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = MkTitulo
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+
+                TarjetaObtenerFlores(
+                    titulo = "Publicar un nuevo producto",
+                    descripcion = "Sumar un nuevo producto o servicio a tu catálogo personal te ayuda a crecer a ti y a tu mascota. Ganas flores cuando tu publicación es aprobada (una vez al día).",
+                    flores = flores("publicacion", 20),
+                    iconVector = Icons.Outlined.ViewInAr,
+                    onCanjearClick = { onNavigate("publicar_producto") }
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+
+                TarjetaObtenerFlores(
+                    titulo = "Registra cómo te has sentido hoy",
+                    descripcion = "Reconocer y expresar tus emociones puede ser un buen método de desahogo. Añade tu estado de ánimo y completa los demás bloques de bienestar: puedes ganar hasta $maxBienestar flores al día (te puedes registrar las veces que quieras, pero las flores se dan solo la primera vez del día en cada bloque).",
+                    flores = flores("bienestar_emocion", 5),
+                    iconVector = Icons.Outlined.Face,
+                    onCanjearClick = { onNavigate("bienestar") }
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+
+                TarjetaObtenerFlores(
+                    titulo = "Completa un microrreto",
+                    descripcion = "Usa tus habilidades y talentos para ayudar a los demás, con ello obtienes una remuneración económica y alimentas a Lilu.",
+                    flores = flores("reto", 30),
+                    iconVector = Icons.Outlined.Speed,
+                    onCanjearClick = { onNavigate("retos") }
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                TarjetaInformativaFlores(
+                    titulo = "Subir de nivel",
+                    descripcion = "Recuerda que conforme pasa el tiempo, subes de nivel, entre cada eslabón se te recompensa con ${flores("nivel", 25)} flores para Lilu.",
+                    iconVector = Icons.Outlined.Verified
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                TarjetaInformativaFlores(
+                    titulo = "Hacer una venta",
+                    descripcion = "Cada que concretas una venta, se te recompensa con ${flores("venta", 30)} flores.\n¡Anímate a compartir tu talento!",
+                    iconVector = Icons.Outlined.ShoppingBag
+                )
+
+                Spacer(modifier = Modifier.height(30.dp))
             }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MkVerdeCeroPerdida)
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(MkVerdeCeroPerdidaTexto.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Shield,
-                        contentDescription = "Escudo",
-                        tint = MkVerdeCeroPerdidaTexto,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "Cero pérdida",
-                        fontFamily = OutfitFont,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = MkVerdeCeroPerdidaTexto
-                    )
-                    Text(
-                        text = "En caso de inactividad, el progreso seguirá igual, tus datos 100% intactos.",
-                        fontFamily = JakartaSansFont,
-                        fontSize = 12.sp,
-                        lineHeight = 17.sp,
-                        color = MkVerdeCeroPerdidaTexto
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-
-            Text(
-                text = "Cómo obtener flores",
-                fontFamily = OutfitFont,
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
-                color = MkTitulo
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-
-            TarjetaObtenerFlores(
-                titulo = "Publicar un nuevo producto",
-                descripcion = "Sumar un nuevo producto o servicio a tu catálogo personal te ayuda a crecer a ti y a tu mascota. Ganas flores cuando tu publicación es aprobada (una vez al día).",
-                flores = flores("publicacion", 20),
-                iconVector = Icons.Outlined.ViewInAr,
-                onCanjearClick = { onNavigate("publicar_producto") }
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-
-            TarjetaObtenerFlores(
-                titulo = "Registra cómo te has sentido hoy",
-                descripcion = "Reconocer y expresar tus emociones puede ser un buen método de desahogo. Añade tu estado de ánimo y completa los demás bloques de bienestar: puedes ganar hasta $maxBienestar flores al día (te puedes registrar las veces que quieras, pero las flores se dan solo la primera vez del día en cada bloque).",
-                flores = flores("bienestar_emocion", 5),
-                iconVector = Icons.Outlined.Face,
-                onCanjearClick = { onNavigate("bienestar") }
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-
-            TarjetaObtenerFlores(
-                titulo = "Completa un microrreto",
-                descripcion = "Usa tus habilidades y talentos para ayudar a los demás, con ello obtienes una remuneración económica y alimentas a Lilu.",
-                flores = flores("reto", 30),
-                iconVector = Icons.Outlined.Speed,
-                onCanjearClick = { onNavigate("retos") }
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            TarjetaInformativaFlores(
-                titulo = "Subir de nivel",
-                descripcion = "Recuerda que conforme pasa el tiempo, subes de nivel, entre cada eslabón se te recompensa con ${flores("nivel", 25)} flores para Lilu.",
-                iconVector = Icons.Outlined.Verified
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            TarjetaInformativaFlores(
-                titulo = "Hacer una venta",
-                descripcion = "Cada que concretas una venta, se te recompensa con ${flores("venta", 30)} flores.\n¡Anímate a compartir tu talento!",
-                iconVector = Icons.Outlined.ShoppingBag
-            )
-
-            Spacer(modifier = Modifier.height(30.dp))
         }
     }
 }
@@ -373,6 +282,7 @@ private fun TarjetaObtenerFlores(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
+                        modifier = Modifier.weight(1f, fill = false),
                         text = "Ganar $flores flores",
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Bold,
@@ -438,5 +348,188 @@ private fun TarjetaInformativaFlores(
                 )
             }
         }
+    }
+}
+// Lilu con su barra de progreso. En vertical es una columna centrada; en horizontal (poca altura)
+// la imagen va a un lado y los datos al otro, para que Lilu y su barra se vean completas sin
+// tener que desplazarse
+@Composable
+private fun TarjetaLilu(
+    etapa: Int?,
+    etapaNombre: String?,
+    flores: Int,
+    floresSiguiente: Int?,
+    siguienteNombre: String?,
+    porcentaje: Int,
+    cargado: Boolean,
+    onRespirar: () -> Unit
+) {
+    val compacto = LocalConfiguration.current.screenHeightDp < 480
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MkFondoCard),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        if (compacto) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ImagenLilu(etapa = etapa, tamano = 110.dp)
+                Spacer(modifier = Modifier.width(16.dp))
+                DatosLilu(
+                    etapa, etapaNombre, flores, floresSiguiente, siguienteNombre, porcentaje, cargado,
+                    centrado = false, onRespirar = onRespirar, modifier = Modifier.weight(1f)
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                ImagenLilu(etapa = etapa, tamano = 130.dp)
+                Spacer(modifier = Modifier.height(14.dp))
+                DatosLilu(
+                    etapa, etapaNombre, flores, floresSiguiente, siguienteNombre, porcentaje, cargado,
+                    centrado = true, onRespirar = onRespirar
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ImagenLilu(etapa: Int?, tamano: Dp) {
+    Box(
+        modifier = Modifier
+            .size(tamano)
+            .clip(CircleShape)
+            .background(Color(0xFFEFE6EB)),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = when (etapa) { 2 -> R.drawable.lilu_larva; 3 -> R.drawable.lilu_mariposa; else -> R.drawable.lilu_huevo }),
+            contentDescription = "Lilu",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
+@Composable
+private fun DatosLilu(
+    etapa: Int?,
+    etapaNombre: String?,
+    flores: Int,
+    floresSiguiente: Int?,
+    siguienteNombre: String?,
+    porcentaje: Int,
+    cargado: Boolean,
+    centrado: Boolean,
+    onRespirar: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val alineacion = if (centrado) TextAlign.Center else TextAlign.Start
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = if (centrado) Alignment.CenterHorizontally else Alignment.Start
+    ) {
+        Text(
+            text = if (cargado && etapaNombre != null) "Lilu • $etapaNombre" else "Lilu",
+            fontFamily = OutfitFont,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            textAlign = alineacion,
+            color = MkTitulo
+        )
+        Text(
+            text = when (etapa) {
+                1 -> "Lilu descansa en su huevo, esperando crecer contigo"
+                2 -> "Lilu ya salió y crece con cada paso tuyo"
+                3 -> "¡Lilu ya tiene alas! Sigue floreciendo con ella"
+                else -> "Cargando a Lilu…"
+            },
+            fontFamily = JakartaSansFont,
+            fontSize = 13.sp,
+            textAlign = alineacion,
+            color = MkSubtitulo
+        )
+
+        Spacer(modifier = Modifier.height(if (centrado) 16.dp else 10.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(12.dp)
+                .clip(CircleShape)
+                .background(MkBarraFondo)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth((porcentaje / 100f).coerceIn(0f, 1f))
+                    .fillMaxHeight()
+                    .clip(CircleShape)
+                    .background(MkBarraProgreso)
+            )
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        // los dos textos se reparten el renglón; si la meta es larga baja de línea en vez de aplastar a "N flores"
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = "$flores flores",
+                fontFamily = JakartaSansFont,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp,
+                color = MkTitulo
+            )
+            Text(
+                text = if (cargado) {
+                    if (floresSiguiente != null) "Meta: $floresSiguiente flores ($siguienteNombre)" else "¡Etapa máxima!"
+                } else "",
+                fontFamily = JakartaSansFont,
+                fontSize = 13.sp,
+                textAlign = TextAlign.End,
+                color = MkSubtitulo,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 12.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(if (centrado) 20.dp else 12.dp))
+
+        Button(
+            onClick = onRespirar,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 44.dp),
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MkVerdeBoton)
+        ) {
+            Text(
+                text = "Respirar con Lilu",
+                fontFamily = OutfitFont,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 17.sp,
+                color = Color.White
+            )
+        }
+    }
+}
+
+// Para revisar sin emulador (Preview: 320 dp, texto al 200 %, horizontal)
+@PreviewResponsivo
+@Composable
+private fun PreviewTarjetaLilu() {
+    Column(
+        modifier = Modifier
+            .background(ColorFondoApp)
+            .padding(18.dp)
+    ) {
+        TarjetaLilu(
+            etapa = 2, etapaNombre = "Larva", flores = 120, floresSiguiente = 300,
+            siguienteNombre = "Mariposa", porcentaje = 40, cargado = true, onRespirar = {}
+        )
     }
 }

@@ -1,5 +1,6 @@
 package com.example.crisalida.ui.theme.screens
 
+import androidx.compose.ui.platform.LocalConfiguration
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.core.*
@@ -31,7 +32,7 @@ import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.ui.theme.screens.rememberProgreso
 import com.example.crisalida.ui.theme.screens.Carga
-import com.example.crisalida.ui.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
 private val MkTitulo = Color(0xFF7F284F)
 private val MkSubtitulo = Color(0xFF545454)
 private val MkFondoBotonVolver = Color(0xFFE2D4DA)
@@ -67,6 +68,8 @@ fun RespirarLiluScreen(
         ),
         label = "flotar_frases"
     )
+    // en horizontal casi no hay alto: Lilu se hace más chica para que no ocupe toda la pantalla
+    val compacto = LocalConfiguration.current.screenHeightDp < 480
     val progreso = rememberProgreso()
     val etapa = (progreso.estado as? Carga.Lista)?.datos?.lilu?.etapa
     CrisalidaScaffold(
@@ -74,148 +77,148 @@ fun RespirarLiluScreen(
         selectedTab = 4,
         onNavigate = onNavigate
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(ColorFondoApp)
-                .padding(innerPadding)
-                .verticalScroll(scrollState)
-                .padding(horizontal = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(12.dp))
-
-            //botón superior izquierdo para volver a screen de mascota
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start
-            ) {
-                Surface(
-                    onClick = { onNavigate("mascota") },
-                    shape = RoundedCornerShape(18.dp),
-                    color = MkFondoBotonVolver,
-                    shadowElevation = 1.dp
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver",
-                            tint = MkTitulo,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Mascota",
-                            fontFamily = OutfitFont,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp,
-                            color = MkTitulo
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-
-            Box(
-                modifier = Modifier
-                    .size(240.dp)
-                    .graphicsLayer(
-                        scaleX = scaleAnim,
-                        scaleY = scaleAnim
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = when (etapa) { 2 -> R.drawable.lilu_larva; 3 -> R.drawable.lilu_mariposa; else -> R.drawable.lilu_huevo}),
-                    contentDescription = "Lilu emocionada",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "Lilu está muy feliz de que estés aquí. Quiere recordarte lo valiosa que eres para el mundo.",
-                fontFamily = OutfitFont,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                textAlign = TextAlign.Center,
-                color = MkTitulo,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-
-            Spacer(modifier = Modifier.height(28.dp))
-
+        ContenidoCentrado(innerPadding) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .graphicsLayer(translationY = floatAnim),
-                verticalArrangement = Arrangement.spacedBy(22.dp),
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                FraseFlotante(
-                    texto = "No eres lo que te ha tocado vivir, eres lo que eres capaz de superar",
-                    align = TextAlign.Start
-                )
+                Spacer(modifier = Modifier.height(12.dp))
 
-                FraseFlotante(
-                    texto = "Tu fuerza no se mide por lo que aguantas en silencio, sino por tu valentía para buscar paz y libertad",
-                    align = TextAlign.End
-                )
-
-                FraseFlotante(
-                    texto = "Tienes derecho a que todos los minutos de tu vida sean de libertad, de felicidad y de paz",
-                    align = TextAlign.Start
-                )
-
-                FraseFlotante(
-                    texto = "Permítete no tener todas las respuestas resueltas ahora. La independencia se construye también en los días donde simplemente eliges cuidarte y respirar",
-                    align = TextAlign.Center
-                )
-            }
-
-            Spacer(modifier = Modifier.height(36.dp))
-
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MkFondoTarjetaAyuda),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.Start
+                //botón superior izquierdo para volver a screen de mascota
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start
                 ) {
-                    Text(
-                        text = "Si necesitas ayuda, recuerda que Guanajuato cuenta con líneas de atención gratuitas, confidenciales y especializadas que operan las 24 horas del día, además de los números nacionales de emergencia.",
-                        fontFamily = JakartaSansFont,
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp,
-                        color = MkTextoAyudaGris
+                    Surface(
+                        onClick = { onNavigate("mascota") },
+                        shape = RoundedCornerShape(18.dp),
+                        color = MkFondoBotonVolver,
+                        shadowElevation = 1.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Volver",
+                                tint = MkTitulo,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Mascota",
+                                fontFamily = OutfitFont,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp,
+                                color = MkTitulo
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+
+                Box(
+                    modifier = Modifier
+                        .size(if (compacto) 150.dp else 240.dp)
+                        .graphicsLayer(
+                            scaleX = scaleAnim,
+                            scaleY = scaleAnim
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = when (etapa) { 2 -> R.drawable.lilu_larva; 3 -> R.drawable.lilu_mariposa; else -> R.drawable.lilu_huevo}),
+                        contentDescription = "Lilu emocionada",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "Lilu está muy feliz de que estés aquí. Quiere recordarte lo valiosa que eres para el mundo.",
+                    fontFamily = OutfitFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    textAlign = TextAlign.Center,
+                    color = MkTitulo,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer(translationY = floatAnim),
+                    verticalArrangement = Arrangement.spacedBy(22.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    FraseFlotante(
+                        texto = "No eres lo que te ha tocado vivir, eres lo que eres capaz de superar",
+                        align = TextAlign.Start
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    FraseFlotante(
+                        texto = "Tu fuerza no se mide por lo que aguantas en silencio, sino por tu valentía para buscar paz y libertad",
+                        align = TextAlign.End
+                    )
 
-                    //lista de números interactivos
-                    BotonTelefonoAyuda(numero = "9-1-1", descripcion = "Emergencias en curso", context = context)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    BotonTelefonoAyuda(numero = "0-7-5", descripcion = "Línea de Atención a las Mujeres", context = context)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    BotonTelefonoAyuda(numero = "473 164 0369", descripcion = "WhatsApp de Apoyo a Mujeres", context = context)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    BotonTelefonoAyuda(numero = "0-8-9", descripcion = "Denuncia Anónima", context = context)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    BotonTelefonoAyuda(numero = "800 290 0024", descripcion = "Línea de salud mental", context = context)
+                    FraseFlotante(
+                        texto = "Tienes derecho a que todos los minutos de tu vida sean de libertad, de felicidad y de paz",
+                        align = TextAlign.Start
+                    )
+
+                    FraseFlotante(
+                        texto = "Permítete no tener todas las respuestas resueltas ahora. La independencia se construye también en los días donde simplemente eliges cuidarte y respirar",
+                        align = TextAlign.Center
+                    )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(36.dp))
+
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MkFondoTarjetaAyuda),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        Text(
+                            text = "Si necesitas ayuda, recuerda que Guanajuato cuenta con líneas de atención gratuitas, confidenciales y especializadas que operan las 24 horas del día, además de los números nacionales de emergencia.",
+                            fontFamily = JakartaSansFont,
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp,
+                            color = MkTextoAyudaGris
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        //lista de números interactivos
+                        BotonTelefonoAyuda(numero = "9-1-1", descripcion = "Emergencias en curso", context = context)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        BotonTelefonoAyuda(numero = "0-7-5", descripcion = "Línea de Atención a las Mujeres", context = context)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        BotonTelefonoAyuda(numero = "473 164 0369", descripcion = "WhatsApp de Apoyo a Mujeres", context = context)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        BotonTelefonoAyuda(numero = "0-8-9", descripcion = "Denuncia Anónima", context = context)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        BotonTelefonoAyuda(numero = "800 290 0024", descripcion = "Línea de salud mental", context = context)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+            }
         }
     }
 }
@@ -270,6 +273,7 @@ fun BotonTelefonoAyuda(
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
+                modifier = Modifier.weight(1f),
                 text = "$numero ($descripcion)",
                 fontFamily = JakartaSansFont,
                 fontWeight = FontWeight.Bold,

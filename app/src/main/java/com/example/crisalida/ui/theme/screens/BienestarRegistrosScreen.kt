@@ -1,6 +1,5 @@
 package com.example.crisalida.ui.theme.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,7 +17,7 @@ import com.example.crisalida.data.EntradaBienestar
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.ui.theme.*
 import kotlinx.coroutines.launch
-import com.example.crisalida.ui.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
 private val Pestanas = listOf(
     "emocion" to "Emociones",
     "monitoreo" to "Monitoreo",
@@ -41,56 +40,56 @@ fun BienestarRegistrosScreen(
     val carga = rememberCarga(subtipo, version) { BienestarRepositorio.entradas(subtipo) }
 
     CrisalidaScaffold(currentTitle = "Mis registros", selectedTab = 3, onNavigate = onNavigate) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(ColorFondoApp)
-                .padding(innerPadding)
-        ) {
-            BarraVolver("Volver a Bienestar", onVolver)
-            ScrollableTabRow(
-                selectedTabIndex = pestana,
-                containerColor = ColorFondoApp,
-                edgePadding = 12.dp
+        ContenidoCentrado(innerPadding) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
             ) {
-                Pestanas.forEachIndexed { i, (_, titulo) ->
-                    Tab(
-                        selected = pestana == i,
-                        onClick = { pestana = i },
-                        text = {
-                            Text(
-                                titulo, fontFamily = OutfitFont, fontSize = 14.sp,
-                                fontWeight = if (pestana == i) FontWeight.Bold else FontWeight.Normal,
-                                color = if (pestana == i) ColorBotonEntrar else ColorPlaceholder
-                            )
-                        }
-                    )
-                }
-            }
-            when (val e = carga.estado) {
-                is Carga.Cargando -> IndicadorCargando()
-                is Carga.Falla -> MensajeError(e.mensaje, carga.recargar)
-                is Carga.Lista -> {
-                    if (e.datos.entradas.isEmpty()) {
-                        Text(
-                            "Aún no tienes registros en este apartado. Cuando guardes uno en Bienestar, aparecerá aquí.",
-                            fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorPlaceholder,
-                            modifier = Modifier.padding(20.dp)
+                BarraVolver("Volver a Bienestar", onVolver)
+                ScrollableTabRow(
+                    selectedTabIndex = pestana,
+                    containerColor = ColorFondoApp,
+                    edgePadding = 12.dp
+                ) {
+                    Pestanas.forEachIndexed { i, (_, titulo) ->
+                        Tab(
+                            selected = pestana == i,
+                            onClick = { pestana = i },
+                            text = {
+                                Text(
+                                    titulo, fontFamily = OutfitFont, fontSize = 14.sp,
+                                    fontWeight = if (pestana == i) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (pestana == i) ColorBotonEntrar else ColorPlaceholder
+                                )
+                            }
                         )
                     }
-                    LazyColumn(
-                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        items(e.datos.entradas, key = { it.id }) { entrada ->
-                            TarjetaRegistro(entrada, onBorrar = { porBorrar = entrada.id })
-                        }
-                        item {
+                }
+                when (val e = carga.estado) {
+                    is Carga.Cargando -> IndicadorCargando()
+                    is Carga.Falla -> MensajeError(e.mensaje, carga.recargar)
+                    is Carga.Lista -> {
+                        if (e.datos.entradas.isEmpty()) {
                             Text(
-                                "Tus registros se guardan cifrados y solo se muestran cuando entras con tu PIN.",
-                                fontFamily = JakartaSansFont, fontSize = 12.sp, color = ColorPlaceholder,
-                                modifier = Modifier.padding(vertical = 8.dp)
+                                "Aún no tienes registros en este apartado. Cuando guardes uno en Bienestar, aparecerá aquí.",
+                                fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorPlaceholder,
+                                modifier = Modifier.padding(20.dp)
                             )
+                        }
+                        LazyColumn(
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            items(e.datos.entradas, key = { it.id }) { entrada ->
+                                TarjetaRegistro(entrada, onBorrar = { porBorrar = entrada.id })
+                            }
+                            item {
+                                Text(
+                                    "Tus registros se guardan cifrados y solo se muestran cuando entras con tu PIN.",
+                                    fontFamily = JakartaSansFont, fontSize = 12.sp, color = ColorPlaceholder,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -147,6 +146,7 @@ private fun TarjetaRegistro(e: EntradaBienestar, onBorrar: () -> Unit) {
             ) {
                 Text(
                     "${fechaLegible(e.dia)} · ${e.hora}",
+                    modifier = Modifier.weight(1f),
                     fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = ColorPlaceholder
                 )
                 TextButton(onClick = onBorrar) {
