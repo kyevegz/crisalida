@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import org.json.JSONObject
 import androidx.core.content.ContextCompat
+import com.example.crisalida.data.AlmacenamientoCifrado
 import com.example.crisalida.data.FotoRemota
 import com.example.crisalida.data.FotosCamara
 import com.example.crisalida.data.MarketplaceRepositorio
@@ -158,7 +159,7 @@ fun PublicarProductoScreen(
     val launcherPermisoCamara = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
         if (concedido) abrirCamara()
         else mensajeCamara = "No hay problema, tu publicación puede seguir con fotos de tu galería. " +
-            "Si más adelante quieres usar la cámara, puedes activar el permiso en los ajustes del teléfono."
+                "Si más adelante quieres usar la cámara, puedes activar el permiso en los ajustes del teléfono."
     }
 
     fun alElegirTomarFoto() {
@@ -177,8 +178,7 @@ fun PublicarProductoScreen(
     var mensajePublicar by remember { mutableStateOf<String?>(null) }
     var publicacionCreada by remember { mutableStateOf(false) }
 
-    //borrador se guarda solo en este teléfono, sin fotos y sin la dirección privada
-    val prefs = remember { contexto.getSharedPreferences("crisalida_borradores", Context.MODE_PRIVATE) }
+    // el borrador se guarda solo en este teléfono, CIFRADO (Keystore), sin fotos y sin la dirección privada
     var borradorRecuperado by remember { mutableStateOf(false) }
     var mensajeBorrador by remember { mutableStateOf<String?>(null) }
 
@@ -198,14 +198,21 @@ fun PublicarProductoScreen(
             .put("insumos", costoInsumos).put("horas", horasDedicacion).put("precio", precioFinal)
             .put("modalidad", modalidadServicio).put("cobro", tipoCobroServicio).put("entrega", opcionEntrega)
             .put("zona", zonaPublica)
-        prefs.edit().putString("publicacion", j.toString()).apply()
+        if (!AlmacenamientoCifrado.guardar(contexto, BORRADOR_PUBLICACION, j.toString())) {
+            mensajeBorrador = "No pudimos guardar el borrador en este teléfono. Intenta de nuevo."
+            return
+        }
         mensajeBorrador = "Borrador guardado en este teléfono. La próxima vez que abras «Subir producto» lo recuperas. " +
                 "No guarda las fotos ni tu dirección privada: esas hay que volver a agregarlas."
     }
 
     LaunchedEffect(Unit) {
         if (!editando) {
-            val texto = prefs.getString("publicacion", null) ?: return@LaunchedEffect
+            val texto = withContext(Dispatchers.IO) {
+                // los borradores de versiones anteriores estaban sin cifrar: se pasan al almacenamiento cifrado
+                AlmacenamientoCifrado.migrarTextoPlano(contexto, "crisalida_borradores", "publicacion", BORRADOR_PUBLICACION)
+                AlmacenamientoCifrado.leer(contexto, BORRADOR_PUBLICACION)
+            } ?: return@LaunchedEffect
             try {
                 val j = JSONObject(texto)
                 tipoPublicacion = j.optInt("tipo", 0)
@@ -217,7 +224,7 @@ fun PublicarProductoScreen(
                 saltarSugerencia = costoInsumos.isNotBlank() || horasDedicacion.isNotBlank()
                 borradorRecuperado = true
             } catch (e: Exception) {
-                prefs.edit().remove("publicacion").apply()
+                AlmacenamientoCifrado.borrar(contexto, BORRADOR_PUBLICACION)
             }
         }
     }
@@ -312,7 +319,7 @@ fun PublicarProductoScreen(
                         if (subida !is ResultadoApi.Exito) fallidas++
                     }
                     publicacionCreada = true
-                    prefs.edit().remove("publicacion").apply()
+                    AlmacenamientoCifrado.borrar(contexto, BORRADOR_PUBLICACION)
                     mensajePublicar = buildString {
                         append(if (r.datos.estado == "activo") "¡Tu publicación ya está visible en el marketplace!"
                         else "¡Listo! Tu publicación quedó en revisión; en cuanto la aprobemos se verá en el marketplace.")
@@ -373,7 +380,7 @@ fun PublicarProductoScreen(
                         Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text("📝 Recuperamos tu borrador.", fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkVerdeSugeridoTexto, modifier = Modifier.weight(1f))
                             TextButton(onClick = {
-                                prefs.edit().remove("publicacion").apply(); limpiarFormulario(); borradorRecuperado = false
+                                AlmacenamientoCifrado.borrar(contexto, BORRADOR_PUBLICACION); limpiarFormulario(); borradorRecuperado = false
                             }) { Text("Descartar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkVerdeSugeridoTexto) }
                         }
                     }
@@ -828,7 +835,7 @@ fun PublicarProductoScreen(
             text = {
                 Text(
                     "Usamos la cámara solo cuando tocas «Tomar foto», para fotografiar tu producto o servicio. " +
-                        "La foto no se guarda en tu galería: solo se agrega a tu publicación.",
+                            "La foto no se guarda en tu galería: solo se agrega a tu publicación.",
                     fontFamily = JakartaSansFont, color = MkSubtitulo,
                     modifier = Modifier.verticalScroll(rememberScrollState())
                 )
@@ -1085,3 +1092,5 @@ private fun PreviewOpcionesAgregarFoto() {
         OpcionesAgregarFoto(onGaleria = {}, onCamara = {})
     }
 }
+
+private const val BORRADOR_PUBLICACION = "borrador_publicacion"
