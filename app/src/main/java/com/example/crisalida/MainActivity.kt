@@ -20,6 +20,7 @@ import com.example.crisalida.data.ROL_COMPRADORA
 import com.example.crisalida.data.ROL_VENDEDORA
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
+import com.example.crisalida.ui.theme.screens.AvisoPendienteScreen
 import com.example.crisalida.ui.theme.screens.ElegirRolScreen
 import com.example.crisalida.ui.theme.screens.LoginScreen
 import com.example.crisalida.ui.theme.screens.RadarScreen
@@ -31,24 +32,43 @@ import com.example.crisalida.ui.theme.screens.GaleriaMariposasScreen
 import com.example.crisalida.ui.theme.screens.pantallasPrincipales
 import kotlinx.coroutines.launch
 import com.example.crisalida.data.InactividadSesion
+import com.example.crisalida.data.ProteccionPantalla
+import com.example.crisalida.ui.theme.screens.VigilantePantalla
+
 class MainActivity : ComponentActivity() {
 
     // cada toque en cualquier parte de la pantalla reinicia el temporizador de inactividad
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
-        `InactividadSesion`.registrarActividad()
+        InactividadSesion.registrarActividad()
         return super.dispatchTouchEvent(ev)
+    }
+
+    // al salir de la app (otra app, pantalla bloqueada, vista de recientes) se marca la ventana como segura
+    // para que la miniatura de «apps recientes» no muestre el contenido
+    override fun onPause() {
+        ProteccionPantalla.alPasarASegundoPlano()
+        ProteccionPantalla.aplicar(this)
+        super.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        ProteccionPantalla.alVolverAPrimerPlano()
+        ProteccionPantalla.aplicar(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AjustesTexto.cargar(applicationContext)   // tamaño de letra elegido, guardado en el teléfono
-        `InactividadSesion`.cargar(applicationContext)   // minutos de inactividad elegidos, guardados en el teléfono
+        InactividadSesion.cargar(applicationContext)   // minutos de inactividad elegidos, guardados en el teléfono
+        ProteccionPantalla.cargar(applicationContext)   // si se bloquean las capturas, guardado en el teléfono
         setContent {
             MaterialTheme {
                 val navController = rememberNavController()
                 val scope = rememberCoroutineScope()   // para llamar al servidor sin trabar la pantalla
 
                 VigilanteInactividad(navController)   // cierra la sesión si pasa el tiempo elegido sin tocar la pantalla
+                VigilantePantalla(navController)      // oculta la app en recientes y bloquea capturas en pantallas sensibles
 
                 NavHost(navController = navController, startDestination = "login") {
 
@@ -67,8 +87,13 @@ class MainActivity : ComponentActivity() {
                                         error = null
                                         when (val resultado = AuthRepositorio.login(seudonimo, pin)) {
                                             is ResultadoApi.Exito -> {
-                                                // pin de camuflaje abre la galería, pin normal abre la app
-                                                val destino = if (resultado.datos.modo == "camuflaje") "camuflaje" else "home"
+                                                // pin de camuflaje abre la galería; si falta aceptar el aviso se pide primero;
+                                                // si no, pin normal abre la app
+                                                val destino = when {
+                                                    resultado.datos.modo == "camuflaje" -> "camuflaje"
+                                                    resultado.datos.avisoPendiente -> "aviso"
+                                                    else -> "home"
+                                                }
                                                 navController.navigate(destino) {
                                                     popUpTo("login") { inclusive = true }
                                                 }
@@ -108,6 +133,7 @@ class MainActivity : ComponentActivity() {
                                 cargando = cargando,
                                 error = error,
                                 esCompradora = rol == ROL_COMPRADORA,
+                                onAvisoCambio = { acepta, mayor -> AuthRepositorio.registrarAviso(acepta, mayor) },
                                 onNextClick = { seudonimo, pinPrincipal, pinCamuflaje ->
                                     scope.launch {
                                         cargando = true
@@ -131,6 +157,37 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 onNavigateToLogin = { navController.popBackStack("login", false) }
+                            )
+                        }
+                    }
+
+                    // aviso de privacidad y términos para cuentas que aún no lo han aceptado
+                    composable("aviso") {
+                        var cargando by remember { mutableStateOf(false) }
+                        var error by remember { mutableStateOf<String?>(null) }
+
+                        ConEscalaDeTexto(tope = 2f) {
+                            AvisoPendienteScreen(
+                                cargando = cargando,
+                                error = error,
+                                onAceptar = {
+                                    scope.launch {
+                                        cargando = true
+                                        error = null
+                                        when (val r = AuthRepositorio.aceptarAviso()) {
+                                            is ResultadoApi.Exito -> navController.navigate("home") {
+                                                popUpTo("login") { inclusive = true }
+                                            }
+                                            is ResultadoApi.Error -> error = r.mensaje
+                                        }
+                                        cargando = false
+                                    }
+                                },
+                                onRechazar = {
+                                    // sin aceptar no se puede usar la app: se cierra la sesión y vuelve al inicio
+                                    SesionActual.cerrar()
+                                    navController.navigate("login") { popUpTo(0) { inclusive = true } }
+                                }
                             )
                         }
                     }

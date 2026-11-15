@@ -1,6 +1,9 @@
 package com.example.crisalida.ui.theme.screens
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,7 +54,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.data.AhorroDatos
@@ -74,6 +80,9 @@ private val MkTitulo = Color(0xFF7F284F)
 private val MkSubtitulo = Color(0xFF545454)
 private val MkFondoItem = Color(0xFFEFE8EC)
 private val MkExito = Color(0xFF2E7D32)
+
+// ⚠️ Correo de contacto y ayuda: cámbialo por el correo real del equipo antes de publicar la app.
+private const val CORREO_AYUDA = "ayuda@crisalida.example"
 
 // Configuración: se abre desde el engrane del Perfil. Las secciones Seguridad, Privacidad, Datos y
 // almacenamiento y Cuenta se irán llenando en sus propios issues; Apariencia ya tiene el tamaño de
@@ -142,7 +151,7 @@ private fun ContenidoConfiguracion(
             }
 
             SeccionConfiguracion("Privacidad") {
-                TextoProximamente("Aquí podrás ver y ajustar cómo se protege tu información.")
+                OpcionesPrivacidad(contexto)
             }
 
             SeccionConfiguracion("Datos y almacenamiento") {
@@ -163,6 +172,8 @@ private fun ContenidoConfiguracion(
                     accion = "Abrir líneas de ayuda",
                     onClick = onAbrirAyuda
                 )
+                Spacer(modifier = Modifier.height(16.dp))
+                OpcionContacto(contexto)
             }
         }
     }
@@ -354,6 +365,110 @@ private fun FilaInterruptor(
             colors = SwitchDefaults.colors(checkedTrackColor = MkTitulo)
         )
     }
+}
+
+// subtítulo de una opción (TalkBack lo anuncia como encabezado)
+@Composable
+private fun TituloOpcion(texto: String) {
+    Text(
+        text = texto,
+        fontFamily = OutfitFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 17.sp,
+        color = Color.Black,
+        modifier = Modifier.semantics { heading() }
+    )
+}
+
+// Privacidad: usuarias bloqueadas, permisos del sistema, qué datos guardamos y el aviso con los términos
+@Composable
+private fun OpcionesPrivacidad(contexto: Context) {
+    var avisoAbierto by remember { mutableStateOf<String?>(null) }
+    var mensajePermisos by remember { mutableStateOf<String?>(null) }
+
+    TituloOpcion("Usuarias bloqueadas")
+    TextoProximamente("Aquí verás a las personas que bloquees y podrás desbloquearlas. Quien bloqueas no puede verte ni escribirte.")
+
+    Spacer(modifier = Modifier.height(20.dp))
+    TituloOpcion("Permisos de la app")
+    TextoProximamente("Aquí puedes ver y cambiar a qué puede acceder Crisálida: ubicación, cámara y fotos.")
+    Spacer(modifier = Modifier.height(8.dp))
+    BotonAccion(texto = "Abrir ajustes del teléfono") {
+        mensajePermisos = if (abrirAjustesDeLaApp(contexto)) null
+        else "No pudimos abrir los ajustes. Búscalos en Ajustes del teléfono → Apps → Crisálida → Permisos."
+    }
+    mensajePermisos?.let { MensajeResultado(it, false) }
+
+    Spacer(modifier = Modifier.height(20.dp))
+    TituloOpcion("Qué datos guardamos y para qué")
+    Spacer(modifier = Modifier.height(4.dp))
+    DatoConTitulo(
+        "Lo que guardamos: ",
+        if (SesionActual.esCompradora) "tu correo, tu municipio y tu localidad, si decides agregarlos."
+        else "tu correo, tu municipio y tu localidad, y lo que registras en tu bitácora."
+    )
+    DatoConTitulo(
+        "Para qué: ",
+        "para que puedas entrar a tu cuenta, ver recursos cerca de ti y recuperar tu información si cambias de teléfono."
+    )
+    DatoConTitulo("Lo que no hacemos: ", "no vendemos tus datos ni los compartimos con terceros.")
+
+    Spacer(modifier = Modifier.height(20.dp))
+    TituloOpcion("Aviso de privacidad y términos")
+    Spacer(modifier = Modifier.height(4.dp))
+    FilaNavegable("Aviso de privacidad", "Leer el aviso de privacidad") { avisoAbierto = AVISO_PRIVACIDAD }
+    FilaNavegable("Términos de uso", "Leer los términos de uso") { avisoAbierto = TERMINOS_DE_USO }
+
+    avisoAbierto?.let { DialogoAviso(it) { avisoAbierto = null } }
+}
+
+// "Lo que guardamos: texto" con el inicio en negritas
+@Composable
+private fun DatoConTitulo(titulo: String, texto: String) {
+    Text(
+        text = buildAnnotatedString {
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(titulo) }
+            append(texto)
+        },
+        fontFamily = JakartaSansFont,
+        fontSize = 14.sp,
+        lineHeight = 19.sp,
+        color = MkSubtitulo,
+        modifier = Modifier.padding(bottom = 6.dp)
+    )
+}
+
+// abre la pantalla de ajustes de ESTA app en el teléfono (ahí se cambian los permisos)
+private fun abrirAjustesDeLaApp(contexto: Context): Boolean = try {
+    contexto.startActivity(
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", contexto.packageName, null))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    )
+    true
+} catch (e: Exception) {
+    false
+}
+
+// Ayuda → Contacto: abre la app de correo con un mensaje en blanco para el equipo
+@Composable
+private fun OpcionContacto(contexto: Context) {
+    var mensaje by remember { mutableStateOf<String?>(null) }
+    TituloOpcion("Contacto")
+    TextoProximamente("¿Tienes dudas o algún problema con la app? Escríbenos. No incluyas tu PIN ni datos que no quieras compartir.")
+    Spacer(modifier = Modifier.height(8.dp))
+    BotonAccion(texto = "Escribir correo") {
+        mensaje = try {
+            contexto.startActivity(
+                Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", CORREO_AYUDA, null))
+                    .putExtra(Intent.EXTRA_SUBJECT, "Ayuda con Crisálida")
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+            null
+        } catch (e: Exception) {
+            "No encontramos una app de correo. Puedes escribirnos a $CORREO_AYUDA."
+        }
+    }
+    mensaje?.let { MensajeResultado(it, false) }
 }
 
 // Datos y almacenamiento: borrar el historial de bienestar (con confirmación) y limpiar la caché del teléfono

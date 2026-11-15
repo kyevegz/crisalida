@@ -44,6 +44,17 @@ data class RegistroCompletoRequest(
     @SerializedName("version_aviso") val versionAviso: String?
 )
 
+// Aceptación del aviso de privacidad y términos (cuentas que aún no lo han aceptado)
+data class AceptarAvisoRequest(
+    val version: String,
+    @SerializedName("es_mayor_de_edad") val esMayorDeEdad: Boolean
+)
+
+data class AvisoAceptadoResponse(
+    @SerializedName("aviso_version") val avisoVersion: String,
+    val aceptado: Boolean
+)
+
 data class LoginRequest(
     val seudonimo: String,
     val pin: String
@@ -58,6 +69,8 @@ data class SesionResponse(
     val modo: String,   // "normal" o "camuflaje"
     val token: String,
     val rol: String? = null,   // "vendedora" o "compradora"
+    // true: la cuenta todavía no acepta la versión vigente del aviso y la app debe mostrarlo
+    @SerializedName("aviso_pendiente") val avisoPendiente: Boolean = false,
     // solo viene al crear la cuenta; la pantalla del código (issue 4.5) lo mostrará
     @SerializedName("codigo_recuperacion") val codigoRecuperacion: String? = null
 )
@@ -83,6 +96,9 @@ interface ApiService {
 
     @POST("auth/login")
     suspend fun login(@Body datos: LoginRequest): Response<SesionResponse>
+
+    @POST("auth/aceptar-aviso")
+    suspend fun aceptarAviso(@Body datos: AceptarAvisoRequest): Response<AvisoAceptadoResponse>
 
     @GET("auth/seudonimo-disponible")
     suspend fun seudonimoDisponible(@Query("seudonimo") seudonimo: String): Response<DisponibleResponse>
@@ -197,6 +213,10 @@ interface ApiService {
 // ---------- 4. Quién soy ahora mismo (se borra al cerrar la app o con la salida de emergencia)
 
 // Los dos roles de la app. El rol se elige al registrarse y viaja en la sesión.
+// Versión del aviso de privacidad y términos que muestra la app. Debe ser igual a AVISO_VERSION del servidor
+// (si el servidor la sube, el registro y el login piden aceptar otra vez; la app se actualiza con la nueva versión).
+const val VERSION_AVISO = "1"
+
 const val ROL_VENDEDORA = "vendedora"
 const val ROL_COMPRADORA = "compradora"
 
@@ -376,6 +396,17 @@ object AuthRepositorio {
                 }
             }
     }
+
+    /** Lo llama la pantalla de registro cada vez que cambian las casillas de aviso y mayoría de edad. */
+    fun registrarAviso(acepta: Boolean, mayorDeEdad: Boolean) {
+        aceptaAviso = acepta
+        esMayorDeEdad = mayorDeEdad
+        versionAviso = if (acepta) VERSION_AVISO else null
+    }
+
+    /** Cuenta que ya existía (o aviso nuevo): acepta la versión vigente y confirma que es mayor de 18 años. */
+    suspend fun aceptarAviso(): ResultadoApi<AvisoAceptadoResponse> =
+        llamarApi { RetrofitCliente.api.aceptarAviso(AceptarAvisoRequest(VERSION_AVISO, true)) }
 
     /** Descarta el registro a medias (salida de emergencia o si la usuaria regresa al inicio). */
     fun cancelarRegistro() {
