@@ -73,7 +73,7 @@ fun HomeScreen(
     val progreso = rememberProgreso()
     val datos = (progreso.estado as? Carga.Lista)?.datos
     val retoCarga = rememberCarga(ProgresoRepositorio.version) { RetosRepositorio.tablero() }
-    val reglas = (rememberCarga { ProgresoRepositorio.reglas() }.estado as? Carga.Lista)?.datos?.reglas
+    val reglas = (rememberCarga { soloVendedora { ProgresoRepositorio.reglas() } }.estado as? Carga.Lista)?.datos?.reglas
     val floresBitacora = reglas?.get("bienestar_bitacora") ?: 12
     val reto: RetoDto? = (retoCarga.estado as? Carga.Lista)?.datos?.retos?.firstOrNull()
     var aceptando by remember { mutableStateOf(false) }
@@ -396,8 +396,10 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(36.dp))
 
-                // Tarjeta Micro-reto
-                if (reto == null) {
+                // Tarjeta Micro-reto (la compradora no completa retos: ve una invitación al marketplace)
+                if (SesionActual.esCompradora) {
+                    TarjetaInicioCompradora(onNavigate)
+                } else if (reto == null) {
                     when (val e = retoCarga.estado) {
                         is Carga.Cargando -> IndicadorCargando()
                         is Carga.Falla -> MensajeError(e.mensaje, retoCarga.recargar)
@@ -560,5 +562,48 @@ fun HomeScreen(
             },
             containerColor = Color.White
         )
+    }
+}
+// lo que ve la compradora en Inicio en lugar del microrreto
+@Composable
+private fun TarjetaInicioCompradora(onNavigate: (String) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = MargenTarjetas)
+            .clip(RoundedCornerShape(8.dp))
+            .background(MkSuperficieSuave)
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "Compra con confianza",
+            fontFamily = OutfitFont,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = MkTextoOscuro
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "Descubre productos y servicios hechos por otras usuarias y apoya su camino hacia la independencia.",
+            fontFamily = JakartaSansFont,
+            fontSize = 15.sp,
+            color = MkTextoSuave
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Button(
+            onClick = { onNavigate("marketplace") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 41.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MkMorado),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(
+                text = "Ir al marketplace",
+                fontFamily = JakartaSansFont,
+                fontSize = 15.sp,
+                color = Color.White
+            )
+        }
     }
 }
