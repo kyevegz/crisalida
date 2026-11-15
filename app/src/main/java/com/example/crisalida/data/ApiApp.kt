@@ -209,6 +209,29 @@ data class EntradaBienestar(
 data class EntradasBienestarResponse(val entradas: List<EntradaBienestar>)
 data class BorradoResponse(val borrada: Boolean)
 
+// ----- Datos personales opcionales: correo (se confirma con un código), municipio y localidad
+data class DatosPersonalesResponse(
+    val correo: String?,
+    @SerializedName("correo_verificado") val correoVerificado: Boolean,
+    val municipio: String?,
+    val localidad: String?
+)
+
+// Gson no envía los campos nulos: solo viaja lo que la usuaria escribió
+data class UbicacionRequest(val municipio: String?, val localidad: String?)
+
+data class CorreoRequest(val correo: String)
+
+data class CorreoGuardadoResponse(
+    @SerializedName("correo_verificado") val correoVerificado: Boolean,
+    @SerializedName("expira_en_minutos") val expiraEnMinutos: Int? = null,
+    val mensaje: String? = null
+)
+
+data class CodigoCorreoRequest(val codigo: String)
+
+data class CorreoVerificadoResponse(@SerializedName("correo_verificado") val correoVerificado: Boolean)
+
 // respuesta de "borrar todo mi historial": cuántos registros se eliminaron
 data class HistorialBorradoResponse(val borradas: Int = 0)
 
@@ -315,4 +338,27 @@ object BienestarRepositorio {
     suspend fun borrarHistorial(): ResultadoApi<HistorialBorradoResponse> =
         llamarApi { RetrofitCliente.api.borrarHistorialBienestar() }
             .also { if (it is ResultadoApi.Exito) ProgresoRepositorio.avisarCambio() }   // que las pantallas se recarguen vacías
+}
+
+object DatosPersonalesRepositorio {
+    suspend fun mios(): ResultadoApi<DatosPersonalesResponse> = llamarApi { RetrofitCliente.api.misDatos() }
+
+    /** Guarda lo que venga escrito; lo que esté vacío no se manda (no borra nada). */
+    suspend fun guardarUbicacion(municipio: String, localidad: String): ResultadoApi<DatosPersonalesResponse> =
+        llamarApi {
+            RetrofitCliente.api.guardarUbicacion(
+                UbicacionRequest(municipio.trim().ifBlank { null }, localidad.trim().ifBlank { null })
+            )
+        }
+
+    /** Guarda el correo (queda sin verificar) y el servidor envía el código. También sirve para reenviarlo. */
+    suspend fun guardarCorreo(correo: String): ResultadoApi<CorreoGuardadoResponse> =
+        llamarApi { RetrofitCliente.api.guardarCorreo(CorreoRequest(correo.trim())) }
+
+    suspend fun verificarCorreo(codigo: String): ResultadoApi<CorreoVerificadoResponse> =
+        llamarApi { RetrofitCliente.api.verificarCorreo(CodigoCorreoRequest(codigo.trim())) }
+
+    /** ¿Ya tiene correo guardado? Se usa antes de publicar retos (si no, se abre CompletarDatosScreen en modo CORREO_PARA_RETOS). */
+    suspend fun tieneCorreo(): Boolean =
+        (mios() as? ResultadoApi.Exito)?.datos?.correo != null
 }
