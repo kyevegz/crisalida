@@ -351,6 +351,14 @@ object DatosPersonalesRepositorio {
             )
         }
 
+    /** Cambia solo el municipio. Vacío lo borra (el servidor así lo entiende). */
+    suspend fun actualizarMunicipio(valor: String): ResultadoApi<DatosPersonalesResponse> =
+        llamarApi { RetrofitCliente.api.guardarUbicacion(UbicacionRequest(municipio = valor.trim(), localidad = null)) }
+
+    /** Cambia solo la localidad. Vacío la borra. */
+    suspend fun actualizarLocalidad(valor: String): ResultadoApi<DatosPersonalesResponse> =
+        llamarApi { RetrofitCliente.api.guardarUbicacion(UbicacionRequest(municipio = null, localidad = valor.trim())) }
+
     /** Guarda el correo (queda sin verificar) y el servidor envía el código. También sirve para reenviarlo. */
     suspend fun guardarCorreo(correo: String): ResultadoApi<CorreoGuardadoResponse> =
         llamarApi { RetrofitCliente.api.guardarCorreo(CorreoRequest(correo.trim())) }

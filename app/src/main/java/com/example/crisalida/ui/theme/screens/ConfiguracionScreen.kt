@@ -159,7 +159,7 @@ private fun ContenidoConfiguracion(
             }
 
             SeccionConfiguracion("Cuenta") {
-                TextoProximamente("Aquí podrás editar tu correo, tu municipio y tu localidad.")
+                OpcionesCuenta()
             }
 
             SeccionConfiguracion("Apariencia") {
