@@ -38,6 +38,10 @@ import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.RetosRepositorio
 import com.example.crisalida.data.SesionActual
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
+import com.example.crisalida.data.PublicacionDto
+import com.example.crisalida.data.MarketplaceRepositorio
 import com.example.crisalida.data.RetoDto
 import kotlinx.coroutines.launch
 import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
@@ -64,7 +68,9 @@ private val TamanoMascotaGrande = 410.dp
 @Composable
 fun HomeScreen(
     onNavigate: (String) -> Unit,
-    onAbrirReto: (String) -> Unit = {}
+    onAbrirReto: (String) -> Unit = {},
+    onAbrirProducto: (String) -> Unit = {},   // la compradora abre productos del marketplace desde Inicio
+    onPublicarReto: () -> Unit = {}           // la compradora publica retos
 ) {
     val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
@@ -107,7 +113,8 @@ fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Bienvenida a tu espacio seguro, privado e impenetrable",
+                        text = if (SesionActual.esCompradora) "¡Bienvenida a Crisálida!\nUn lugar seguro y privado para todas."
+                        else "Bienvenida a tu espacio seguro, privado e impenetrable",
                         fontFamily = JakartaSansFont,
                         fontWeight = FontWeight.Normal,
                         fontSize = 18.sp,
@@ -118,8 +125,10 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // bitácora, mascota y bienestar: la compradora no los tiene
-                if (!SesionActual.esCompradora) {
+                // La compradora ve su propio Inicio (marketplace y publicar retos); lo demás es de la vendedora
+                if (SesionActual.esCompradora) {
+                InicioCompradora(onNavigate, onAbrirProducto, onPublicarReto)
+                } else {
                 //bitácora, lleva a Bienestar
                 Card(
                     shape = RoundedCornerShape(8.dp),
@@ -392,14 +401,11 @@ fun HomeScreen(
                     )
                 }
 
-                }   // fin de lo que no ve la compradora
 
                 Spacer(modifier = Modifier.height(36.dp))
 
-                // Tarjeta Micro-reto (la compradora no completa retos: ve una invitación al marketplace)
-                if (SesionActual.esCompradora) {
-                    TarjetaInicioCompradora(onNavigate)
-                } else if (reto == null) {
+                // Tarjeta Micro-reto
+                if (reto == null) {
                     when (val e = retoCarga.estado) {
                         is Carga.Cargando -> IndicadorCargando()
                         is Carga.Falla -> MensajeError(e.mensaje, retoCarga.recargar)
@@ -545,6 +551,7 @@ fun HomeScreen(
                     }
                     Spacer(modifier = Modifier.height(38.dp))
                 }
+                }   // fin de lo que ve la vendedora
 
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -564,46 +571,162 @@ fun HomeScreen(
         )
     }
 }
-// lo que ve la compradora en Inicio en lugar del microrreto
+// Inicio de la compradora: mascota decorativa, dos productos del marketplace y la invitación a publicar un reto
 @Composable
-private fun TarjetaInicioCompradora(onNavigate: (String) -> Unit) {
-    Column(
+private fun InicioCompradora(
+    onNavigate: (String) -> Unit,
+    onAbrirProducto: (String) -> Unit,
+    onPublicarReto: () -> Unit
+) {
+    val catalogo = rememberCarga { MarketplaceRepositorio.catalogo() }
+    val destacados = (catalogo.estado as? Carga.Lista)?.datos?.publicaciones?.take(2).orEmpty()
+
+    Spacer(modifier = Modifier.height(8.dp))
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Image(
+            painter = painterResource(id = R.drawable.mascotagrande),
+            contentDescription = null,   // es decorativa
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .widthIn(max = TamanoMascotaGrande)
+                .fillMaxWidth()
+                .aspectRatio(1f)
+        )
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+    TituloInicio("Explora nuestro marketplace")
+    Text(
+        text = "Lleno de talento y habilidad de mujeres increíbles",
+        fontFamily = JakartaSansFont,
+        fontSize = 18.sp,
+        lineHeight = 24.sp,
+        color = MkSubtitulo,
+        modifier = Modifier.padding(start = MargenIzqArriba, end = MargenDerArriba)
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+
+    when (val e = catalogo.estado) {
+        is Carga.Cargando -> IndicadorCargando()
+        is Carga.Falla -> MensajeError(e.mensaje, catalogo.recargar)
+        is Carga.Lista -> if (destacados.isEmpty()) {
+            Text(
+                text = "Aún no hay publicaciones. ¡Vuelve pronto!",
+                fontFamily = JakartaSansFont, fontSize = 14.sp, color = MkTextoSuave,
+                modifier = Modifier.padding(horizontal = MargenTarjetas)
+            )
+        }
+    }
+    destacados.forEach { p ->
+        ProductoDestacado(p, onAbrirProducto)
+        Spacer(modifier = Modifier.height(10.dp))
+    }
+
+    Spacer(modifier = Modifier.height(4.dp))
+    BotonInicio("Ir a marketplace") { onNavigate("marketplace") }
+
+    Spacer(modifier = Modifier.height(24.dp))
+    TituloInicio("O publica un microrreto")
+    Text(
+        text = "Ideal si necesitas ayuda con algo muy específico y rápido.\nProcura consultar nuestras directrices de seguridad antes.",
+        fontFamily = JakartaSansFont,
+        fontSize = 18.sp,
+        lineHeight = 24.sp,
+        color = MkSubtitulo,
+        modifier = Modifier.padding(start = MargenIzqArriba, end = MargenDerArriba)
+    )
+    Spacer(modifier = Modifier.height(12.dp))
+    BotonInicio("Quiero publicar un reto", onPublicarReto)
+}
+
+@Composable
+private fun TituloInicio(texto: String) {
+    Text(
+        text = texto,
+        fontFamily = OutfitFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 24.sp,
+        color = MkTitulo,
+        modifier = Modifier
+            .padding(start = MargenIzqArriba, end = MargenDerArriba)
+            .semantics { heading() }
+    )
+}
+
+@Composable
+private fun BotonInicio(texto: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = MargenTarjetas)
-            .clip(RoundedCornerShape(8.dp))
-            .background(MkSuperficieSuave)
-            .padding(16.dp)
+            .heightIn(min = 48.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = MkMorado),
+        shape = RoundedCornerShape(8.dp)
     ) {
-        Text(
-            text = "Compra con confianza",
-            fontFamily = OutfitFont,
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            color = MkTextoOscuro
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "Descubre productos y servicios hechos por otras usuarias y apoya su camino hacia la independencia.",
-            fontFamily = JakartaSansFont,
-            fontSize = 15.sp,
-            color = MkTextoSuave
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Button(
-            onClick = { onNavigate("marketplace") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 41.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = MkMorado),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Text(
-                text = "Ir al marketplace",
-                fontFamily = JakartaSansFont,
-                fontSize = 15.sp,
-                color = Color.White
-            )
+        Text(text = texto, fontFamily = JakartaSansFont, fontSize = 15.sp, color = Color.White)
+    }
+}
+
+// producto del marketplace en Inicio: foto, categoría, título, descripción, precio y «Ver producto»
+@Composable
+private fun ProductoDestacado(p: PublicacionDto, onAbrir: (String) -> Unit) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = MkSuperficieSuave),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = MargenTarjetas)
+            .clickable { onAbrir(p.id) }
+    ) {
+        Column(modifier = Modifier.padding(8.dp)) {
+            Row {
+                Box(
+                    modifier = Modifier
+                        .size(width = 96.dp, height = 78.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color(0xFFD9D9D9))
+                ) {
+                    FotoRemota(ruta = p.imagenes.firstOrNull(), modifier = Modifier.fillMaxSize())
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = p.categoria,
+                        fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 11.sp,
+                        color = MkMorado
+                    )
+                    Text(
+                        text = p.titulo,
+                        fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp,
+                        color = MkTextoOscuro, maxLines = 2, overflow = TextOverflow.Ellipsis
+                    )
+                    p.descripcion?.takeIf { it.isNotBlank() }?.let {
+                        Text(
+                            text = it,
+                            fontFamily = JakartaSansFont, fontSize = 13.sp,
+                            color = MkTextoSuave, maxLines = 2, overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    Text(
+                        text = formatoPrecio(p.precio) + " MXN",
+                        fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp,
+                        color = MkVerde
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = { onAbrir(p.id) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 40.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MkVerde),
+                shape = RoundedCornerShape(4.dp)
+            ) {
+                Text(text = "Ver producto", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
+            }
         }
     }
 }

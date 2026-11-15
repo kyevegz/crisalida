@@ -349,6 +349,13 @@ object AuthRepositorio {
     private var pendiente: RegistroRequest? = null
     private var rolPendiente: String = ROL_VENDEDORA
 
+    // Código de recuperación que entrega el servidor UNA sola vez, al crear la cuenta. Vive solo en memoria
+    // (nunca en disco) y se borra al mostrarlo, al cerrar sesión o al cancelar el registro.
+    var codigoRecuperacion: String? = null
+        private set
+
+    fun limpiarCodigoRecuperacion() { codigoRecuperacion = null }
+
     // Casillas del aviso de privacidad y de mayoría de edad. La pantalla del aviso (issue siguiente)
     // las llena antes de crear la cuenta; mientras no estén marcadas el servidor rechaza el registro.
     var aceptaAviso: Boolean = false
@@ -405,6 +412,7 @@ object AuthRepositorio {
                     SesionActual.iniciar(it.datos)
                     SesionActual.tokenRegistro = null
                     cancelarRegistro()
+                    codigoRecuperacion = it.datos.codigoRecuperacion   // después de cancelarRegistro, que lo borra
                 }
             }
     }
@@ -427,6 +435,7 @@ object AuthRepositorio {
         aceptaAviso = false
         esMayorDeEdad = false
         versionAviso = null
+        codigoRecuperacion = null
         SesionActual.tokenRegistro = null
     }
 

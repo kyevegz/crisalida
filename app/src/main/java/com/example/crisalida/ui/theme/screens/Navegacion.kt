@@ -141,11 +141,13 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
     val abrirProducto: (String) -> Unit = { navController.navigate("producto_detalle/$it") }
     val editar: (String) -> Unit = { navController.navigate("editar_publicacion/$it") }
     val volver: () -> Unit = { navController.popBackStack() }
+    // publicar un reto: antes se pide el correo si la usuaria no lo tiene (ver PuertaCorreo en MainActivity)
+    val publicarReto: () -> Unit = { navController.navigate("requiere_correo/publicar_reto") }
     val argId = listOf(navArgument("id") { type = NavType.StringType })
 
     composable("retos") { ConEscalaDeTexto(tope = 2f) { RetosScreen(onNavigate = ir, onAbrirDetalle = abrirReto) } }
     composable("marketplace") { ConEscalaDeTexto(tope = 2f) { MarketplaceScreen(onNavigate = ir, onAbrirDetalle = abrirProducto) } }
-    composable("home") { ConEscalaDeTexto(tope = 2f) { HomeScreen(onNavigate = ir, onAbrirReto = abrirReto) } }
+    composable("home") { ConEscalaDeTexto(tope = 2f) { HomeScreen(onNavigate = ir, onAbrirReto = abrirReto, onAbrirProducto = abrirProducto, onPublicarReto = publicarReto) } }
     composable("bienestar") {
         SoloVendedora(navController) {
             ConEscalaDeTexto { BienestarScreen(onNavigate = ir, onVerRegistros = { navController.navigate("bienestar_registros") }) }
@@ -157,6 +159,7 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
             PerfilScreen(
                 onNavigate = ir, onEditar = editar,
                 onAbrirConfiguracion = { navController.navigate("configuracion") },
+                onPublicarReto = publicarReto,
                 onCerrarSesion = {
                     SesionActual.cerrar()
                     navController.navigate("login") { popUpTo(0) { inclusive = true } }
@@ -165,6 +168,8 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
         }
     }
 
+    // pantalla para publicar retos: se hará en su propio issue
+    composable("publicar_reto") { ConEscalaDeTexto { PantallaPendiente("Publicar reto", 0, ir) } }
     composable("configuracion") { ConEscalaDeTexto { ConfiguracionScreen(onNavigate = ir, onVolver = volver) } }
     composable("respirar_lilu") { SoloVendedora(navController) { ConEscalaDeTexto { RespirarLiluScreen(onNavigate = ir) } } }
     composable("portafolio_completo") { SoloVendedora(navController) { ConEscalaDeTexto { PortafolioScreen(onNavigate = ir, onEditar = editar) } } }
