@@ -2,6 +2,7 @@ package com.example.crisalida.ui.theme.screens
 
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.semantics.Role
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -31,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -84,14 +84,13 @@ data class HabilidadInsignia(
 fun PerfilScreen(
     onNavigate: (String) -> Unit,
     onEditar: (String) -> Unit = {},
+    onAbrirConfiguracion: () -> Unit = {},
     onCerrarSesion: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
     val scope = rememberCoroutineScope()
     var mostrarSelectorAvatar by remember { mutableStateOf(false) }
-    var mostrarConfiguracion by remember { mutableStateOf(false) }
-    val contexto = LocalContext.current
     var avatarSeleccionado by remember { mutableStateOf(SesionActual.avatar) }
     var mensajeInfo by remember { mutableStateOf<String?>(null) }
 
@@ -212,7 +211,7 @@ fun PerfilScreen(
                             .size(48.dp)
                             .clip(CircleShape)
                             .background(MkBarraFondo)
-                            .clickable { mostrarConfiguracion = true },
+                            .clickable(role = Role.Button, onClick = onAbrirConfiguracion),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -598,70 +597,6 @@ fun PerfilScreen(
             confirmButton = {
                 TextButton(onClick = { mensajeInfo = null }) {
                     Text(text = "Entendido", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo)
-                }
-            },
-            containerColor = Color.White,
-            shape = RoundedCornerShape(12.dp)
-        )
-    }
-
-    //config
-    if (mostrarConfiguracion) {
-        AlertDialog(
-            onDismissRequest = { mostrarConfiguracion = false },
-            title = {
-                Text(text = "Configuración", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo)
-            },
-            text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    Text(text = "Tamaño del texto", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Color.Black)
-                    Text(
-                        text = "Elige el que se te haga más cómodo de leer.",
-                        fontFamily = JakartaSansFont, fontSize = 14.sp, color = MkSubtitulo
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    AjustesTexto.opciones.forEach { (nombre, valor) ->
-                        val elegida = AjustesTexto.escala == valor
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable { AjustesTexto.cambiar(contexto, valor) }
-                                .padding(vertical = 2.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = elegida,
-                                onClick = { AjustesTexto.cambiar(contexto, valor) },
-                                colors = RadioButtonDefaults.colors(selectedColor = MkTitulo)
-                            )
-                            Text(
-                                text = nombre,
-                                fontFamily = JakartaSansFont,
-                                fontWeight = if (elegida) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 16.sp,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MkFondoItem)
-                            .padding(12.dp)
-                    ) {
-                        Text(
-                            text = "Así se va a ver el texto de la app. Lilu te acompaña en cada paso.",
-                            fontFamily = JakartaSansFont, fontSize = 15.sp, color = Color.Black
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { mostrarConfiguracion = false }) {
-                    Text(text = "Listo", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo)
                 }
             },
             containerColor = Color.White,

@@ -69,6 +69,7 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
         ConEscalaDeTexto {
             PerfilScreen(
                 onNavigate = ir, onEditar = editar,
+                onAbrirConfiguracion = { navController.navigate("configuracion") },
                 onCerrarSesion = {
                     SesionActual.cerrar()
                     navController.navigate("login") { popUpTo(0) { inclusive = true } }
@@ -77,6 +78,7 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
         }
     }
 
+    composable("configuracion") { ConEscalaDeTexto { ConfiguracionScreen(onNavigate = ir, onVolver = volver) } }
     composable("respirar_lilu") { ConEscalaDeTexto { RespirarLiluScreen(onNavigate = ir) } }
     composable("portafolio_completo") { ConEscalaDeTexto { PortafolioScreen(onNavigate = ir, onEditar = editar) } }
     composable("publicar_producto") { ConEscalaDeTexto { PublicarProductoScreen(onNavigate = ir) } }
