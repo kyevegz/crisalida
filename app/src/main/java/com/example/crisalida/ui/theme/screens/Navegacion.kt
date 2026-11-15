@@ -20,7 +20,7 @@ import com.example.crisalida.ui.theme.ColorFondoApp
 import com.example.crisalida.ui.theme.ColorTextoPrincipal
 import com.example.crisalida.ui.theme.ConEscalaDeTexto
 import com.example.crisalida.ui.theme.OutfitFont
-import com.example.crisalida.ui.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
 // navegación de la barra de abajo, sin acumular historial
 fun NavController.navigateToTab(route: String) {
     navigate(route) {
@@ -58,9 +58,9 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
     val volver: () -> Unit = { navController.popBackStack() }
     val argId = listOf(navArgument("id") { type = NavType.StringType })
 
-    composable("retos") { ConEscalaDeTexto { RetosScreen(onNavigate = ir, onAbrirDetalle = abrirReto) } }
-    composable("marketplace") { ConEscalaDeTexto { MarketplaceScreen(onNavigate = ir, onAbrirDetalle = abrirProducto) } }
-    composable("home") { ConEscalaDeTexto { HomeScreen(onNavigate = ir, onAbrirReto = abrirReto) } }
+    composable("retos") { ConEscalaDeTexto(tope = 2f) { RetosScreen(onNavigate = ir, onAbrirDetalle = abrirReto) } }
+    composable("marketplace") { ConEscalaDeTexto(tope = 2f) { MarketplaceScreen(onNavigate = ir, onAbrirDetalle = abrirProducto) } }
+    composable("home") { ConEscalaDeTexto(tope = 2f) { HomeScreen(onNavigate = ir, onAbrirReto = abrirReto) } }
     composable("bienestar") {
         ConEscalaDeTexto { BienestarScreen(onNavigate = ir, onVerRegistros = { navController.navigate("bienestar_registros") }) }
     }
@@ -82,12 +82,12 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
     composable("publicar_producto") { ConEscalaDeTexto { PublicarProductoScreen(onNavigate = ir) } }
 
     composable("reto_detalle/{id}", arguments = argId) { entrada ->
-        ConEscalaDeTexto {
+        ConEscalaDeTexto(tope = 2f) {
             RetoDetalleScreen(retoId = entrada.arguments?.getString("id").orEmpty(), onNavigate = ir, onVolver = volver)
         }
     }
     composable("producto_detalle/{id}", arguments = argId) { entrada ->
-        ConEscalaDeTexto {
+        ConEscalaDeTexto(tope = 2f) {
             ProductoDetalleScreen(
                 publicacionId = entrada.arguments?.getString("id").orEmpty(),
                 onNavigate = ir, onVolver = volver, onEditar = editar

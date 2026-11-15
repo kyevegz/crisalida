@@ -30,7 +30,7 @@ import com.example.crisalida.data.RetoDto
 import com.example.crisalida.data.RetosRepositorio
 import com.example.crisalida.ui.theme.*
 import kotlinx.coroutines.launch
-import com.example.crisalida.ui.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
 private val RetoVerde = Color(0xFF1E681E)
 private val RetoGris = Color(0xFF545454)
 private val RetoCaja = Color(0xFFF2F0EF)
@@ -63,12 +63,8 @@ fun RetoDetalleScreen(
     }
 
     CrisalidaScaffold(currentTitle = "Detalle del reto", selectedTab = 0, onNavigate = onNavigate) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(ColorFondoApp)
-                .padding(innerPadding)
-        ) {
+        ContenidoCentrado(innerPadding) {
+        Column(modifier = Modifier.fillMaxSize()) {
             BarraVolver("Volver al tablero", onVolver)
             when (val e = carga.estado) {
                 is Carga.Cargando -> IndicadorCargando()
@@ -95,12 +91,13 @@ fun RetoDetalleScreen(
                 }
             }
         }
+        }
     }
 
     aviso?.let { texto ->
         AlertDialog(
             onDismissRequest = { aviso = null },
-            text = { Text(text = texto, fontFamily = OutfitFont, color = Color.Black) },
+            text = { Text(text = texto, fontFamily = OutfitFont, color = Color.Black, modifier = Modifier.verticalScroll(rememberScrollState())) },
             confirmButton = {
                 TextButton(onClick = { aviso = null }) {
                     Text("Entendido", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = RetoVerde)
@@ -111,6 +108,7 @@ fun RetoDetalleScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColumnScope.Contenido(
     reto: RetoDto,
@@ -134,10 +132,13 @@ private fun ColumnScope.Contenido(
     Text(reto.titulo, fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 26.sp, lineHeight = 31.sp, color = Color.Black)
     Spacer(Modifier.height(6.dp))
     Text("${formatoPrecio(reto.compensacion)} MXN", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = RetoVerde)
-    Text("Pago al completar el reto y que sea validado", fontFamily = JakartaSansFont, fontSize = 13.sp, color = RetoGris)
+    Text("Pago al completar el reto y que sea validado", fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = RetoGris)
     Spacer(Modifier.height(12.dp))
 
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         Etiqueta(reto.categoria)
         Etiqueta(dificultadTexto(reto.dificultad))
         reto.etiqueta?.takeIf { it != reto.categoria }?.let { Etiqueta(it) }
@@ -194,7 +195,7 @@ private fun Boton(texto: String, habilitado: Boolean, onClick: () -> Unit) {
 @Composable
 private fun Etiqueta(texto: String) {
     Box(modifier = Modifier.clip(CircleShape).background(Color(0xFFE8D7DD)).padding(horizontal = 12.dp, vertical = 4.dp)) {
-        Text(texto, fontFamily = OutfitFont, fontSize = 13.sp, color = Color(0xFF5A1136))
+        Text(texto, fontFamily = OutfitFont, fontSize = 13.sp, lineHeight = 18.sp, color = Color(0xFF5A1136))
     }
 }
 
@@ -207,5 +208,31 @@ private fun Dato(icono: ImageVector, titulo: String, valor: String) {
             Text(titulo, fontFamily = JakartaSansFont, fontSize = 12.sp, color = RetoGris)
             Text(valor, fontFamily = OutfitFont, fontWeight = FontWeight.Medium, fontSize = 15.sp, color = Color.Black)
         }
+    }
+}
+
+
+@PreviewResponsivo
+@Composable
+private fun RetoDetallePreview() {
+    Column(
+        modifier = Modifier
+            .background(ColorFondoApp)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp)
+    ) {
+        Contenido(
+            reto = RetoDto(
+                retoId = "1",
+                titulo = "Etiquetado de frascos para mermelada artesanal",
+                descripcion = "Se necesitan 60 etiquetas pegadas y alineadas en frascos de 250 ml, con el nombre del producto hacia el frente. El material se entrega en la tienda.",
+                compensacion = 350.0, duracionMin = 90, dificultad = "media",
+                habilidadRequerida = "Trabajo manual y atención al detalle", etiqueta = "Manualidades",
+                fechaLimite = "2026-12-05", categoriaId = 1, categoria = "Manualidades",
+                contratista = "Mermeladas La Abuela", aceptacionId = "a1", estado = "aceptado",
+                imagenRuta = null, miEstado = "aceptado"
+            ),
+            ocupado = false, onAceptar = {}, onEntregar = {}, onSoltar = {}
+        )
     }
 }

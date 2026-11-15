@@ -4,9 +4,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -23,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import com.example.crisalida.data.FotoRemota
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.data.MarketplaceRepositorio
@@ -32,7 +37,7 @@ import com.example.crisalida.data.RetoDto
 import com.example.crisalida.data.RetosRepositorio
 import kotlinx.coroutines.launch
 import com.example.crisalida.ui.theme.*
-import com.example.crisalida.ui.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
 // colores del mockup
 private val MkTitulo = Color(0xFF9D4067)
 private val MkGris = Color(0xFF545454)
@@ -86,6 +91,7 @@ private fun RetoDto.aUi(): RetoUi {
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun RetosScreen(
     onNavigate: (String) -> Unit,
@@ -131,7 +137,10 @@ fun RetosScreen(
         selectedTab = 0,
         onNavigate = onNavigate
     ) { innerPadding ->
-        LazyColumn(
+        // Las tarjetas se acomodan solas según el ancho: 1 columna en teléfono, 2 o más en pantallas anchas.
+        // Los encabezados (título, pestañas, chips, mensajes) ocupan todo el ancho.
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 320.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .background(ColorFondoApp)
@@ -139,20 +148,22 @@ fun RetosScreen(
             contentPadding = PaddingValues(bottom = 22.dp)
         ) {
             // Título + contador
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = 19.dp, end = 11.dp, top = 17.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Bottom
                 ) {
+                    // el título cede espacio al contador: antes, en pantallas angostas el contador desaparecía
                     Text(
                         text = if (verMisRetos) "Mis retos" else "Retos disponibles hoy",
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 35.sp,
-                        color = MkTitulo
+                        lineHeight = 40.sp,
+                        color = MkTitulo,
+                        modifier = Modifier.weight(1f)
                     )
                     Text(
                         text = if (verMisRetos) "${visibles.size}" else "${visibles.size} nuevos",
@@ -160,16 +171,17 @@ fun RetosScreen(
                         fontWeight = FontWeight.Normal,
                         fontSize = 18.sp,
                         color = MkGris,
-                        modifier = Modifier.padding(bottom = 5.dp)
+                        modifier = Modifier.padding(start = 8.dp, bottom = 5.dp)
                     )
                 }
             }
 
-            // Pestañas: Disponibles / Mis retos
-            item {
-                Row(
+            // Pestañas: Disponibles / Mis retos (si no caben en una línea, la segunda baja)
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                FlowRow(
                     modifier = Modifier.padding(start = MargenIzq, end = MargenDer, top = 9.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     listOf("Disponibles" to false, "Mis retos" to true).forEach { (texto, esMios) ->
                         val sel = verMisRetos == esMios
@@ -194,7 +206,7 @@ fun RetosScreen(
             }
 
             // Chips de categoría (solo en "Disponibles")
-            if (!verMisRetos) item {
+            if (!verMisRetos) item(span = { GridItemSpan(maxLineSpan) }) {
                 LazyRow(
                     modifier = Modifier.padding(top = 9.dp),
                     contentPadding = PaddingValues(start = MargenIzq, end = MargenDer),
@@ -223,10 +235,10 @@ fun RetosScreen(
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(3.dp)) }
+            item(span = { GridItemSpan(maxLineSpan) }) { Spacer(modifier = Modifier.height(3.dp)) }
 
             // Cargando / error / vacío
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 when (val e = activo.estado) {
                     is Carga.Cargando -> IndicadorCargando()
                     is Carga.Falla -> MensajeError(e.mensaje, activo.recargar)
@@ -278,7 +290,7 @@ fun RetosScreen(
     aviso?.let { texto ->
         AlertDialog(
             onDismissRequest = { aviso = null },
-            text = { Text(text = texto, fontFamily = OutfitFont, color = Color.Black) },
+            text = { Text(text = texto, fontFamily = OutfitFont, color = Color.Black, modifier = Modifier.verticalScroll(rememberScrollState())) },
             confirmButton = {
                 TextButton(onClick = { aviso = null }) {
                     Text(text = "Entendido", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkVerde)
@@ -289,6 +301,7 @@ fun RetosScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RetoCard(
     reto: RetoUi,
@@ -310,9 +323,9 @@ private fun RetoCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
+                // antes el título medía 250 dp fijos y el precio se cortaba en pantallas angostas
                 Text(
                     text = reto.titulo,
                     fontFamily = OutfitFont,
@@ -320,14 +333,17 @@ private fun RetoCard(
                     fontSize = 25.sp,
                     lineHeight = 30.sp,
                     color = Color.Black,
-                    modifier = Modifier.width(250.dp)
+                    modifier = Modifier.weight(1f)
                 )
                 Text(
                     text = reto.precio,
                     fontFamily = OutfitFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = 21.sp,
-                    color = MkVerde
+                    lineHeight = 26.sp,
+                    textAlign = TextAlign.End,
+                    color = MkVerde,
+                    modifier = Modifier.padding(start = 8.dp).widthIn(max = 170.dp)
                 )
             }
 
@@ -338,14 +354,14 @@ private fun RetoCard(
                     .wrapContentHeight()
                     .clip(CircleShape)
                     .background(reto.etiquetaFondo)
-                    .padding(horizontal = 10.dp),
+                    .padding(horizontal = 10.dp, vertical = 3.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = reto.etiqueta,
                     fontFamily = OutfitFont,
                     fontSize = 15.sp,
-                    lineHeight = 10.sp,
+                    lineHeight = 20.sp,
                     color = reto.etiquetaTexto
                 )
             }
@@ -386,7 +402,7 @@ private fun RetoCard(
                     .wrapContentHeight()
                     .clip(RoundedCornerShape(7.dp))
                     .background(MkSkillFondo)
-                    .padding(start = 6.dp),
+                    .padding(start = 6.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
                 verticalArrangement = Arrangement.Center
             ) {
                 Row(
@@ -438,7 +454,7 @@ private fun RetoCard(
                         .heightIn(min = 38.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MkVerde),
-                    contentPadding = PaddingValues(0.dp)
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
                         text = textoBoton,
@@ -465,5 +481,26 @@ private fun RetoCard(
                 }
             }
         }
+    }
+}
+
+
+@PreviewResponsivo
+@Composable
+private fun RetoCardPreview() {
+    Column(modifier = Modifier.background(ColorFondoApp).verticalScroll(rememberScrollState()).padding(vertical = 8.dp)) {
+        RetoCard(
+            reto = RetoUi(
+                retoId = "1", aceptacionId = "a1", estado = "aceptado",
+                titulo = "Etiquetado de frascos para mermelada artesanal",
+                precio = "1,250.00 MXN", etiqueta = "Manualidades",
+                etiquetaFondo = Color(0xFFAFD0DD), etiquetaTexto = Color(0xFF11215A),
+                categoria = "Manualidades", habilidad = "Trabajo manual y atención al detalle",
+                duracion = "45 min. aprox", imagenRuta = null
+            ),
+            modifier = Modifier.padding(start = MargenIzq, end = MargenDer, top = 16.dp),
+            textoBoton = "Marcar como entregado",
+            textoSecundario = "Soltar este reto"
+        )
     }
 }
