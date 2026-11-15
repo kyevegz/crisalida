@@ -22,7 +22,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -40,7 +39,7 @@ import com.example.crisalida.data.RetosRepositorio
 import com.example.crisalida.data.SesionActual
 import com.example.crisalida.data.RetoDto
 import kotlinx.coroutines.launch
-import com.example.crisalida.ui.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
 
 
 private val MkFondo = Color(0xFFF2F0EF)
@@ -84,11 +83,10 @@ fun HomeScreen(
         selectedTab = 2,
         onNavigate = onNavigate
     ) { innerPadding ->
+        ContenidoCentrado(innerPadding) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(ColorFondoApp)
-                .padding(innerPadding)
                 .verticalScroll(scrollState)
         ) {
             Spacer(modifier = Modifier.height(24.dp))
@@ -112,7 +110,7 @@ fun HomeScreen(
                     fontFamily = JakartaSansFont,
                     fontWeight = FontWeight.Normal,
                     fontSize = 18.sp,
-                    lineHeight = 19.sp,
+                    lineHeight = 24.sp,
                     color = MkSubtitulo
                 )
             }
@@ -195,18 +193,20 @@ fun HomeScreen(
                 )
             }
 
+            // la mascota se ajusta al ancho de la pantalla (máximo 410 dp): antes medía 410 dp fijos y en
+            // pantallas angostas se cortaban las alas
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(412.dp)
-                    .clipToBounds(),
+                modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.mascotagrande),
                     contentDescription = "Mascota Lilu",
                     contentScale = ContentScale.Fit,
-                    modifier = Modifier.requiredSize(TamanoMascotaGrande)
+                    modifier = Modifier
+                        .widthIn(max = TamanoMascotaGrande)
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
                 )
             }
             Card(
@@ -223,7 +223,8 @@ fun HomeScreen(
                             .fillMaxWidth()
                             .padding(start = 13.dp, top = 8.dp, end = 8.dp)
                     ) {
-                        // Mascota pequeña + chip "Sereno"
+                        // Mascota pequeña + chip "Sereno" (medidas fijas: su texto crece poco)
+                        ConEscalaLimitada(tope = 1.1f) {
                         Box(modifier = Modifier.width(58.dp).height(81.dp)) {
                             Image(
                                 painter = painterResource(id = when (datos?.lilu?.etapa) { 2 -> R.drawable.lilu_larva; 3 -> R.drawable.lilu_mariposa; else -> R.drawable.lilu_huevo }),
@@ -259,16 +260,18 @@ fun HomeScreen(
                                 )
                             }
                         }
+                        }
 
                         Spacer(modifier = Modifier.width(15.dp))
 
-                        Column(modifier = Modifier.width(400.dp)) {
+                        // antes medía 400 dp fijos: en pantallas angostas la frase se salía de la tarjeta
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "REFUGIO AMABLE",
                                 fontFamily = OutfitFont,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
-                                lineHeight = 14.sp,
+                                lineHeight = 18.sp,
                                 color = MkTitulo
                             )
                             Text(
@@ -301,11 +304,12 @@ fun HomeScreen(
                                 fontFamily = JakartaSansFont,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
-                                lineHeight = 13.sp,
-                                color = MkTextoOscuro
+                                lineHeight = 19.sp,
+                                color = MkTextoOscuro,
+                                modifier = Modifier.weight(1f)
                             )
                             Row(
-                                modifier = Modifier.padding(end = 17.dp),
+                                modifier = Modifier.padding(start = 8.dp, end = 17.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
@@ -322,7 +326,7 @@ fun HomeScreen(
                                     fontFamily = JakartaSansFont,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp,
-                                    lineHeight = 13.sp,
+                                    lineHeight = 19.sp,
                                     color = MkVerde
                                 )
                             }
@@ -470,7 +474,7 @@ fun HomeScreen(
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             color = MkTextoOscuro,
-                            maxLines = 1,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
@@ -478,7 +482,7 @@ fun HomeScreen(
                             fontFamily = JakartaSansFont,
                             fontSize = 15.sp,
                             color = MkTextoSuave,
-                            maxLines = 1,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
@@ -537,12 +541,13 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
         }
+        }
     }
 
     avisoReto?.let { texto ->
         AlertDialog(
             onDismissRequest = { avisoReto = null },
-            text = { Text(text = texto, fontFamily = JakartaSansFont, color = MkTextoOscuro) },
+            text = { Text(text = texto, fontFamily = JakartaSansFont, color = MkTextoOscuro, modifier = Modifier.verticalScroll(rememberScrollState())) },
             confirmButton = {
                 TextButton(onClick = { avisoReto = null }) {
                     Text(text = "Entendido", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkMorado)

@@ -30,7 +30,7 @@ import com.example.crisalida.data.FotoRemota
 import com.example.crisalida.data.MarketplaceRepositorio
 import com.example.crisalida.data.PublicacionDto
 import com.example.crisalida.ui.theme.*
-import com.example.crisalida.ui.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
 private val PdGris = Color(0xFF545454)
 private val PdVerde = Color(0xFF1E681E)
 private val PdVino = Color(0xFF6B3045)
@@ -47,12 +47,8 @@ fun ProductoDetalleScreen(
     var dialogoCompra by remember { mutableStateOf(false) }
 
     CrisalidaScaffold(currentTitle = "Marketplace", selectedTab = 1, onNavigate = onNavigate) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(ColorFondoApp)
-                .padding(innerPadding)
-        ) {
+        ContenidoCentrado(innerPadding) {
+        Column(modifier = Modifier.fillMaxSize()) {
             BarraVolver("Volver al marketplace", onVolver)
             when (val e = carga.estado) {
                 is Carga.Cargando -> IndicadorCargando()
@@ -64,6 +60,7 @@ fun ProductoDetalleScreen(
                 }
             }
         }
+        }
     }
 
     if (dialogoCompra) {
@@ -74,7 +71,8 @@ fun ProductoDetalleScreen(
                 Text(
                     "El proceso de compra (pago en custodia y entrega) todavía no está activo en esta versión. " +
                         "Cuando lo esté, todo el contacto será dentro de la app, sin compartir teléfonos ni direcciones.",
-                    fontFamily = JakartaSansFont
+                    fontFamily = JakartaSansFont,
+                    modifier = Modifier.verticalScroll(rememberScrollState())
                 )
             },
             confirmButton = { TextButton(onClick = { dialogoCompra = false }) { Text("Entendido", color = ColorBotonEntrar) } },
@@ -207,5 +205,25 @@ private fun Fila(icono: androidx.compose.ui.graphics.vector.ImageVector, titulo:
             Text(titulo, fontFamily = JakartaSansFont, fontSize = 12.sp, color = PdGris)
             Text(valor, fontFamily = OutfitFont, fontWeight = FontWeight.Medium, fontSize = 15.sp, color = Color.Black)
         }
+    }
+}
+
+
+@PreviewResponsivo
+@Composable
+private fun ProductoDetallePreview() {
+    Column(modifier = Modifier.background(ColorFondoApp).verticalScroll(rememberScrollState())) {
+        Contenido(
+            p = PublicacionDto(
+                id = "1", tipo = "producto", titulo = "Tamales de rajas con queso hechos por encargo",
+                descripcion = "Tamales caseros de masa tradicional, rellenos de rajas con queso. Se preparan el mismo día de la entrega y se venden por docena.",
+                precio = 250.0, notaPrecio = "Precio por docena", opcionEntrega = 3, modalidadServicio = null,
+                esquemaCobro = null, tiempoElaboracionHoras = 24, zonaPublica = "Centro de Pénjamo",
+                categoriaId = 1, categoria = "Comida", vendedora = "Mariposa_de_la_montaña_2026",
+                vendedoraAvatar = "🦋", esMia = false, vendidos = 132, calificacion = 4.8, porEncargo = true,
+                imagenes = emptyList(), estado = null, pedidosPendientes = null, puntoEntrega = null
+            ),
+            onComprar = {}, onEditar = {}
+        )
     }
 }

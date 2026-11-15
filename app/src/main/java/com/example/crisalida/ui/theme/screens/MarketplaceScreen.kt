@@ -5,9 +5,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,7 +34,7 @@ import com.example.crisalida.data.FotoRemota
 import com.example.crisalida.data.MarketplaceRepositorio
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.PublicacionDto
-import com.example.crisalida.ui.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
 private val MkTitulo = Color(0xFF9D4067)
 private val MkGrisContador = Color(0xFF545454)
 private val MkChipSeleccionado = Color(0xFF62012A)
@@ -86,27 +90,32 @@ fun MarketplaceScreen(
         selectedTab = 1, //pestaña del Marketplace seleccionada
         onNavigate = onNavigate
     ) { innerPadding ->
-        LazyColumn(
+        // Las tarjetas se acomodan solas según el ancho: 1 columna en teléfono, 2 o más en pantallas anchas.
+        // Los encabezados (título, chips, mensajes) ocupan todo el ancho.
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 320.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .background(ColorFondoApp)
                 .padding(innerPadding),
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = MargenIzq, end = MargenDer, top = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Bottom
                 ) {
+                    // el título cede espacio al contador: antes, en pantallas angostas el contador desaparecía
                     Text(
                         text = "Explorar por rubro",
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 32.sp,
-                        color = MkTitulo
+                        lineHeight = 38.sp,
+                        color = MkTitulo,
+                        modifier = Modifier.weight(1f)
                     )
                     Text(
                         text = "${productosFiltrados.size} publicaciones",
@@ -114,12 +123,12 @@ fun MarketplaceScreen(
                         fontWeight = FontWeight.Normal,
                         fontSize = 14.sp,
                         color = MkGrisContador,
-                        modifier = Modifier.padding(bottom = 4.dp)
+                        modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
                     )
                 }
             }
 
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 LazyRow(
                     modifier = Modifier.padding(top = 10.dp),
                     contentPadding = PaddingValues(start = MargenIzq, end = MargenDer),
@@ -131,9 +140,9 @@ fun MarketplaceScreen(
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(8.dp)) }
+            item(span = { GridItemSpan(maxLineSpan) }) { Spacer(modifier = Modifier.height(8.dp)) }
 
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 when (val e = catalogo.estado) {
                     is Carga.Cargando -> IndicadorCargando()
                     is Carga.Falla -> MensajeError(e.mensaje, catalogo.recargar)
@@ -181,6 +190,7 @@ private fun ChipFiltro(texto: String, activo: Boolean, onClick: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ProductoCard(
     producto: ProductoMarketplaceUi,
@@ -238,10 +248,11 @@ private fun ProductoCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Row(
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                itemVerticalAlignment = Alignment.CenterVertically
             ) {
                 // Insignia / Tag del seudónimo
                 Row(
@@ -262,6 +273,7 @@ private fun ProductoCard(
                         text = producto.vendedora,
                         fontFamily = JakartaSansFont,
                         fontSize = 12.sp,
+                        lineHeight = 16.sp,
                         fontWeight = FontWeight.Medium,
                         color = MkTagVendedoraPunto
                     )
@@ -291,7 +303,7 @@ private fun ProductoCard(
                 fontFamily = OutfitFont,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
-                lineHeight = 22.sp,
+                lineHeight = 26.sp,
                 color = Color.Black
             )
 
@@ -325,10 +337,12 @@ private fun ProductoCard(
             Spacer(modifier = Modifier.height(14.dp))
 
 
-            Row(
+            // si el precio y el botón no caben en una línea, el botón baja
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                itemVerticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
                     Text(
@@ -336,6 +350,7 @@ private fun ProductoCard(
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 26.sp,
+                        lineHeight = 32.sp,
                         color = Color.Black
                     )
                     if (producto.notaPrecio != null) {
@@ -371,11 +386,11 @@ private fun ProductoCard(
                     Button(
                         onClick = onComprarClick,
                         modifier = Modifier
-                            .width(135.dp)
+                            .widthIn(min = 135.dp)
                             .heightIn(min = 40.dp),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MkVerdeBotonComprar),
-                        contentPadding = PaddingValues(0.dp)
+                        contentPadding = PaddingValues(horizontal = 12.dp)
                     ) {
                         Text(
                             text = "Comprar",
@@ -406,3 +421,21 @@ private fun PublicacionDto.aMarketplaceUi() = ProductoMarketplaceUi(
     esMia = esMia,
     imagenRuta = imagenes.firstOrNull()
 )
+
+
+@PreviewResponsivo
+@Composable
+private fun ProductoCardPreview() {
+    Column(modifier = Modifier.background(ColorFondoApp).verticalScroll(rememberScrollState()).padding(vertical = 8.dp)) {
+        ProductoCard(
+            producto = ProductoMarketplaceUi(
+                id = "1", titulo = "Tamales de rajas con queso hechos por encargo",
+                vendedora = "Mariposa_de_la_montaña_2026", calificacion = "4.8", ventas = 132,
+                puntoEntrega = "Punto de entrega: Plaza principal, Pénjamo, Guanajuato",
+                precio = "1,250.00 MXN*", notaPrecio = "*Precio por docena", categoria = "Comida"
+            ),
+            modifier = Modifier.padding(start = MargenIzq, end = MargenDer, top = 14.dp),
+            onComprarClick = {}
+        )
+    }
+}
