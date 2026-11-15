@@ -39,13 +39,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
 import com.example.crisalida.ui.theme.AjustesTexto
 import com.example.crisalida.ui.theme.ColorFondoApp
 import com.example.crisalida.ui.theme.ConEscalaLimitada
 import com.example.crisalida.ui.theme.JakartaSansFont
 import com.example.crisalida.ui.theme.OutfitFont
-
+import com.example.crisalida.data.InactividadSesion
 private val MkTitulo = Color(0xFF7F284F)
 private val MkSubtitulo = Color(0xFF545454)
 private val MkFondoItem = Color(0xFFEFE8EC)
@@ -103,6 +102,8 @@ private fun ContenidoConfiguracion(
             }
 
             SeccionConfiguracion("Seguridad") {
+                OpcionesInactividad(contexto)
+                Spacer(modifier = Modifier.height(16.dp))
                 TextoProximamente("Aquí podrás cambiar tu PIN y administrar tu código de recuperación.")
             }
 
@@ -207,8 +208,7 @@ private fun FilaNavegable(texto: String, accion: String, onClick: () -> Unit) {
 }
 
 // el tamaño de letra de antes (Normal / Grande / Muy grande), con la misma lógica: AjustesTexto lo guarda
-// en el teléfono y se aplica al instante. Cada opción es un solo elemento para TalkBack
-// ("Grande, botón de selección, seleccionado")
+// en el teléfono y se aplica al instante
 @Composable
 private fun OpcionesTamanoTexto(contexto: Context) {
     Text(
@@ -227,33 +227,11 @@ private fun OpcionesTamanoTexto(contexto: Context) {
     Spacer(modifier = Modifier.height(8.dp))
     Column(modifier = Modifier.selectableGroup()) {
         AjustesTexto.opciones.forEach { (nombre, valor) ->
-            val elegida = AjustesTexto.escala == valor
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .selectable(
-                        selected = elegida,
-                        onClick = { AjustesTexto.cambiar(contexto, valor) },
-                        role = Role.RadioButton
-                    ),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RadioButton(
-                    selected = elegida,
-                    onClick = null, // el clic lo maneja toda la fila
-                    colors = RadioButtonDefaults.colors(selectedColor = MkTitulo),
-                    modifier = Modifier.padding(horizontal = 12.dp)
-                )
-                Text(
-                    text = nombre,
-                    fontFamily = JakartaSansFont,
-                    fontWeight = if (elegida) FontWeight.Bold else FontWeight.Normal,
-                    fontSize = 16.sp,
-                    color = Color.Black
-                )
-            }
+            OpcionRadio(
+                texto = nombre,
+                elegida = AjustesTexto.escala == valor,
+                onClick = { AjustesTexto.cambiar(contexto, valor) }
+            )
         }
     }
     Spacer(modifier = Modifier.height(8.dp))
@@ -268,6 +246,64 @@ private fun OpcionesTamanoTexto(contexto: Context) {
             text = "Así se va a ver el texto de la app. Lilu te acompaña en cada paso.",
             fontFamily = JakartaSansFont,
             fontSize = 15.sp,
+            color = Color.Black
+        )
+    }
+}
+
+// cierre de sesión por inactividad: 5, 10, 15, 30 minutos o nunca
+@Composable
+private fun OpcionesInactividad(contexto: Context) {
+    Text(
+        text = "Cerrar sesión por inactividad",
+        fontFamily = OutfitFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 17.sp,
+        color = Color.Black
+    )
+    Text(
+        text = "Si pasa este tiempo sin que toques la pantalla, tu sesión se cierra y la app se cierra sola. " +
+                "Para volver a entrar necesitarás tu PIN.",
+        fontFamily = JakartaSansFont,
+        fontSize = 14.sp,
+        lineHeight = 19.sp,
+        color = MkSubtitulo
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    Column(modifier = Modifier.selectableGroup()) {
+        `InactividadSesion`.opciones.forEach { (minutos, nombre) ->
+            OpcionRadio(
+                texto = nombre,
+                elegida = `InactividadSesion`.minutos == minutos,
+                onClick = { `InactividadSesion`.cambiar(contexto, minutos) }
+            )
+        }
+    }
+}
+
+// una opción de lista de selección única: toda la fila es el botón (TalkBack: «Grande, botón de selección,
+// seleccionado») y mide al menos 48 dp
+@Composable
+private fun OpcionRadio(texto: String, elegida: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .selectable(selected = elegida, onClick = onClick, role = Role.RadioButton),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(
+            selected = elegida,
+            onClick = null, // el clic lo maneja toda la fila
+            colors = RadioButtonDefaults.colors(selectedColor = MkTitulo),
+            modifier = Modifier.padding(horizontal = 12.dp)
+        )
+        Text(
+            text = texto,
+            fontFamily = JakartaSansFont,
+            fontWeight = if (elegida) FontWeight.Bold else FontWeight.Normal,
+            fontSize = 16.sp,
             color = Color.Black
         )
     }

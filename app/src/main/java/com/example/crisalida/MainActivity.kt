@@ -1,6 +1,7 @@
 package com.example.crisalida
 
 import android.os.Bundle
+import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
@@ -17,22 +18,32 @@ import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.theme.screens.LoginScreen
 import com.example.crisalida.ui.theme.screens.RadarScreen
+import com.example.crisalida.ui.theme.screens.VigilanteInactividad
 import com.example.crisalida.ui.theme.AjustesTexto
 import com.example.crisalida.ui.theme.ConEscalaDeTexto
 import com.example.crisalida.ui.theme.screens.RegisterScreen
 import com.example.crisalida.ui.theme.screens.GaleriaMariposasScreen
 import com.example.crisalida.ui.theme.screens.pantallasPrincipales
 import kotlinx.coroutines.launch
-
+import com.example.crisalida.data.InactividadSesion
 class MainActivity : ComponentActivity() {
+
+    // cada toque en cualquier parte de la pantalla reinicia el temporizador de inactividad
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        `InactividadSesion`.registrarActividad()
+        return super.dispatchTouchEvent(ev)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AjustesTexto.cargar(applicationContext)   // tamaño de letra elegido, guardado en el teléfono
+        `InactividadSesion`.cargar(applicationContext)   // minutos de inactividad elegidos, guardados en el teléfono
         setContent {
             MaterialTheme {
                 val navController = rememberNavController()
                 val scope = rememberCoroutineScope()   // para llamar al servidor sin trabar la pantalla
+
+                VigilanteInactividad(navController)   // cierra la sesión si pasa el tiempo elegido sin tocar la pantalla
 
                 NavHost(navController = navController, startDestination = "login") {
 
