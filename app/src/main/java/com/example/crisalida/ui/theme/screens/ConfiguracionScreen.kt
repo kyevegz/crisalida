@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +24,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -29,20 +33,36 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.crisalida.data.AlmacenamientoLocal
+import com.example.crisalida.data.BienestarRepositorio
+import com.example.crisalida.data.ResultadoApi
+import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.theme.AjustesTexto
+import com.example.crisalida.ui.theme.ColorBotonEntrar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.example.crisalida.ui.theme.ColorFondoApp
 import com.example.crisalida.ui.theme.ConEscalaLimitada
 import com.example.crisalida.ui.theme.JakartaSansFont
@@ -52,6 +72,7 @@ import com.example.crisalida.data.ProteccionPantalla
 private val MkTitulo = Color(0xFF7F284F)
 private val MkSubtitulo = Color(0xFF545454)
 private val MkFondoItem = Color(0xFFEFE8EC)
+private val MkExito = Color(0xFF2E7D32)
 
 // Configuración: se abre desde el engrane del Perfil. Las secciones Seguridad, Privacidad, Datos y
 // almacenamiento y Cuenta se irán llenando en sus propios issues; Apariencia ya tiene el tamaño de
@@ -124,7 +145,7 @@ private fun ContenidoConfiguracion(
             }
 
             SeccionConfiguracion("Datos y almacenamiento") {
-                TextoProximamente("Aquí podrás revisar los datos que guarda la app en tu teléfono.")
+                OpcionesDatosYAlmacenamiento(contexto)
             }
 
             SeccionConfiguracion("Cuenta") {
@@ -332,6 +353,158 @@ private fun FilaInterruptor(
             colors = SwitchDefaults.colors(checkedTrackColor = MkTitulo)
         )
     }
+}
+
+// Datos y almacenamiento: borrar el historial de bienestar (con confirmación) y limpiar la caché del teléfono
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun OpcionesDatosYAlmacenamiento(contexto: Context) {
+    val scope = rememberCoroutineScope()
+    var confirmando by remember { mutableStateOf(false) }
+    var borrando by remember { mutableStateOf(false) }
+    var mensajeHistorial by remember { mutableStateOf<Pair<String, Boolean>?>(null) }   // texto, ¿fue éxito?
+    var limpiando by remember { mutableStateOf(false) }
+    var mensajeCache by remember { mutableStateOf<String?>(null) }
+
+    // Ahorro de datos: llega en su propio issue
+    Text(
+        text = "Ahorro de datos",
+        fontFamily = OutfitFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 17.sp,
+        color = Color.Black
+    )
+    TextoProximamente("Aquí podrás cargar menos imágenes y evitar descargas automáticas.")
+
+    // La compradora no tiene bienestar emocional: no hay historial que borrar
+    if (!SesionActual.esCompradora) {
+        Spacer(modifier = Modifier.height(20.dp))
+        Text(
+            text = "Borrar mi historial",
+            fontFamily = OutfitFont,
+            fontWeight = FontWeight.Bold,
+            fontSize = 17.sp,
+            color = Color.Black,
+            modifier = Modifier.semantics { heading() }
+        )
+        TextoProximamente(
+            "Elimina todos los registros de tu bitácora y de tu bienestar. " +
+                "Tus flores, tu nivel y tu mascota no cambian."
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (!confirmando) {
+            BotonAccion(texto = "Borrar mi historial", habilitado = !borrando) {
+                mensajeHistorial = null
+                confirmando = true
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MkFondoItem)
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = "¿Borrar tu historial?",
+                    fontFamily = JakartaSansFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Color.Black,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+                )
+                Text(
+                    text = "Se eliminarán todos los registros de tu bitácora. Esta acción no se puede deshacer.",
+                    fontFamily = JakartaSansFont,
+                    fontSize = 14.sp,
+                    lineHeight = 19.sp,
+                    color = MkSubtitulo
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    BotonAccion(texto = if (borrando) "Borrando…" else "Sí, borrar", habilitado = !borrando) {
+                        borrando = true
+                        scope.launch {
+                            mensajeHistorial = when (val r = BienestarRepositorio.borrarHistorial()) {
+                                is ResultadoApi.Exito -> "Listo, tu historial se borró." to true
+                                is ResultadoApi.Error -> r.mensaje to false
+                            }
+                            borrando = false
+                            confirmando = false
+                        }
+                    }
+                    OutlinedButton(
+                        onClick = { confirmando = false },
+                        enabled = !borrando,
+                        modifier = Modifier.heightIn(min = 48.dp),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Cancelar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo)
+                    }
+                }
+            }
+        }
+        mensajeHistorial?.let { (texto, exito) -> MensajeResultado(texto, exito) }
+    }
+
+    Spacer(modifier = Modifier.height(20.dp))
+    Text(
+        text = "Limpiar caché",
+        fontFamily = OutfitFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 17.sp,
+        color = Color.Black,
+        modifier = Modifier.semantics { heading() }
+    )
+    TextoProximamente("Libera espacio en el teléfono. No borra tu cuenta ni tu información, y tu sesión sigue abierta.")
+    Spacer(modifier = Modifier.height(8.dp))
+    BotonAccion(texto = if (limpiando) "Limpiando…" else "Limpiar caché", habilitado = !limpiando) {
+        limpiando = true
+        mensajeCache = null
+        scope.launch {
+            val liberados = withContext(Dispatchers.IO) { AlmacenamientoLocal.limpiarCache(contexto) }
+            mensajeCache = if (liberados > 0)
+                "Listo, se liberaron ${AlmacenamientoLocal.formatoTamano(liberados)}. Tu sesión sigue abierta."
+            else
+                "Listo, tu caché ya estaba limpia. Tu sesión sigue abierta."
+            limpiando = false
+        }
+    }
+    mensajeCache?.let { MensajeResultado(it, true) }
+}
+
+// botón de acción de Configuración: al menos 48 dp de alto
+@Composable
+private fun BotonAccion(texto: String, habilitado: Boolean = true, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        enabled = habilitado,
+        modifier = Modifier.heightIn(min = 48.dp),
+        shape = RoundedCornerShape(8.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = ColorBotonEntrar)
+    ) {
+        Text(texto, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
+    }
+}
+
+// mensaje de resultado: TalkBack lo lee solo cuando aparece
+@Composable
+private fun MensajeResultado(texto: String, exito: Boolean) {
+    Text(
+        text = texto,
+        fontFamily = JakartaSansFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 14.sp,
+        lineHeight = 19.sp,
+        color = if (exito) MkExito else MkTitulo,
+        modifier = Modifier
+            .padding(top = 8.dp)
+            .semantics { liveRegion = LiveRegionMode.Polite }
+    )
 }
 
 // una opción de lista de selección única: toda la fila es el botón (TalkBack: «Grande, botón de selección,

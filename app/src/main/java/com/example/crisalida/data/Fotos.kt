@@ -88,6 +88,9 @@ fun prepararFoto(contexto: Context, uri: Uri): ByteArray? {
 }
 
 private val cacheFotos = object : LruCache<String, ImageBitmap>(24) {}
+
+/** Vacía las fotos que la app guarda en memoria (se vuelven a descargar al verlas). Lo usa "Limpiar caché". */
+fun vaciarCacheFotos() = cacheFotos.evictAll()
 private val clienteFotos by lazy { OkHttpClient() }   // las fotos son públicas: no necesitan token
 
 /** Muestra la foto que está en [ruta] (por ejemplo "/imagenes/abc..."). Mientras carga, o si falla, muestra [alternativa]. */

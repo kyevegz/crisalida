@@ -189,6 +189,9 @@ interface ApiService {
 
     @DELETE("bienestar/entradas/{id}")
     suspend fun borrarEntradaBienestar(@Path("id") id: String): Response<BorradoResponse>
+
+    @DELETE("bienestar/entradas")
+    suspend fun borrarHistorialBienestar(): Response<HistorialBorradoResponse>
 }
 
 // ---------- 4. Quién soy ahora mismo (se borra al cerrar la app o con la salida de emergencia)
