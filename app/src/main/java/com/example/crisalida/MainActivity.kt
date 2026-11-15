@@ -26,6 +26,9 @@ import com.example.crisalida.ui.theme.screens.GaleriaMariposasScreen
 import com.example.crisalida.ui.theme.screens.pantallasPrincipales
 import kotlinx.coroutines.launch
 import com.example.crisalida.data.InactividadSesion
+import com.example.crisalida.data.ProteccionPantalla
+import com.example.crisalida.ui.theme.screens.VigilantePantalla
+
 class MainActivity : ComponentActivity() {
 
     // cada toque en cualquier parte de la pantalla reinicia el temporizador de inactividad
@@ -34,16 +37,32 @@ class MainActivity : ComponentActivity() {
         return super.dispatchTouchEvent(ev)
     }
 
+    // al salir de la app se marca la ventana como segura
+    // para que la miniatura de "apps recientes" no muestre el contenido
+    override fun onPause() {
+        ProteccionPantalla.alPasarASegundoPlano()
+        ProteccionPantalla.aplicar(this)
+        super.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        ProteccionPantalla.alVolverAPrimerPlano()
+        ProteccionPantalla.aplicar(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AjustesTexto.cargar(applicationContext)   // tamaño de letra elegido, guardado en el teléfono
         `InactividadSesion`.cargar(applicationContext)   // minutos de inactividad elegidos, guardados en el teléfono
+        ProteccionPantalla.cargar(applicationContext)   // si se bloquean las capturas, guardado en el teléfono
         setContent {
             MaterialTheme {
                 val navController = rememberNavController()
                 val scope = rememberCoroutineScope()   // para llamar al servidor sin trabar la pantalla
 
                 VigilanteInactividad(navController)   // cierra la sesión si pasa el tiempo elegido sin tocar la pantalla
+                VigilantePantalla(navController)      // oculta la app en recientes y bloquea capturas en pantallas sensibles
 
                 NavHost(navController = navController, startDestination = "login") {
 
