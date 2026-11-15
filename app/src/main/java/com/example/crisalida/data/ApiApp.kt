@@ -28,6 +28,7 @@ data class NivelInfo(
 data class LiluInfo(
     val nombre: String,
     val flores: Int,
+    val reposo: Boolean = false,                      // true: Lilu duerme (sin actividad varios días o cuenta suspendida)
     val etapa: Int,                                   // 1 Huevo · 2 Larva · 3 Mariposa
     @SerializedName("etapa_nombre") val etapaNombre: String,
     @SerializedName("flores_siguiente") val floresSiguiente: Int?,
