@@ -56,6 +56,8 @@ fun CrisalidaScaffold(
     content: @Composable (PaddingValues) -> Unit
 ) {
     val context = LocalContext.current
+    // la compradora no tiene bienestar emocional ni mascota: su barra tiene solo 4 pestañas
+    val esCompradora = SesionActual.esCompradora
     // en horizontal casi no hay alto: las barras se hacen más bajitas para dejar espacio al contenido
     val compacto = LocalConfiguration.current.screenHeightDp < 480
     val altoBarraSuperior = if (compacto) 56.dp else 64.dp
@@ -157,8 +159,9 @@ fun CrisalidaScaffold(
                     shadowElevation = 12.dp
                 ) {
                     BoxWithConstraints(modifier = Modifier.fillMaxWidth().navigationBarsPadding()) {
-                        // 6 pestañas comparten el ancho: la letra se ajusta para que "Marketplace" no se parta (8 a 11 sp)
-                        val tamanoLetra = ((maxWidth / 6).value / 6.2f).coerceIn(8f, 11f).sp
+                        // 6 pestañas (4 si es compradora) comparten el ancho: la letra se ajusta para que "Marketplace" no se parta (8 a 11 sp)
+                        val pestanas = if (esCompradora) 4 else 6
+                        val tamanoLetra = ((maxWidth / pestanas).value / 6.2f).coerceIn(8f, 11f).sp
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -169,8 +172,10 @@ fun CrisalidaScaffold(
                             BottomVectorTabItem("Retos", Icons.Outlined.TrackChanges, selectedTab == 0, Modifier.weight(1f), tamanoLetra, compacto) { onNavigate("retos") }
                             BottomVectorTabItem("Marketplace", Icons.Outlined.Storefront, selectedTab == 1, Modifier.weight(1f), tamanoLetra, compacto) { onNavigate("marketplace") }
                             BottomVectorTabItem("Inicio", Icons.Outlined.Home, selectedTab == 2, Modifier.weight(1f), tamanoLetra, compacto) { onNavigate("home") }
-                            BottomVectorTabItem("Bienestar diario", Icons.Outlined.EventAvailable, selectedTab == 3, Modifier.weight(1f), tamanoLetra, compacto) { onNavigate("bienestar") }
-                            BottomVectorTabItem("Mascota", Icons.Outlined.Spa, selectedTab == 4, Modifier.weight(1f), tamanoLetra, compacto) { onNavigate("mascota") }
+                            if (!esCompradora) {
+                                BottomVectorTabItem("Bienestar diario", Icons.Outlined.EventAvailable, selectedTab == 3, Modifier.weight(1f), tamanoLetra, compacto) { onNavigate("bienestar") }
+                                BottomVectorTabItem("Mascota", Icons.Outlined.Spa, selectedTab == 4, Modifier.weight(1f), tamanoLetra, compacto) { onNavigate("mascota") }
+                            }
                             BottomVectorTabItem("Perfil", Icons.Filled.Person, selectedTab == 5, Modifier.weight(1f), tamanoLetra, compacto) { onNavigate("perfil") }
                         }
                     }

@@ -37,7 +37,11 @@ data class RegistroCompletoRequest(
     val seudonimo: String,
     val pin: String,
     @SerializedName("pin_camuflaje") val pinCamuflaje: String,
-    val radar: RadarFinalRequest   // definido en ApiRadar.kt
+    val rol: String,                       // "vendedora" o "compradora"
+    val radar: RadarFinalRequest?,         // solo la vendedora (definido en ApiRadar.kt); si es null no se envía
+    @SerializedName("acepta_aviso") val aceptaAviso: Boolean,
+    @SerializedName("es_mayor_de_edad") val esMayorDeEdad: Boolean,
+    @SerializedName("version_aviso") val versionAviso: String?
 )
 
 data class LoginRequest(
@@ -52,7 +56,10 @@ data class SesionResponse(
     val seudonimo: String,
     val avatar: String,
     val modo: String,   // "normal" o "camuflaje"
-    val token: String
+    val token: String,
+    val rol: String? = null,   // "vendedora" o "compradora"
+    // solo viene al crear la cuenta; la pantalla del código (issue 4.5) lo mostrará
+    @SerializedName("codigo_recuperacion") val codigoRecuperacion: String? = null
 )
 
 // Pase temporal que entrega el servidor al validar el paso 1 del registro (todavía no hay cuenta)
@@ -186,6 +193,10 @@ interface ApiService {
 
 // ---------- 4. Quién soy ahora mismo (se borra al cerrar la app o con la salida de emergencia)
 
+// Los dos roles de la app. El rol se elige al registrarse y viaja en la sesión.
+const val ROL_VENDEDORA = "vendedora"
+const val ROL_COMPRADORA = "compradora"
+
 object SesionActual {
     var token: String? = null
     var tokenRegistro: String? = null   // pase temporal: solo existe entre "Siguiente" y el final del radar
@@ -193,8 +204,10 @@ object SesionActual {
     var seudonimo: String = ""
     var avatar: String = "🐱"
     var modo: String = "normal"
+    var rol: String = ROL_VENDEDORA
 
     val esCamuflaje: Boolean get() = modo == "camuflaje"
+    val esCompradora: Boolean get() = rol == ROL_COMPRADORA
 
     fun iniciar(s: SesionResponse) {
         token = s.token
@@ -202,6 +215,7 @@ object SesionActual {
         seudonimo = s.seudonimo
         avatar = s.avatar
         modo = s.modo
+        rol = s.rol ?: ROL_VENDEDORA
     }
 
     fun cerrar() {
@@ -212,6 +226,7 @@ object SesionActual {
         seudonimo = ""
         avatar = "🐱"
         modo = "normal"
+        rol = ROL_VENDEDORA
         ProgresoRepositorio.avisarCambio()   // que ninguna pantalla conserve datos de la sesión anterior
     }
 }
@@ -297,40 +312,64 @@ object AuthRepositorio {
 
     // Seudónimo y PIN del paso 1: viven SOLO en memoria hasta que se crea la cuenta (nunca en disco)
     private var pendiente: RegistroRequest? = null
+    private var rolPendiente: String = ROL_VENDEDORA
 
-    /** Paso 1 ("Siguiente"): el servidor valida y la app recibe un pase para usar el radar. NO crea la cuenta. */
-    suspend fun validarRegistro(seudonimo: String, pin: String, pinCamuflaje: String): ResultadoApi<TokenRegistroResponse> {
+    // Casillas del aviso de privacidad y de mayoría de edad. La pantalla del aviso (issue siguiente)
+    // las llena antes de crear la cuenta; mientras no estén marcadas el servidor rechaza el registro.
+    var aceptaAviso: Boolean = false
+    var esMayorDeEdad: Boolean = false
+    var versionAviso: String? = null
+
+    /** Paso 1 ("Siguiente"): el servidor valida y la app recibe un pase. NO crea la cuenta. */
+    suspend fun validarRegistro(
+        seudonimo: String,
+        pin: String,
+        pinCamuflaje: String,
+        rol: String = ROL_VENDEDORA
+    ): ResultadoApi<TokenRegistroResponse> {
         val datos = RegistroRequest(seudonimo.trim(), pin, pinCamuflaje)
         return llamarApi { RetrofitCliente.api.validarRegistro(datos) }
             .also {
                 if (it is ResultadoApi.Exito) {
                     SesionActual.tokenRegistro = it.datos.tokenRegistro
                     pendiente = datos
+                    rolPendiente = rol
                 }
             }
     }
 
-    /** Paso final (segundo "Terminar"): crea la cuenta con el radar completo e inicia la sesión. */
+    /** Vendedora, paso final (segundo "Terminar"): crea la cuenta con el radar completo e inicia la sesión. */
     suspend fun completarRegistro(
         actividades: List<String>,
         tiempo: String,
         respuestas: List<RespuestaDinamicaDto>,
         perfil: PerfilResponse
-    ): ResultadoApi<SesionResponse> {
+    ): ResultadoApi<SesionResponse> =
+        enviarRegistro(ROL_VENDEDORA, RadarFinalRequest(actividades, tiempo, respuestas, perfil))
+
+    /** Compradora: su registro es corto, sin radar. Crea la cuenta e inicia la sesión. */
+    suspend fun completarRegistroCompradora(): ResultadoApi<SesionResponse> =
+        enviarRegistro(ROL_COMPRADORA, null)
+
+    private suspend fun enviarRegistro(rol: String, radar: RadarFinalRequest?): ResultadoApi<SesionResponse> {
         val credenciales = pendiente
             ?: return ResultadoApi.Error("Tu registro expiró. Regresa y vuelve a empezar.")
         val peticion = RegistroCompletoRequest(
             seudonimo = credenciales.seudonimo,
             pin = credenciales.pin,
             pinCamuflaje = credenciales.pinCamuflaje,
-            radar = RadarFinalRequest(actividades, tiempo, respuestas, perfil)
+            rol = rol,
+            radar = radar,
+            aceptaAviso = aceptaAviso,
+            esMayorDeEdad = esMayorDeEdad,
+            versionAviso = versionAviso
         )
         return llamarApi { RetrofitCliente.api.registroCompleto(peticion) }
             .also {
                 if (it is ResultadoApi.Exito) {
                     SesionActual.iniciar(it.datos)
                     SesionActual.tokenRegistro = null
-                    pendiente = null
+                    cancelarRegistro()
                 }
             }
     }
@@ -338,6 +377,10 @@ object AuthRepositorio {
     /** Descarta el registro a medias (salida de emergencia o si la usuaria regresa al inicio). */
     fun cancelarRegistro() {
         pendiente = null
+        rolPendiente = ROL_VENDEDORA
+        aceptaAviso = false
+        esMayorDeEdad = false
+        versionAviso = null
         SesionActual.tokenRegistro = null
     }
 

@@ -118,6 +118,8 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // bitácora, mascota y bienestar: la compradora no los tiene
+                if (!SesionActual.esCompradora) {
                 //bitácora, lleva a Bienestar
                 Card(
                     shape = RoundedCornerShape(8.dp),
@@ -389,6 +391,8 @@ fun HomeScreen(
                         color = Color.White
                     )
                 }
+
+                }   // fin de lo que no ve la compradora
 
                 Spacer(modifier = Modifier.height(36.dp))
 

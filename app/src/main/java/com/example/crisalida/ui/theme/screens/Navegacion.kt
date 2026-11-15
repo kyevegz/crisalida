@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
@@ -49,6 +50,19 @@ fun PantallaPendiente(titulo: String, selectedTab: Int, onNavigate: (String) -> 
     }
 }
 
+// Las pantallas de la vendedora (bienestar, mascota, portafolio, publicar) no existen para la compradora:
+// si alguna ruta se abriera por error, regresa a Inicio sin mostrar nada.
+@Composable
+private fun SoloVendedora(navController: NavHostController, contenido: @Composable () -> Unit) {
+    if (SesionActual.esCompradora) {
+        LaunchedEffect(Unit) {
+            navController.navigate("home") { popUpTo("home"); launchSingleTop = true }
+        }
+    } else {
+        contenido()
+    }
+}
+
 fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
     val ir: (String) -> Unit = { navController.navigateToTab(it) }
     //pantallas de detalle: se apilan encima y «Volver» regresa a donde se estaba antes
@@ -62,9 +76,11 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
     composable("marketplace") { ConEscalaDeTexto(tope = 2f) { MarketplaceScreen(onNavigate = ir, onAbrirDetalle = abrirProducto) } }
     composable("home") { ConEscalaDeTexto(tope = 2f) { HomeScreen(onNavigate = ir, onAbrirReto = abrirReto) } }
     composable("bienestar") {
-        ConEscalaDeTexto { BienestarScreen(onNavigate = ir, onVerRegistros = { navController.navigate("bienestar_registros") }) }
+        SoloVendedora(navController) {
+            ConEscalaDeTexto { BienestarScreen(onNavigate = ir, onVerRegistros = { navController.navigate("bienestar_registros") }) }
+        }
     }
-    composable("mascota") { ConEscalaDeTexto { MascotaScreen (onNavigate =  ir) } }
+    composable("mascota") { SoloVendedora(navController) { ConEscalaDeTexto { MascotaScreen (onNavigate =  ir) } } }
     composable("perfil") {
         ConEscalaDeTexto {
             PerfilScreen(
@@ -79,9 +95,9 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
     }
 
     composable("configuracion") { ConEscalaDeTexto { ConfiguracionScreen(onNavigate = ir, onVolver = volver) } }
-    composable("respirar_lilu") { ConEscalaDeTexto { RespirarLiluScreen(onNavigate = ir) } }
-    composable("portafolio_completo") { ConEscalaDeTexto { PortafolioScreen(onNavigate = ir, onEditar = editar) } }
-    composable("publicar_producto") { ConEscalaDeTexto { PublicarProductoScreen(onNavigate = ir) } }
+    composable("respirar_lilu") { SoloVendedora(navController) { ConEscalaDeTexto { RespirarLiluScreen(onNavigate = ir) } } }
+    composable("portafolio_completo") { SoloVendedora(navController) { ConEscalaDeTexto { PortafolioScreen(onNavigate = ir, onEditar = editar) } } }
+    composable("publicar_producto") { SoloVendedora(navController) { ConEscalaDeTexto { PublicarProductoScreen(onNavigate = ir) } } }
 
     composable("reto_detalle/{id}", arguments = argId) { entrada ->
         ConEscalaDeTexto(tope = 2f) {
@@ -97,9 +113,11 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
         }
     }
     composable("editar_publicacion/{id}", arguments = argId) { entrada ->
-        ConEscalaDeTexto {
-            PublicarProductoScreen(onNavigate = ir, publicacionId = entrada.arguments?.getString("id").orEmpty(), onEditado = volver)
+        SoloVendedora(navController) {
+            ConEscalaDeTexto {
+                PublicarProductoScreen(onNavigate = ir, publicacionId = entrada.arguments?.getString("id").orEmpty(), onEditado = volver)
+            }
         }
     }
-    composable("bienestar_registros") { ConEscalaDeTexto { BienestarRegistrosScreen(onNavigate = ir, onVolver = volver) } }
+    composable("bienestar_registros") { SoloVendedora(navController) { ConEscalaDeTexto { BienestarRegistrosScreen(onNavigate = ir, onVolver = volver) } } }
 }

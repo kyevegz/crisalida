@@ -10,12 +10,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.crisalida.data.AuthRepositorio
+import com.example.crisalida.data.ROL_COMPRADORA
+import com.example.crisalida.data.ROL_VENDEDORA
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
+import com.example.crisalida.ui.theme.screens.ElegirRolScreen
 import com.example.crisalida.ui.theme.screens.LoginScreen
 import com.example.crisalida.ui.theme.screens.RadarScreen
 import com.example.crisalida.ui.theme.screens.VigilanteInactividad
@@ -26,9 +31,6 @@ import com.example.crisalida.ui.theme.screens.GaleriaMariposasScreen
 import com.example.crisalida.ui.theme.screens.pantallasPrincipales
 import kotlinx.coroutines.launch
 import com.example.crisalida.data.InactividadSesion
-import com.example.crisalida.data.ProteccionPantalla
-import com.example.crisalida.ui.theme.screens.VigilantePantalla
-
 class MainActivity : ComponentActivity() {
 
     // cada toque en cualquier parte de la pantalla reinicia el temporizador de inactividad
@@ -37,32 +39,16 @@ class MainActivity : ComponentActivity() {
         return super.dispatchTouchEvent(ev)
     }
 
-    // al salir de la app se marca la ventana como segura
-    // para que la miniatura de "apps recientes" no muestre el contenido
-    override fun onPause() {
-        ProteccionPantalla.alPasarASegundoPlano()
-        ProteccionPantalla.aplicar(this)
-        super.onPause()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        ProteccionPantalla.alVolverAPrimerPlano()
-        ProteccionPantalla.aplicar(this)
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AjustesTexto.cargar(applicationContext)   // tamaño de letra elegido, guardado en el teléfono
         `InactividadSesion`.cargar(applicationContext)   // minutos de inactividad elegidos, guardados en el teléfono
-        ProteccionPantalla.cargar(applicationContext)   // si se bloquean las capturas, guardado en el teléfono
         setContent {
             MaterialTheme {
                 val navController = rememberNavController()
                 val scope = rememberCoroutineScope()   // para llamar al servidor sin trabar la pantalla
 
                 VigilanteInactividad(navController)   // cierra la sesión si pasa el tiempo elegido sin tocar la pantalla
-                VigilantePantalla(navController)      // oculta la app en recientes y bloquea capturas en pantallas sensibles
 
                 NavHost(navController = navController, startDestination = "login") {
 
@@ -92,13 +78,28 @@ class MainActivity : ComponentActivity() {
                                         cargando = false
                                     }
                                 },
-                                onNavigateToRegister = { navController.navigate("register") }
+                                onNavigateToRegister = { navController.navigate("elegir_rol") }
                             )
                         }
                     }
 
-                    // registro (solo valida, la cuenta se crea al terminar el radar)
-                    composable("register") {
+                    // elección de rol: primer paso del registro
+                    composable("elegir_rol") {
+                        ConEscalaDeTexto(tope = 2f) {
+                            ElegirRolScreen(
+                                onElegir = { rol -> navController.navigate("register/$rol") },
+                                onNavigateToLogin = { navController.popBackStack() }
+                            )
+                        }
+                    }
+
+                    // registro: la vendedora sigue al radar (ahí se crea su cuenta);
+                    // la compradora crea su cuenta aquí mismo, sin radar (registro corto)
+                    composable(
+                        "register/{rol}",
+                        arguments = listOf(navArgument("rol") { type = NavType.StringType })
+                    ) { entrada ->
+                        val rol = if (entrada.arguments?.getString("rol") == ROL_COMPRADORA) ROL_COMPRADORA else ROL_VENDEDORA
                         var cargando by remember { mutableStateOf(false) }
                         var error by remember { mutableStateOf<String?>(null) }
 
@@ -106,18 +107,30 @@ class MainActivity : ComponentActivity() {
                             RegisterScreen(
                                 cargando = cargando,
                                 error = error,
+                                esCompradora = rol == ROL_COMPRADORA,
                                 onNextClick = { seudonimo, pinPrincipal, pinCamuflaje ->
                                     scope.launch {
                                         cargando = true
                                         error = null
-                                        when (val resultado = AuthRepositorio.validarRegistro(seudonimo, pinPrincipal, pinCamuflaje)) {
-                                            is ResultadoApi.Exito -> navController.navigate("radar")   // todavía sin cuenta
-                                            is ResultadoApi.Error -> error = resultado.mensaje
+                                        when (val validacion = AuthRepositorio.validarRegistro(seudonimo, pinPrincipal, pinCamuflaje, rol)) {
+                                            is ResultadoApi.Exito -> {
+                                                if (rol == ROL_COMPRADORA) {
+                                                    when (val cuenta = AuthRepositorio.completarRegistroCompradora()) {
+                                                        is ResultadoApi.Exito -> navController.navigate("home") {
+                                                            popUpTo("login") { inclusive = true }   // ya no se regresa a login/registro
+                                                        }
+                                                        is ResultadoApi.Error -> error = cuenta.mensaje
+                                                    }
+                                                } else {
+                                                    navController.navigate("radar")   // todavía sin cuenta
+                                                }
+                                            }
+                                            is ResultadoApi.Error -> error = validacion.mensaje
                                         }
                                         cargando = false
                                     }
                                 },
-                                onNavigateToLogin = { navController.popBackStack() }
+                                onNavigateToLogin = { navController.popBackStack("login", false) }
                             )
                         }
                     }

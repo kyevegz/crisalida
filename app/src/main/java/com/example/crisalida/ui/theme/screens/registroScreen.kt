@@ -30,7 +30,8 @@ fun RegisterScreen(
     onNextClick: (String, String, String) -> Unit,
     onNavigateToLogin: () -> Unit,
     cargando: Boolean = false,   // true mientras se espera al servidor
-    error: String? = null        // mensaje a mostrar si algo falló
+    error: String? = null,       // mensaje a mostrar si algo falló
+    esCompradora: Boolean = false // registro corto: sin radar, la cuenta se crea con este botón
 ) {
     var seudonimo by remember { mutableStateOf("") }
     var pinPrincipal by remember { mutableStateOf("") }
@@ -111,6 +112,15 @@ fun RegisterScreen(
             color = ColorTextoPrincipal,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 8.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = if (esCompradora) "Te registras para comprar y publicar retos" else "Te registras para vender",
+            fontFamily = JakartaSansFont,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp,
+            color = ColorBotonEntrar,
+            textAlign = TextAlign.Center
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -219,7 +229,10 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(14.dp))
 
         Text(
-            text = "Una vez hayas elegido un seudónimo y un PIN seguro, será momento de responder un formulario que te ayudará a conocer tus talentos y habilidades.",
+            text = if (esCompradora)
+                "Tu registro es corto: al terminar entrarás directo a la app."
+            else
+                "Una vez hayas elegido un seudónimo y un PIN seguro, será momento de responder un formulario que te ayudará a conocer tus talentos y habilidades.",
             fontFamily = JakartaSansFont,
             fontSize = 12.sp,
             color = ColorTextoPrincipal,
@@ -253,7 +266,7 @@ fun RegisterScreen(
                 )
             } else {
                 Text(
-                    text = "Siguiente",
+                    text = if (esCompradora) "Crear mi cuenta" else "Siguiente",
                     fontFamily = OutfitFont,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.ExtraBold,

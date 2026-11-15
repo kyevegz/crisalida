@@ -302,6 +302,8 @@ fun PerfilScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // nivel, portafolio y habilidades vienen de la vendedora: la compradora no los ve
+                if (!SesionActual.esCompradora) {
                 // apartado ¿Cómo subo de nivel?
                 Card(
                     shape = RoundedCornerShape(12.dp),
@@ -523,6 +525,7 @@ fun PerfilScreen(
                         }
                     }
                 }
+                }   // fin de lo que no ve la compradora
                 Spacer(modifier = Modifier.height(20.dp))
                 OutlinedButton(
                     onClick = onCerrarSesion,
