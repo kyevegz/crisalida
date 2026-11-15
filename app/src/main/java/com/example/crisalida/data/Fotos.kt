@@ -3,6 +3,8 @@ package com.example.crisalida.data
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import android.util.LruCache
 import androidx.compose.foundation.Image
@@ -31,6 +33,25 @@ import java.io.ByteArrayOutputStream
 private const val LADO_MAXIMO = 1280
 private const val BYTES_MAXIMOS = 380 * 1024
 
+// Las fotos de la cámara guardan su giro en los metadatos (EXIF) en lugar de girar los píxeles; hay que leerlo
+// antes de volver a codificar, porque al recomprimir esos metadatos se pierden y la foto quedaría de lado.
+private fun gradosDeGiro(contexto: Context, uri: Uri): Int = try {
+    contexto.contentResolver.openInputStream(uri)?.use { flujo ->
+        when (ExifInterface(flujo).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> 90
+            ExifInterface.ORIENTATION_ROTATE_180 -> 180
+            ExifInterface.ORIENTATION_ROTATE_270 -> 270
+            else -> 0
+        }
+    } ?: 0
+} catch (e: Exception) {
+    0
+}
+
+private fun girar(bmp: Bitmap, grados: Int): Bitmap =
+    if (grados == 0) bmp
+    else Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, Matrix().apply { postRotate(grados.toFloat()) }, true)
+
 /** Devuelve la foto como JPEG liviano, o null si no se pudo leer. Llámala en un hilo de fondo (Dispatchers.IO). */
 fun prepararFoto(contexto: Context, uri: Uri): ByteArray? {
     return try {
@@ -44,7 +65,8 @@ fun prepararFoto(contexto: Context, uri: Uri): ByteArray? {
 
         // 2) Decodificar reducida
         val opciones = BitmapFactory.Options().apply { inSampleSize = muestreo }
-        val original = resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opciones) } ?: return null
+        val sinGirar = resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opciones) } ?: return null
+        val original = girar(sinGirar, gradosDeGiro(contexto, uri))
 
         // 3) Ajustar al lado máximo
         val escala = LADO_MAXIMO.toFloat() / maxOf(original.width, original.height)
@@ -108,7 +130,8 @@ fun MiniaturaLocal(uri: Uri, modifier: Modifier = Modifier) {
         value = withContext(Dispatchers.IO) {
             try {
                 val opciones = BitmapFactory.Options().apply { inSampleSize = 4 }
-                contexto.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opciones) }?.asImageBitmap()
+                contexto.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opciones) }
+                    ?.let { girar(it, gradosDeGiro(contexto, uri)) }?.asImageBitmap()
             } catch (e: Exception) {
                 null
             }

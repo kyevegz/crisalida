@@ -2,10 +2,14 @@ package com.example.crisalida.ui.theme.screens
 
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
 import org.json.JSONObject
+import androidx.core.content.ContextCompat
 import com.example.crisalida.data.FotoRemota
+import com.example.crisalida.data.FotosCamara
 import com.example.crisalida.data.MarketplaceRepositorio
 import androidx.compose.ui.platform.LocalContext
 import com.example.crisalida.data.MiniaturaLocal
@@ -35,10 +39,13 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.LocalMall
+import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -116,6 +123,56 @@ fun PublicarProductoScreen(
 
     val contexto = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    // ---- fotos con la cámara: ver FotosCamara (archivo temporal privado) ----
+    var mostrarOpcionesFoto by remember { mutableStateOf(false) }
+    var mostrarExplicacionCamara by remember { mutableStateOf(false) }
+    var mensajeCamara by remember { mutableStateOf<String?>(null) }
+    // se guarda aunque Android recree la pantalla mientras la app de cámara está abierta
+    var fotoPendiente by rememberSaveable { mutableStateOf<Uri?>(null) }
+
+    val launcherCamara = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { exito ->
+        val uri = fotoPendiente
+        fotoPendiente = null
+        if (uri != null) {
+            if (exito && imagenesSeleccionadas.size + fotosExistentes.size < 3) {
+                imagenesSeleccionadas.add(uri)      // se trata igual que una foto de la galería
+            } else {
+                FotosCamara.borrar(contexto, uri)   // canceló: no se agrega nada ni queda ningún archivo
+            }
+        }
+    }
+
+    fun abrirCamara() {
+        try {
+            val uri = FotosCamara.crearArchivoTemporal(contexto)
+            fotoPendiente = uri
+            launcherCamara.launch(uri)
+        } catch (e: Exception) {
+            FotosCamara.borrar(contexto, fotoPendiente)
+            fotoPendiente = null
+            mensajeCamara = "No pudimos abrir la cámara en este momento. Puedes elegir una foto de tu galería."
+        }
+    }
+
+    val launcherPermisoCamara = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
+        if (concedido) abrirCamara()
+        else mensajeCamara = "No hay problema, tu publicación puede seguir con fotos de tu galería. " +
+            "Si más adelante quieres usar la cámara, puedes activar el permiso en los ajustes del teléfono."
+    }
+
+    fun alElegirTomarFoto() {
+        mostrarOpcionesFoto = false
+        val permiso = ContextCompat.checkSelfPermission(contexto, Manifest.permission.CAMERA)
+        if (permiso == PackageManager.PERMISSION_GRANTED) abrirCamara() else mostrarExplicacionCamara = true
+    }
+
+    // las fotos temporales de la cámara se borran al salir de la pantalla (y se limpian restos de una vez anterior)
+    DisposableEffect(Unit) {
+        FotosCamara.limpiarTodo(contexto)
+        onDispose { FotosCamara.limpiarTodo(contexto) }
+    }
+
     var publicando by remember { mutableStateOf(false) }
     var mensajePublicar by remember { mutableStateOf<String?>(null) }
     var publicacionCreada by remember { mutableStateOf(false) }
@@ -490,7 +547,7 @@ fun PublicarProductoScreen(
                                             .size(22.dp)
                                             .clip(RoundedCornerShape(11.dp))
                                             .background(Color(0xAA000000))
-                                            .clickable { imagenesSeleccionadas.remove(uri) },
+                                            .clickable { imagenesSeleccionadas.remove(uri); FotosCamara.borrar(contexto, uri) },
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(text = "✕", fontSize = 12.sp, color = Color.White)
@@ -504,13 +561,17 @@ fun PublicarProductoScreen(
                                         .clip(RoundedCornerShape(8.dp))
                                         .border(1.dp, MkTitulo.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
                                         .background(Color(0xFFFAF8F8))
-                                        .clickable { launcherGaleria.launch("image/*") },
+                                        .clickable(onClickLabel = "Agregar foto") {
+                                            // con cámara: elegir entre galería y cámara; sin cámara: directo a la galería
+                                            if (FotosCamara.hayCamara(contexto)) mostrarOpcionesFoto = true
+                                            else launcherGaleria.launch("image/*")
+                                        },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Icon(imageVector = Icons.Default.Add, contentDescription = "Agregar", tint = MkTitulo, modifier = Modifier.size(24.dp))
+                                        Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = MkTitulo, modifier = Modifier.size(24.dp))
                                         Spacer(modifier = Modifier.height(2.dp))
-                                        Text(text = "+ Agregar", fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkTitulo, fontWeight = FontWeight.Bold)
+                                        Text(text = "Agregar foto", fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkTitulo, fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                                     }
                                 }
                             }
@@ -744,6 +805,54 @@ fun PublicarProductoScreen(
         }
     }
 
+    if (mostrarOpcionesFoto) {
+        AlertDialog(
+            onDismissRequest = { mostrarOpcionesFoto = false },
+            title = { Text("Agregar foto", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo) },
+            text = {
+                OpcionesAgregarFoto(
+                    onGaleria = { mostrarOpcionesFoto = false; launcherGaleria.launch("image/*") },
+                    onCamara = { alElegirTomarFoto() }
+                )
+            },
+            confirmButton = { TextButton(onClick = { mostrarOpcionesFoto = false }) { Text("Cancelar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo) } },
+            containerColor = Color.White, shape = RoundedCornerShape(12.dp)
+        )
+    }
+
+    // antes de pedir el permiso se explica para qué se usa la cámara
+    if (mostrarExplicacionCamara) {
+        AlertDialog(
+            onDismissRequest = { mostrarExplicacionCamara = false },
+            title = { Text("Permiso de cámara", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo) },
+            text = {
+                Text(
+                    "Usamos la cámara solo cuando tocas «Tomar foto», para fotografiar tu producto o servicio. " +
+                        "La foto no se guarda en tu galería: solo se agrega a tu publicación.",
+                    fontFamily = JakartaSansFont, color = MkSubtitulo,
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { mostrarExplicacionCamara = false; launcherPermisoCamara.launch(Manifest.permission.CAMERA) },
+                    colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)
+                ) { Text("Continuar", color = Color.White) }
+            },
+            dismissButton = { TextButton(onClick = { mostrarExplicacionCamara = false }) { Text("Ahora no", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo) } },
+            containerColor = Color.White, shape = RoundedCornerShape(12.dp)
+        )
+    }
+
+    mensajeCamara?.let { texto ->
+        AlertDialog(
+            onDismissRequest = { mensajeCamara = null },
+            text = { Text(texto, fontFamily = JakartaSansFont, color = MkSubtitulo, modifier = Modifier.verticalScroll(rememberScrollState())) },
+            confirmButton = { Button(onClick = { mensajeCamara = null }, colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)) { Text("Entendido", color = Color.White) } },
+            containerColor = Color.White, shape = RoundedCornerShape(12.dp)
+        )
+    }
+
     mensajeBorrador?.let { texto ->
         AlertDialog(
             onDismissRequest = { mensajeBorrador = null },
@@ -936,5 +1045,43 @@ private fun PreviewControlesPublicar() {
             "El cliente paga en custodia; dispones de hasta 48 hrs para preparar sin prisas.",
             "24h - 48h", false
         ) {}
+    }
+}
+// las dos formas de agregar una foto; los botones miden al menos 48 dp y el texto puede bajar de línea
+@Composable
+private fun OpcionesAgregarFoto(onGaleria: () -> Unit, onCamara: () -> Unit) {
+    Column(
+        modifier = Modifier.verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        OutlinedButton(
+            onClick = onGaleria,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(1.dp, MkTitulo.copy(alpha = 0.5f))
+        ) {
+            Icon(Icons.Outlined.PhotoLibrary, contentDescription = null, tint = MkTitulo, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Elegir de la galería", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo, modifier = Modifier.weight(1f, fill = false))
+        }
+        OutlinedButton(
+            onClick = onCamara,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(1.dp, MkTitulo.copy(alpha = 0.5f))
+        ) {
+            Icon(Icons.Outlined.PhotoCamera, contentDescription = null, tint = MkTitulo, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Tomar foto", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo, modifier = Modifier.weight(1f, fill = false))
+        }
+    }
+}
+
+// Para revisar sin emulador (Preview: 320 dp, texto al 200 %, horizontal)
+@PreviewResponsivo
+@Composable
+private fun PreviewOpcionesAgregarFoto() {
+    Column(modifier = Modifier.background(Color.White).padding(16.dp)) {
+        OpcionesAgregarFoto(onGaleria = {}, onCamara = {})
     }
 }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Carpetas que se pueden compartir con otras apps mediante FileProvider.
+     Solo la carpeta de fotos temporales de la cámara, dentro de la caché privada de la app. -->
+<paths>
+    <cache-path name="fotos_camara" path="fotos_camara/" />
+</paths>
