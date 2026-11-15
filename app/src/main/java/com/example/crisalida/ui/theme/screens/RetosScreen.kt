@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.example.crisalida.data.MarketplaceRepositorio
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.ResultadoApi
+import com.example.crisalida.data.SesionActual
 import com.example.crisalida.data.RetoDto
 import com.example.crisalida.data.RetosRepositorio
 import kotlinx.coroutines.launch
@@ -111,7 +112,7 @@ fun RetosScreen(
 
     var version by remember { mutableIntStateOf(0) }
     val tablero = rememberCarga(categoriaId, version, ProgresoRepositorio.version) { RetosRepositorio.tablero(categoriaId = categoriaId) }
-    val mios = rememberCarga(version, ProgresoRepositorio.version) { RetosRepositorio.mis() }
+    val mios = rememberCarga(version, ProgresoRepositorio.version) { soloVendedora { RetosRepositorio.mis() } }
 
     val activo = if (verMisRetos) mios else tablero
     val visibles: List<RetoUi> = ((activo.estado as? Carga.Lista)?.datos?.retos ?: emptyList())
@@ -176,8 +177,9 @@ fun RetosScreen(
                 }
             }
 
-            // Pestañas: Disponibles / Mis retos (si no caben en una línea, la segunda baja)
-            item(span = { GridItemSpan(maxLineSpan) }) {
+            // Pestañas: Disponibles / Mis retos (si no caben en una línea, la segunda baja).
+            // La compradora no completa retos: no tiene "Mis retos".
+            if (!SesionActual.esCompradora) item(span = { GridItemSpan(maxLineSpan) }) {
                 FlowRow(
                     modifier = Modifier.padding(start = MargenIzq, end = MargenDer, top = 9.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -261,6 +263,7 @@ fun RetosScreen(
                         modifier = modificador,
                         onAbrir = { onAbrirDetalle(reto.retoId) },
                         habilitado = !ocupado,
+                        mostrarBoton = !SesionActual.esCompradora,   // la compradora solo mira los retos
                         onAceptar = {
                             ejecutar({ RetosRepositorio.aceptar(reto.retoId) },
                                 "¡Reto aceptado! Lo encuentras en «Mis retos». Cuando termines, márcalo como entregado.")
@@ -309,6 +312,7 @@ private fun RetoCard(
     onAbrir: () -> Unit = {},
     textoBoton: String = "Aceptar el reto",
     habilitado: Boolean = true,
+    mostrarBoton: Boolean = true,
     onAceptar: () -> Unit = {},
     textoSecundario: String? = null,
     onSecundario: () -> Unit = {}
@@ -443,6 +447,7 @@ private fun RetoCard(
                 }
             }
 
+            if (mostrarBoton) {
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -471,6 +476,7 @@ private fun RetoCard(
                         modifier = Modifier.size(16.dp)
                     )
                 }
+            }
             }
 
             if (textoSecundario != null) {
