@@ -30,7 +30,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
@@ -109,6 +108,7 @@ fun MascotaScreen(
                     siguienteNombre = lilu?.siguienteNombre,
                     porcentaje = lilu?.porcentaje ?: 0,
                     cargado = lilu != null,
+                    reposo = lilu?.reposo == true,
                     onRespirar = { onNavigate("respirar_lilu") }
                 )
 
@@ -362,6 +362,7 @@ private fun TarjetaLilu(
     siguienteNombre: String?,
     porcentaje: Int,
     cargado: Boolean,
+    reposo: Boolean,
     onRespirar: () -> Unit
 ) {
     val compacto = LocalConfiguration.current.screenHeightDp < 480
@@ -376,10 +377,10 @@ private fun TarjetaLilu(
                 modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ImagenLilu(etapa = etapa, tamano = 110.dp)
+                ImagenLilu(etapa = etapa, reposo = reposo, tamano = 110.dp)
                 Spacer(modifier = Modifier.width(16.dp))
                 DatosLilu(
-                    etapa, etapaNombre, flores, floresSiguiente, siguienteNombre, porcentaje, cargado,
+                    etapa, etapaNombre, flores, floresSiguiente, siguienteNombre, porcentaje, cargado, reposo,
                     centrado = false, onRespirar = onRespirar, modifier = Modifier.weight(1f)
                 )
             }
@@ -388,10 +389,10 @@ private fun TarjetaLilu(
                 modifier = Modifier.padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                ImagenLilu(etapa = etapa, tamano = 130.dp)
+                ImagenLilu(etapa = etapa, reposo = reposo, tamano = 130.dp)
                 Spacer(modifier = Modifier.height(14.dp))
                 DatosLilu(
-                    etapa, etapaNombre, flores, floresSiguiente, siguienteNombre, porcentaje, cargado,
+                    etapa, etapaNombre, flores, floresSiguiente, siguienteNombre, porcentaje, cargado, reposo,
                     centrado = true, onRespirar = onRespirar
                 )
             }
@@ -400,7 +401,7 @@ private fun TarjetaLilu(
 }
 
 @Composable
-private fun ImagenLilu(etapa: Int?, tamano: Dp) {
+private fun ImagenLilu(etapa: Int?, reposo: Boolean, tamano: Dp) {
     Box(
         modifier = Modifier
             .size(tamano)
@@ -409,10 +410,11 @@ private fun ImagenLilu(etapa: Int?, tamano: Dp) {
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(id = when (etapa) { 2 -> R.drawable.lilu_larva; 3 -> R.drawable.lilu_mariposa; else -> R.drawable.lilu_huevo }),
-            contentDescription = "Lilu",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
+            painter = painterResource(id = imagenLilu(etapa, reposo)),
+            contentDescription = descripcionImagenLilu(reposo),
+            // la imagen de reposo es más ancha que alta: se muestra completa en vez de recortarla en el círculo
+            contentScale = if (reposo) ContentScale.Fit else ContentScale.Crop,
+            modifier = if (reposo) Modifier.fillMaxSize().padding(10.dp) else Modifier.fillMaxSize()
         )
     }
 }
@@ -426,6 +428,7 @@ private fun DatosLilu(
     siguienteNombre: String?,
     porcentaje: Int,
     cargado: Boolean,
+    reposo: Boolean,
     centrado: Boolean,
     onRespirar: () -> Unit,
     modifier: Modifier = Modifier
@@ -436,7 +439,7 @@ private fun DatosLilu(
         horizontalAlignment = if (centrado) Alignment.CenterHorizontally else Alignment.Start
     ) {
         Text(
-            text = if (cargado && etapaNombre != null) "Lilu • $etapaNombre" else "Lilu",
+            text = tituloLilu(if (cargado) etapaNombre else null, reposo),
             fontFamily = OutfitFont,
             fontWeight = FontWeight.Bold,
             fontSize = 18.sp,
@@ -444,12 +447,7 @@ private fun DatosLilu(
             color = MkTitulo
         )
         Text(
-            text = when (etapa) {
-                1 -> "Lilu descansa en su huevo, esperando crecer contigo"
-                2 -> "Lilu ya salió y crece con cada paso tuyo"
-                3 -> "¡Lilu ya tiene alas! Sigue floreciendo con ella"
-                else -> "Cargando a Lilu…"
-            },
+            text = mensajeLilu(etapa, reposo),
             fontFamily = JakartaSansFont,
             fontSize = 13.sp,
             textAlign = alineacion,
@@ -529,7 +527,22 @@ private fun PreviewTarjetaLilu() {
     ) {
         TarjetaLilu(
             etapa = 2, etapaNombre = "Larva", flores = 120, floresSiguiente = 300,
-            siguienteNombre = "Mariposa", porcentaje = 40, cargado = true, onRespirar = {}
+            siguienteNombre = "Mariposa", porcentaje = 40, cargado = true, reposo = false, onRespirar = {}
+        )
+    }
+}
+
+@PreviewResponsivo
+@Composable
+private fun PreviewTarjetaLiluReposo() {
+    Column(
+        modifier = Modifier
+            .background(ColorFondoApp)
+            .padding(18.dp)
+    ) {
+        TarjetaLilu(
+            etapa = 2, etapaNombre = "Larva", flores = 120, floresSiguiente = 300,
+            siguienteNombre = "Mariposa", porcentaje = 40, cargado = true, reposo = true, onRespirar = {}
         )
     }
 }

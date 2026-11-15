@@ -28,7 +28,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.ui.theme.screens.rememberProgreso
 import com.example.crisalida.ui.theme.screens.Carga
@@ -71,7 +70,9 @@ fun RespirarLiluScreen(
     // en horizontal casi no hay alto: Lilu se hace más chica para que no ocupe toda la pantalla
     val compacto = LocalConfiguration.current.screenHeightDp < 480
     val progreso = rememberProgreso()
-    val etapa = (progreso.estado as? Carga.Lista)?.datos?.lilu?.etapa
+    val lilu = (progreso.estado as? Carga.Lista)?.datos?.lilu
+    val etapa = lilu?.etapa
+    val reposo = lilu?.reposo == true
     CrisalidaScaffold(
         currentTitle = "Respirar con Lilu",
         selectedTab = 4,
@@ -133,8 +134,8 @@ fun RespirarLiluScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = when (etapa) { 2 -> R.drawable.lilu_larva; 3 -> R.drawable.lilu_mariposa; else -> R.drawable.lilu_huevo}),
-                        contentDescription = "Lilu emocionada",
+                        painter = painterResource(id = imagenLilu(etapa, reposo)),
+                        contentDescription = if (reposo) "Lilu durmiendo" else "Lilu emocionada",
                         contentScale = ContentScale.Fit,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -143,7 +144,7 @@ fun RespirarLiluScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "Lilu está muy feliz de que estés aquí. Quiere recordarte lo valiosa que eres para el mundo.",
+                    text = saludoRespirarLilu(reposo),
                     fontFamily = OutfitFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
