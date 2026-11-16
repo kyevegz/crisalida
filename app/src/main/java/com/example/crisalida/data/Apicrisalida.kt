@@ -134,6 +134,10 @@ interface ApiService {
     @POST("cuenta/rol")
     suspend fun cambiarRol(@Body datos: CambioRolRequest): Response<CambioRolResponse>
 
+    // publicar un reto (7.5): queda "en revisión"; la Idempotency-Key evita crearlo dos veces
+    @POST("retos")
+    suspend fun publicarReto(@Body datos: RetoPublicarRequest, @Header("Idempotency-Key") clave: String?): Response<RetoPublicadoResponse>
+
     @GET("perfil/datos")
     suspend fun misDatos(): Response<DatosPersonalesResponse>
 

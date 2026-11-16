@@ -175,7 +175,17 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
     }
 
     // pantalla para publicar retos: se hará en su propio issue
-    composable("publicar_reto") { ConEscalaDeTexto { PantallaPendiente("Publicar reto", 0, ir) } }
+    composable("publicar_reto") {
+        ConEscalaDeTexto {
+            PublicarRetoScreen(
+                onNavigate = ir,
+                // si el servidor dice que falta verificar el correo: se vuelve a la puerta del correo y de ahí a esta pantalla
+                onVerificarCorreo = {
+                    navController.navigate("requiere_correo/publicar_reto") { popUpTo("publicar_reto") { inclusive = true } }
+                }
+            )
+        }
+    }
     composable("configuracion") {
         val contexto = LocalContext.current
         ConEscalaDeTexto {

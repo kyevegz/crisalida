@@ -416,7 +416,11 @@ object DatosPersonalesRepositorio {
     suspend fun verificarCorreo(codigo: String): ResultadoApi<CorreoVerificadoResponse> =
         llamarApi { RetrofitCliente.api.verificarCorreo(CodigoCorreoRequest(codigo.trim())) }
 
-    /** ¿Ya tiene correo guardado? Se usa antes de publicar retos (si no, se abre CompletarDatosScreen en modo CORREO_PARA_RETOS). */
+    /** ¿Ya tiene correo guardado? */
     suspend fun tieneCorreo(): Boolean =
         (mios() as? ResultadoApi.Exito)?.datos?.correo != null
+
+    /** ¿Tiene el correo VERIFICADO? Es lo que exige el servidor para publicar retos (si no, se abre CompletarDatosScreen en modo CORREO_PARA_RETOS). */
+    suspend fun correoVerificado(): Boolean =
+        (mios() as? ResultadoApi.Exito)?.datos?.correoVerificado == true
 }
