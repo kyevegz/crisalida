@@ -178,6 +178,9 @@ interface ApiService {
     @POST("radar/finalizar")
     suspend fun radarFinalizar(@Body datos: FinalizarRequest): Response<PerfilResponse>
 
+    @POST("radar/aceptar")
+    suspend fun radarAceptar(@Body datos: RadarFinalRequest): Response<PerfilResponse>
+
     @GET("radar/resultado")
     suspend fun radarResultado(): Response<ResultadoRadarResponse>
 
