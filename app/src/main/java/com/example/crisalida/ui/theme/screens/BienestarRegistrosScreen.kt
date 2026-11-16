@@ -67,7 +67,7 @@ fun BienestarRegistrosScreen(
                 }
                 when (val e = carga.estado) {
                     is Carga.Cargando -> IndicadorCargando()
-                    is Carga.Falla -> MensajeError(e.mensaje, carga.recargar)
+                    is Carga.Falla -> ErrorDeCarga(e, carga.recargar, "No podemos mostrar tus registros sin conexión.")
                     is Carga.Lista -> {
                         if (e.datos.entradas.isEmpty()) {
                             Text(

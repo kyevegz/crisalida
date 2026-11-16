@@ -48,18 +48,18 @@ fun ProductoDetalleScreen(
 
     CrisalidaScaffold(currentTitle = "Marketplace", selectedTab = 1, onNavigate = onNavigate) { innerPadding ->
         ContenidoCentrado(innerPadding) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            BarraVolver("Volver al marketplace", onVolver)
-            when (val e = carga.estado) {
-                is Carga.Cargando -> IndicadorCargando()
-                is Carga.Falla -> MensajeError(e.mensaje, carga.recargar)
-                is Carga.Lista -> Column(
-                    modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
-                ) {
-                    Contenido(e.datos, onComprar = { dialogoCompra = true }, onEditar = { onEditar(e.datos.id) })
+            Column(modifier = Modifier.fillMaxSize()) {
+                BarraVolver("Volver al marketplace", onVolver)
+                when (val e = carga.estado) {
+                    is Carga.Cargando -> IndicadorCargando()
+                    is Carga.Falla -> ErrorDeCarga(e, carga.recargar, "No podemos mostrar este producto sin conexión.")
+                    is Carga.Lista -> Column(
+                        modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
+                    ) {
+                        Contenido(e.datos, onComprar = { dialogoCompra = true }, onEditar = { onEditar(e.datos.id) })
+                    }
                 }
             }
-        }
         }
     }
 
@@ -70,7 +70,7 @@ fun ProductoDetalleScreen(
             text = {
                 Text(
                     "El proceso de compra (pago en custodia y entrega) todavía no está activo en esta versión. " +
-                        "Cuando lo esté, todo el contacto será dentro de la app, sin compartir teléfonos ni direcciones.",
+                            "Cuando lo esté, todo el contacto será dentro de la app, sin compartir teléfonos ni direcciones.",
                     fontFamily = JakartaSansFont,
                     modifier = Modifier.verticalScroll(rememberScrollState())
                 )

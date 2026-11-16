@@ -243,7 +243,7 @@ fun RetosScreen(
             item(span = { GridItemSpan(maxLineSpan) }) {
                 when (val e = activo.estado) {
                     is Carga.Cargando -> IndicadorCargando()
-                    is Carga.Falla -> MensajeError(e.mensaje, activo.recargar)
+                    is Carga.Falla -> ErrorDeCarga(e, activo.recargar, "No podemos mostrar los microrretos sin conexión.")
                     is Carga.Lista -> if (visibles.isEmpty()) {
                         Text(
                             text = if (verMisRetos) "Aún no has tomado ningún reto. ¡Ve a «Disponibles» y elige uno!"
@@ -448,35 +448,35 @@ private fun RetoCard(
             }
 
             if (mostrarBoton) {
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                Button(
-                    onClick = onAceptar,
-                    enabled = habilitado,
-                    modifier = Modifier
-                        .widthIn(min = 191.dp)
-                        .heightIn(min = 38.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MkVerde),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = textoBoton,
-                        fontFamily = OutfitFont,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 16.sp,
-                        color = Color(0xFFFFFAFA)
-                    )
-                    Spacer(modifier = Modifier.width(5.dp))
-                    Icon(
-                        imageVector = Icons.Filled.ArrowForward,
-                        contentDescription = null,
-                        tint = Color(0xFFFFFAFA),
-                        modifier = Modifier.size(16.dp)
-                    )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    Button(
+                        onClick = onAceptar,
+                        enabled = habilitado,
+                        modifier = Modifier
+                            .widthIn(min = 191.dp)
+                            .heightIn(min = 38.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MkVerde),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = textoBoton,
+                            fontFamily = OutfitFont,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 16.sp,
+                            color = Color(0xFFFFFAFA)
+                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Icon(
+                            imageVector = Icons.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = Color(0xFFFFFAFA),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
-            }
             }
 
             if (textoSecundario != null) {

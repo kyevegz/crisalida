@@ -196,7 +196,7 @@ fun PortafolioScreen(
 
                 when (val e = portafolio.estado) {
                     is Carga.Cargando -> IndicadorCargando()
-                    is Carga.Falla -> MensajeError(e.mensaje, portafolio.recargar)
+                    is Carga.Falla -> ErrorDeCarga(e, portafolio.recargar, "No podemos mostrar tu portafolio sin conexión.")
                     is Carga.Lista -> if (publicacionesPortafolio.isEmpty()) {
                         Text(
                             text = "Aún no has publicado nada. ¡Anímate a subir tu primer producto o servicio!",
