@@ -58,6 +58,8 @@ private val MkTextoPregunta = Color(0xFF262626)
 
 private const val MIN_ABIERTA = 3     // las 2 preguntas abiertas fijas no pueden ir vacías
 private const val MAX_DINAMICAS_ESTIMADAS = 6   // el Bloque II trae hasta 6 preguntas (8.2)
+private const val RADAR_SUGERENCIAS = "Son sugerencias para orientarte, no un diagnóstico ni una evaluación. Tú decides qué te representa: cámbialas, quita las que no y agrega otras."
+private const val RADAR_NO_GUARDADO = "No se guarda nada hasta que pulses «Aceptar». Si sales ahora, no queda nada guardado."
 private const val MAX_ABIERTA = 300   // ni ser demasiado largas (igual que el servidor)
 private val PreguntasAbiertasFijas = setOf("gusta", "sabe")
 
@@ -427,6 +429,34 @@ fun RadarScreen(
         )
     }
 
+    // Escuchar (8.7): el texto visible de esta pregunta o paso. Nunca lo que la usuaria escribió.
+    val lineasVoz = mutableListOf<String>()
+    if (bloque1 != null) {
+        lineasVoz.add("Radar de talentos.")
+        if (enResultado) {
+            lineasVoz.add("Esto es lo que vemos en ti.")
+            lineasVoz.add(RADAR_SUGERENCIAS)
+            lineasVoz.add(RADAR_NO_GUARDADO)
+            habilidades.forEachIndexed { i, h ->
+                if (h.titulo.isNotBlank()) lineasVoz.add("Habilidad ${i + 1}: ${h.titulo.trim()}. ${h.descripcion.trim()}")
+            }
+            lineasVoz.add("Botón: Aceptar.")
+        } else {
+            lineasVoz.add("Pregunta ${paso + 1} de $totalPreguntas. Faltan ${totalPreguntas - paso - 1}.")
+            if (esDinamica && paso == nB1) analisis?.let { lineasVoz.add(it.mensaje) }
+            preguntaActual?.let { p ->
+                lineasVoz.add(p.texto)
+                when (p.tipo) {
+                    "casillas", "chips" -> lineasVoz.add("Puedes elegir varias opciones.")
+                    "opcion_unica" -> lineasVoz.add("Elige una opción.")
+                    "texto" -> lineasVoz.add("Escribe tu respuesta con tus propias palabras.")
+                }
+                p.opciones.forEach { lineasVoz.add(it.texto) }
+                lineasVoz.add(if (esBloque1) "Esta pregunta es obligatoria." else "Puedes omitir esta pregunta.")
+            }
+        }
+    }
+
     //es parte del registro, sin barras
     Box(
         modifier = Modifier
@@ -448,6 +478,7 @@ fun RadarScreen(
                     .fillMaxWidth()
                     .padding(start = 17.dp, end = 16.dp, top = 20.dp)
             ) {
+                BotonEscuchar(lineasVoz)
                 // título muy grande: crece poco para que "talentos" no se parta en pantallas chicas
                 ConEscalaLimitada(tope = 1.3f) {
                     Text(
@@ -484,7 +515,7 @@ fun RadarScreen(
                     enResultado -> {
                         TarjetaRosa(titulo = "Esto es lo que vemos en ti", colorTitulo = MkVino) {
                             Text(
-                                text = "Son sugerencias para orientarte, no un diagnóstico ni una evaluación. Tú decides qué te representa: cámbialas, quita las que no y agrega otras.",
+                                text = RADAR_SUGERENCIAS,
                                 fontFamily = OutfitFont,
                                 fontSize = 16.sp,
                                 lineHeight = 22.sp,
@@ -492,7 +523,7 @@ fun RadarScreen(
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "No se guarda nada hasta que pulses «Aceptar». Si sales ahora, no queda nada guardado.",
+                                text = RADAR_NO_GUARDADO,
                                 fontFamily = OutfitFont,
                                 fontSize = 14.sp,
                                 lineHeight = 20.sp,
