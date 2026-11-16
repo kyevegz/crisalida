@@ -1,11 +1,12 @@
 package com.example.crisalida.ui.theme.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -49,19 +50,20 @@ private val MkPlaceholder = Color(0xFF836B86)
 private val MkTextoPregunta = Color(0xFF262626)
 
 private const val MIN_ABIERTA = 3     // las 2 preguntas abiertas fijas no pueden ir vacías
+private const val MAX_DINAMICAS_ESTIMADAS = 6   // el Bloque II trae hasta 6 preguntas (8.2)
 private const val MAX_ABIERTA = 300   // ni ser demasiado largas (igual que el servidor)
 private val PreguntasAbiertasFijas = setOf("gusta", "sabe")
 
-//el radar va dentro del registro, la cuenta se crea hasta el segundo dar clic en terminar
+//el radar va dentro del registro. Se contesta una pregunta a la vez, con barra de progreso, «Omitir» y «Atrás» (8.4)
 @Composable
 fun RadarScreen(
     onTerminar: () -> Unit,
-    // true: ya tiene cuenta (una compradora que vuelve a vender, 6.5). El primer «Terminar» ya guarda su perfil en el servidor,
-    // así que el segundo solo cierra la pantalla en lugar de crear la cuenta.
+    // true: ya tiene cuenta (una compradora que vuelve a vender, 6.5). Al aceptar su resultado se guarda en el servidor
+    // y solo se cierra la pantalla en lugar de crear la cuenta.
     yaTieneCuenta: Boolean = false
 ) {
     val scope = rememberCoroutineScope()
-    val listState = rememberLazyListState()
+    val scroll = rememberScrollState()
 
     //bloque I (viene del servidor)
     var bloque1 by remember { mutableStateOf<List<PreguntaDto>?>(null) }
@@ -72,16 +74,22 @@ fun RadarScreen(
     val respuestas = remember { mutableStateMapOf<String, List<String>>() }
     val textos = remember { mutableStateMapOf<String, String>() }
 
-    //bloque II (lo genera la IA)
+    //bloque II (lo genera la IA o el respaldo)
     var analisis by remember { mutableStateOf<Bloque2Response?>(null) }
     var analizando by remember { mutableStateOf(false) }
     var errorAnalisis by remember { mutableStateOf<String?>(null) }
+    var huellaAnalizada by remember { mutableStateOf<String?>(null) }   // con qué respuestas del Bloque I se armó el Bloque II
 
-    //besultado final
+    //resultado: propuesta editable (8.3)
     var perfil by remember { mutableStateOf<PerfilResponse?>(null) }
+    var huellaPerfil by remember { mutableStateOf<String?>(null) }      // con qué respuestas se armó la propuesta
+    val habilidades = remember { mutableStateListOf<HabilidadDto>() }
     var detectando by remember { mutableStateOf(false) }
     var creandoCuenta by remember { mutableStateOf(false) }
     var errorFinal by remember { mutableStateOf<String?>(null) }
+
+    //en qué pregunta va (0 = la primera)
+    var paso by remember { mutableIntStateOf(0) }
 
     // Pide las preguntas fijas del Bloque I al abrir la pantalla
     LaunchedEffect(intentoCarga) {
@@ -92,10 +100,8 @@ fun RadarScreen(
         }
     }
 
-    //desplazamiento automático para que la usuaria vea lo nuevo que va apareciendo
-    LaunchedEffect(analizando) { if (analizando) listState.animateScrollToItem(2) }
-    LaunchedEffect(analisis) { if (analisis != null) listState.animateScrollToItem(2) }
-    LaunchedEffect(perfil) { if (perfil != null) listState.animateScrollToItem(4) }
+    // Cada pregunta nueva se ve desde arriba
+    LaunchedEffect(paso) { scroll.scrollTo(0) }
 
     fun alternar(preguntaId: String, opcionId: String, unica: Boolean) {
         val actual = respuestas[preguntaId].orEmpty()
@@ -114,28 +120,26 @@ fun RadarScreen(
     val abiertasValidas = gusta.length >= MIN_ABIERTA && sabe.length >= MIN_ABIERTA
     val puedeAnalizar = actividadesElegidas.isNotEmpty() && tiempoElegido != null && abiertasValidas
 
-    // Las preguntas dinámicas son hasta 6 y algunas son de texto libre y opcionales: basta con haber respondido alguna
-    val algunaRespondida = analisis?.preguntas.orEmpty().any {
-        respuestas[it.id].orEmpty().isNotEmpty() || textos[it.id].orEmpty().isNotBlank()
-    }
-    // El resultado editable (8.3): lo que ve y cambia la usuaria. Hasta que lo acepta, solo vive en esta pantalla.
-    val habilidades = remember { mutableStateListOf<HabilidadDto>() }
     val habilidadesValidas = habilidades.isNotEmpty() && habilidades.all { it.titulo.trim().length >= 3 }
-    val puedeTerminar = if (perfil != null) habilidadesValidas else (analisis != null && algunaRespondida)
 
-    fun analizar() {
-        val tiempo = tiempoElegido ?: return
-        scope.launch {
-            analizando = true
-            errorAnalisis = null
-            when (val r = RadarRepositorio.analizar(actividadesElegidas, tiempo, gusta, sabe)) {
-                is ResultadoApi.Exito -> analisis = r.datos
-                is ResultadoApi.Error -> errorAnalisis = r.mensaje
-            }
-            analizando = false
-        }
+    // ---- dónde estamos
+    val preguntasB1 = bloque1.orEmpty()
+    val dinamicas = analisis?.preguntas.orEmpty()
+    val nB1 = preguntasB1.size
+    val nDin = dinamicas.size
+    val enResultado = perfil != null && analisis != null && paso == nB1 + nDin
+    val esBloque1 = nB1 > 0 && paso < nB1
+    val esDinamica = !esBloque1 && paso >= nB1 && paso < nB1 + nDin
+    val preguntaActual: PreguntaDto? = when {
+        esBloque1 -> preguntasB1.getOrNull(paso)
+        esDinamica -> dinamicas.getOrNull(paso - nB1)
+        else -> null
     }
+    // Mientras no se arma el Bloque II se cuenta con el máximo (6); el total se ajusta cuando llegan
+    val totalPreguntas = nB1 + (if (analisis != null) nDin else MAX_DINAMICAS_ESTIMADAS)
+    val ocupado = analizando || detectando || creandoCuenta
 
+    // Lo que contestó de las dinámicas; las que omitió (o dejó vacías) no se mandan
     fun construirRespuestas(): List<RespuestaDinamicaDto> =
         analisis?.preguntas.orEmpty().map { p ->
             RespuestaDinamicaDto(
@@ -144,47 +148,118 @@ fun RadarScreen(
                 seleccion = respuestas[p.id].orEmpty(),
                 texto = textos[p.id].orEmpty()
             )
-        }
+        }.filter { it.seleccion.isNotEmpty() || it.texto.isNotBlank() }
 
-    fun terminar() {
-        if (analisis == null) return
+    // Para saber si lo contestado cambió desde que se armó el Bloque II / la propuesta
+    fun huellaBloque1(): String =
+        actividadesElegidas.joinToString(",") + "|" + (tiempoElegido ?: "") + "|" + gusta + "|" + sabe
+
+    fun huellaRespuestas(): String =
+        construirRespuestas().joinToString("¦") { r -> r.pregunta + ":" + r.seleccion.joinToString(",") + ":" + r.texto.trim() }
+
+    fun analizar() {
         val tiempo = tiempoElegido ?: return
-        val perfilActual = perfil
         scope.launch {
-            errorFinal = null
-            if (perfilActual == null) {
-                // Primer «Terminar»: el servidor solo PROPONE el resultado. No se guarda nada todavía.
-                detectando = true
-                when (val r = RadarRepositorio.finalizar(actividadesElegidas, tiempo, gusta, sabe, construirRespuestas())) {
-                    is ResultadoApi.Exito -> {
-                        perfil = r.datos
-                        habilidades.clear()
-                        habilidades.addAll(r.datos.habilidades)
+            analizando = true
+            errorAnalisis = null
+            when (val r = RadarRepositorio.analizar(actividadesElegidas, tiempo, gusta, sabe)) {
+                is ResultadoApi.Exito -> {
+                    // lo contestado de un análisis anterior ya no aplica a las preguntas nuevas
+                    dinamicas.forEach { d ->
+                        respuestas.remove(d.id)
+                        textos.remove(d.id)
                     }
-                    is ResultadoApi.Error -> errorFinal = r.mensaje
+                    analisis = r.datos
+                    huellaAnalizada = huellaBloque1()
+                    perfil = null
+                    huellaPerfil = null
+                    habilidades.clear()
+                    paso = nB1
                 }
-                detectando = false
-            } else {
-                // Segundo «Aceptar»: lo que ve ahora (con sus cambios) es lo que se guarda
-                val aceptado = perfilActual.copy(
-                    habilidades = habilidades.map { it.copy(titulo = it.titulo.trim(), descripcion = it.descripcion.trim()) }
-                )
-                creandoCuenta = true
-                if (yaTieneCuenta) {
-                    when (val r = RadarRepositorio.aceptar(actividadesElegidas, tiempo, gusta, sabe, construirRespuestas(), aceptado)) {
-                        is ResultadoApi.Exito -> onTerminar()
-                        is ResultadoApi.Error -> errorFinal = r.mensaje
-                    }
-                } else {
-                    when (val r = AuthRepositorio.completarRegistro(actividadesElegidas, tiempo, gusta, sabe, construirRespuestas(), aceptado)) {
-                        is ResultadoApi.Exito -> onTerminar()
-                        is ResultadoApi.Error -> errorFinal = r.mensaje
-                    }
-                }
-                creandoCuenta = false
+                is ResultadoApi.Error -> errorAnalisis = r.mensaje
             }
+            analizando = false
         }
     }
+
+    // El servidor solo PROPONE el resultado: no se guarda nada todavía (8.3)
+    fun proponer() {
+        val tiempo = tiempoElegido ?: return
+        scope.launch {
+            errorFinal = null
+            detectando = true
+            when (val r = RadarRepositorio.finalizar(actividadesElegidas, tiempo, gusta, sabe, construirRespuestas())) {
+                is ResultadoApi.Exito -> {
+                    perfil = r.datos
+                    huellaPerfil = huellaRespuestas()
+                    habilidades.clear()
+                    habilidades.addAll(r.datos.habilidades)
+                    paso = nB1 + nDin
+                }
+                is ResultadoApi.Error -> errorFinal = r.mensaje
+            }
+            detectando = false
+        }
+    }
+
+    // Aquí es donde por fin se guarda: lo que ve (con sus cambios) es lo que se guarda
+    fun aceptar() {
+        val tiempo = tiempoElegido ?: return
+        val perfilActual = perfil ?: return
+        scope.launch {
+            errorFinal = null
+            val aceptado = perfilActual.copy(
+                habilidades = habilidades.map { it.copy(titulo = it.titulo.trim(), descripcion = it.descripcion.trim()) }
+            )
+            creandoCuenta = true
+            if (yaTieneCuenta) {
+                when (val r = RadarRepositorio.aceptar(actividadesElegidas, tiempo, gusta, sabe, construirRespuestas(), aceptado)) {
+                    is ResultadoApi.Exito -> onTerminar()
+                    is ResultadoApi.Error -> errorFinal = r.mensaje
+                }
+            } else {
+                when (val r = AuthRepositorio.completarRegistro(actividadesElegidas, tiempo, gusta, sabe, construirRespuestas(), aceptado)) {
+                    is ResultadoApi.Exito -> onTerminar()
+                    is ResultadoApi.Error -> errorFinal = r.mensaje
+                }
+            }
+            creandoCuenta = false
+        }
+    }
+
+    fun siguiente() {
+        errorAnalisis = null
+        errorFinal = null
+        when {
+            esBloque1 && paso < nB1 - 1 -> paso++
+            esBloque1 ->
+                // última del Bloque I: si no cambió nada desde que se armó el Bloque II, se reutiliza
+                if (analisis != null && huellaAnalizada == huellaBloque1()) paso++ else analizar()
+            esDinamica && paso < nB1 + nDin - 1 -> paso++
+            esDinamica ->
+                if (perfil != null && huellaPerfil == huellaRespuestas()) paso++ else proponer()
+        }
+    }
+
+    // Omitir una dinámica: se descarta lo que hubiera marcado en ella y se sigue
+    fun omitir() {
+        val p = preguntaActual ?: return
+        if (!esDinamica) return
+        respuestas.remove(p.id)
+        textos.remove(p.id)
+        siguiente()
+    }
+
+    fun atras() {
+        if (paso > 0 && !ocupado) {
+            errorAnalisis = null
+            errorFinal = null
+            paso--
+        }
+    }
+
+    // El botón «atrás» del teléfono regresa a la pregunta anterior (en la primera hace lo de siempre)
+    BackHandler(enabled = paso > 0 && !ocupado) { atras() }
 
     //es parte del registro, sin barras
     Box(
@@ -196,142 +271,51 @@ fun RadarScreen(
             .imePadding(),
         contentAlignment = Alignment.TopCenter
     ) {
-        LazyColumn(
-            state = listState,
+        Column(
             modifier = Modifier
                 .widthIn(max = 640.dp)   // en tablets u horizontal no se estira de lado a lado
-                .fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 40.dp)
+                .fillMaxSize()
         ) {
-
-            item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 17.dp, end = 16.dp, top = 28.dp)
-                ) {
-                    // título muy grande: crece poco para que "talentos" no se parta en pantallas chicas
-                    ConEscalaLimitada(tope = 1.3f) {
-                        Text(
-                            text = "Radar de talentos",
-                            fontFamily = OutfitFont,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 32.sp,
-                            color = MkTitulo
-                        )
-                    }
+            // ---- Cabecera fija: título y barra de progreso
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 17.dp, end = 16.dp, top = 20.dp)
+            ) {
+                // título muy grande: crece poco para que "talentos" no se parta en pantallas chicas
+                ConEscalaLimitada(tope = 1.3f) {
                     Text(
-                        text = "Descubre tus superpoderes cotidianos a tu propio ritmo, sin tecnicismos ni formularios rígidos.",
+                        text = "Radar de talentos",
                         fontFamily = OutfitFont,
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp,
-                        color = MkGris
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 28.sp,
+                        color = MkTitulo
+                    )
+                }
+                if (bloque1 != null) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    BarraProgreso(
+                        paso = paso,
+                        total = totalPreguntas,
+                        enResultado = enResultado,
+                        totalProvisional = analisis == null
                     )
                 }
             }
 
-            item {
-                Column {
-                    Spacer(modifier = Modifier.height(20.dp))
-                    val preguntas = bloque1
-                    if (preguntas == null) {
-                        EstadoCarga(errorCarga) { intentoCarga++ }
-                    } else {
-                        BloqueCard(
-                            numero = "1",
-                            titulo = "Bloque I. Punto de partida",
-                            subtitulo = "Sobre tu vocación diaria",
-                            paddingInferior = 27.dp
-                        ) {
-                            preguntas.forEachIndexed { i, p ->
-                                if (i > 0) Spacer(modifier = Modifier.height(40.dp))
-                                PreguntaView(
-                                    pregunta = p,
-                                    seleccion = respuestas[p.id].orEmpty(),
-                                    texto = textos[p.id].orEmpty(),
-                                    habilitado = analisis == null && !analizando,
-                                    onAlternar = { alternar(p.id, it, unica = p.tipo == "opcion_unica") },
-                                    onTexto = { textos[p.id] = it }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            // ---- Contenido: una sola pregunta a la vez
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(scroll)
+                    .padding(top = 16.dp, bottom = 12.dp)
+            ) {
+                val preguntaVista = preguntaActual
+                when {
+                    bloque1 == null -> EstadoCarga(errorCarga) { intentoCarga++ }
 
-            item {
-                Column {
-                    if (bloque1 != null) {
-                        if (analisis == null && !analizando) {
-                            Spacer(modifier = Modifier.height(20.dp))
-                            BotonPrincipal(
-                                texto = "Analizar mis respuestas",
-                                tamano = 18.sp,
-                                habilitado = puedeAnalizar,
-                                cargando = false,
-                                onClick = { analizar() }
-                            )
-                            MensajeError(errorAnalisis)
-                        } else {
-                            Spacer(modifier = Modifier.height(28.dp))
-                            TarjetaRosa(
-                                titulo = if (analizando) "Analizando tus respuestas…" else "Tus respuestas han sido analizadas…"
-                            ) {
-                                if (analizando) {
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(22.dp),
-                                        color = MkVino,
-                                        strokeWidth = 2.5.dp
-                                    )
-                                } else {
-                                    analisis?.let {
-                                        Text(
-                                            text = mensajeConNegrita(it.mensaje),
-                                            fontFamily = OutfitFont,
-                                            fontSize = 16.sp,
-                                            lineHeight = 22.sp,
-                                            color = Color.Black
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            item {
-                Column {
-                    analisis?.let { b2 ->
-                        Spacer(modifier = Modifier.height(36.dp))
-                        BloqueCard(
-                            numero = "2",
-                            titulo = "Bloque II. Fase de adaptación",
-                            subtitulo = "Estas preguntas (hasta 6) se arman según lo que nos contaste que te gusta y sabes hacer",
-                            paddingInferior = 20.dp,
-
-                            ) {
-                            b2.preguntas.forEachIndexed { i, p ->
-                                if (i > 0) Spacer(modifier = Modifier.height(40.dp))
-                                PreguntaView(
-                                    pregunta = p,
-                                    seleccion = respuestas[p.id].orEmpty(),
-                                    texto = textos[p.id].orEmpty(),
-                                    habilitado = perfil == null && !detectando && !creandoCuenta,
-                                    onAlternar = { alternar(p.id, it, unica = false) },
-                                    onTexto = { textos[p.id] = it }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            item {
-                Column {
-                    perfil?.let { p ->
-                        Spacer(modifier = Modifier.height(38.dp))
+                    enResultado -> {
                         TarjetaRosa(titulo = "¡Tus habilidades han sido detectadas!", colorTitulo = MkVino) {
                             Text(
                                 text = "Esto es una propuesta: cámbiala como quieras. No se guarda hasta que pulses «Aceptar». Si sales ahora, no queda nada guardado.",
@@ -340,14 +324,13 @@ fun RadarScreen(
                                 lineHeight = 22.sp,
                                 color = Color.Black
                             )
-                            val bloqueado = detectando || creandoCuenta
                             habilidades.forEachIndexed { i, h ->
                                 Spacer(modifier = Modifier.height(16.dp))
                                 CampoEditable(
                                     valor = h.titulo,
                                     etiqueta = "Habilidad",
                                     maximo = MAX_TITULO_HABILIDAD,
-                                    habilitado = !bloqueado,
+                                    habilitado = !ocupado,
                                     negrita = true,
                                     error = h.titulo.trim().length < 3,
                                     onCambio = { habilidades[i] = h.copy(titulo = it) }
@@ -357,7 +340,7 @@ fun RadarScreen(
                                     valor = h.descripcion,
                                     etiqueta = "Descripción (opcional)",
                                     maximo = MAX_DESCRIPCION_HABILIDAD,
-                                    habilitado = !bloqueado,
+                                    habilitado = !ocupado,
                                     negrita = false,
                                     error = false,
                                     onCambio = { habilidades[i] = h.copy(descripcion = it) }
@@ -365,7 +348,7 @@ fun RadarScreen(
                                 if (habilidades.size > 1) {
                                     TextButton(
                                         onClick = { habilidades.removeAt(i) },
-                                        enabled = !bloqueado,
+                                        enabled = !ocupado,
                                         modifier = Modifier.align(Alignment.End)
                                     ) {
                                         Text("Quitar", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkVino)
@@ -374,8 +357,8 @@ fun RadarScreen(
                             }
                             if (habilidades.size < MAX_HABILIDADES_PERFIL) {
                                 TextButton(
-                                    onClick = { habilidades.add(HabilidadDto("", "", p.habilidades.firstOrNull()?.categoria.orEmpty())) },
-                                    enabled = !bloqueado
+                                    onClick = { habilidades.add(HabilidadDto("", "", habilidades.firstOrNull()?.categoria.orEmpty())) },
+                                    enabled = !ocupado
                                 ) {
                                     Text("+ Agregar una habilidad", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkVino)
                                 }
@@ -389,26 +372,143 @@ fun RadarScreen(
                                 )
                             }
                         }
+                        MensajeError(errorFinal)
+                    }
+
+                    preguntaVista != null -> {
+                        // Al entrar al Bloque II se muestra el mensaje personalizado
+                        if (esDinamica && paso == nB1) {
+                            analisis?.let {
+                                TarjetaRosa(titulo = "Tus respuestas han sido analizadas…") {
+                                    Text(
+                                        text = mensajeConNegrita(it.mensaje),
+                                        fontFamily = OutfitFont,
+                                        fontSize = 16.sp,
+                                        lineHeight = 22.sp,
+                                        color = Color.Black
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(20.dp))
+                            }
+                        }
+                        BloqueCard(
+                            numero = if (esBloque1) "1" else "2",
+                            titulo = if (esBloque1) "Bloque I. Punto de partida" else "Bloque II. Fase de adaptación",
+                            subtitulo = if (esBloque1) "Sobre tu vocación diaria" else "Se arman según lo que nos contaste que te gusta y sabes hacer",
+                            paddingInferior = 20.dp
+                        ) {
+                            PreguntaView(
+                                pregunta = preguntaVista,
+                                seleccion = respuestas[preguntaVista.id].orEmpty(),
+                                texto = textos[preguntaVista.id].orEmpty(),
+                                habilitado = !ocupado,
+                                onAlternar = { alternar(preguntaVista.id, it, unica = preguntaVista.tipo == "opcion_unica") },
+                                onTexto = { textos[preguntaVista.id] = it }
+                            )
+                        }
+                        if (analizando || detectando) {
+                            Spacer(modifier = Modifier.height(20.dp))
+                            TarjetaRosa(titulo = if (analizando) "Analizando tus respuestas…" else "Detectando tus habilidades…") {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                CircularProgressIndicator(modifier = Modifier.size(22.dp), color = MkVino, strokeWidth = 2.5.dp)
+                            }
+                        }
+                        MensajeError(errorAnalisis)
+                        MensajeError(errorFinal)
                     }
                 }
             }
 
-            item {
-                Column {
-                    if (analisis != null) {
-                        Spacer(modifier = Modifier.height(34.dp))
-                        MensajeError(errorFinal)
-                        Spacer(modifier = Modifier.height(10.dp))
-                        BotonPrincipal(
-                            texto = if (perfil == null) "Terminar" else "Aceptar",
-                            tamano = 22.sp,
-                            habilitado = puedeTerminar,
-                            cargando = detectando || creandoCuenta,
-                            onClick = { terminar() }
+            // ---- Pie fijo: avanzar, volver y omitir
+            if (bloque1 != null) {
+                Column(modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 8.dp)) {
+                    if (esBloque1) {
+                        Text(
+                            text = "Esta pregunta es obligatoria",
+                            fontFamily = OutfitFont,
+                            fontSize = 12.sp,
+                            color = MkGris,
+                            modifier = Modifier.padding(start = 26.dp, bottom = 4.dp)
                         )
+                    }
+                    val ultimaB1 = esBloque1 && paso == nB1 - 1
+                    val ultimaDin = esDinamica && paso == nB1 + nDin - 1
+                    val respondida = preguntaActual?.let { p ->
+                        when (p.id) {
+                            "actividades" -> actividadesElegidas.isNotEmpty()
+                            "tiempo" -> tiempoElegido != null
+                            "gusta", "sabe" -> textos[p.id].orEmpty().trim().length >= MIN_ABIERTA
+                            else -> true
+                        }
+                    } ?: true
+                    BotonPrincipal(
+                        texto = when {
+                            enResultado -> "Aceptar"
+                            ultimaB1 -> "Analizar mis respuestas"
+                            ultimaDin -> "Ver mi resultado"
+                            else -> "Siguiente"
+                        },
+                        tamano = 20.sp,
+                        habilitado = when {
+                            enResultado -> habilidadesValidas
+                            ultimaB1 -> respondida && puedeAnalizar
+                            esBloque1 -> respondida
+                            else -> true
+                        },
+                        cargando = ocupado,
+                        onClick = { if (enResultado) aceptar() else siguiente() }
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 17.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(onClick = { atras() }, enabled = paso > 0 && !ocupado) {
+                            Text("‹ Atrás", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo)
+                        }
+                        if (esDinamica) {
+                            TextButton(onClick = { omitir() }, enabled = !ocupado) {
+                                Text("Omitir", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo)
+                            }
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+// Barra de progreso: en qué pregunta va y cuántas faltan (8.4)
+@Composable
+private fun BarraProgreso(paso: Int, total: Int, enResultado: Boolean, totalProvisional: Boolean) {
+    val actual = paso + 1
+    val texto = if (enResultado) "Último paso · revisa tu resultado" else "Pregunta $actual de $total · faltan ${total - actual}"
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = texto,
+            fontFamily = OutfitFont,
+            fontWeight = FontWeight.Medium,
+            fontSize = 14.sp,
+            color = MkOscuro
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        LinearProgressIndicator(
+            progress = { if (enResultado) 1f else (paso.toFloat() / total).coerceIn(0f, 1f) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(CircleShape),
+            color = MkBoton,
+            trackColor = MkLila
+        )
+        if (totalProvisional && !enResultado) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "El total puede bajar cuando armemos tus preguntas.",
+                fontFamily = OutfitFont,
+                fontSize = 11.sp,
+                color = MkGris
+            )
         }
     }
 }
