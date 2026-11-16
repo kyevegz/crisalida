@@ -48,6 +48,10 @@ private val MkTextoBoton = Color(0xFFFDF0FF)
 private val MkPlaceholder = Color(0xFF836B86)
 private val MkTextoPregunta = Color(0xFF262626)
 
+private const val MIN_ABIERTA = 3     // las 2 preguntas abiertas fijas no pueden ir vacías
+private const val MAX_ABIERTA = 300   // ni ser demasiado largas (igual que el servidor)
+private val PreguntasAbiertasFijas = setOf("gusta", "sabe")
+
 //el radar va dentro del registro, la cuenta se crea hasta el segundo dar clic en terminar
 @Composable
 fun RadarScreen(
@@ -79,11 +83,11 @@ fun RadarScreen(
     var creandoCuenta by remember { mutableStateOf(false) }
     var errorFinal by remember { mutableStateOf<String?>(null) }
 
-    // Pide las 2 preguntas fijas al abrir la pantalla
+    // Pide las preguntas fijas del Bloque I al abrir la pantalla
     LaunchedEffect(intentoCarga) {
         errorCarga = null
         when (val r = RadarRepositorio.bloque1()) {
-            is ResultadoApi.Exito -> bloque1 = r.datos.preguntas
+            is ResultadoApi.Exito -> bloque1 = r.datos.preguntas.conAbiertasFijas()
             is ResultadoApi.Error -> errorCarga = r.mensaje
         }
     }
@@ -104,7 +108,11 @@ fun RadarScreen(
 
     val actividadesElegidas = respuestas["actividades"].orEmpty()
     val tiempoElegido = respuestas["tiempo"]?.firstOrNull()
-    val puedeAnalizar = actividadesElegidas.isNotEmpty() && tiempoElegido != null
+    // Las 2 preguntas abiertas fijas (8.1): obligatorias, de MIN_ABIERTA a MAX_ABIERTA caracteres (el servidor las vuelve a revisar)
+    val gusta = textos["gusta"].orEmpty().trim()
+    val sabe = textos["sabe"].orEmpty().trim()
+    val abiertasValidas = gusta.length >= MIN_ABIERTA && sabe.length >= MIN_ABIERTA
+    val puedeAnalizar = actividadesElegidas.isNotEmpty() && tiempoElegido != null && abiertasValidas
 
     val primeraRespondida = analisis?.preguntas?.firstOrNull()
         ?.let { respuestas[it.id].orEmpty().isNotEmpty() } == true
@@ -115,7 +123,7 @@ fun RadarScreen(
         scope.launch {
             analizando = true
             errorAnalisis = null
-            when (val r = RadarRepositorio.analizar(actividadesElegidas, tiempo)) {
+            when (val r = RadarRepositorio.analizar(actividadesElegidas, tiempo, gusta, sabe)) {
                 is ResultadoApi.Exito -> analisis = r.datos
                 is ResultadoApi.Error -> errorAnalisis = r.mensaje
             }
@@ -141,7 +149,7 @@ fun RadarScreen(
             errorFinal = null
             if (perfilActual == null) {
                 detectando = true
-                when (val r = RadarRepositorio.finalizar(actividadesElegidas, tiempo, construirRespuestas())) {
+                when (val r = RadarRepositorio.finalizar(actividadesElegidas, tiempo, gusta, sabe, construirRespuestas())) {
                     is ResultadoApi.Exito -> perfil = r.datos
                     is ResultadoApi.Error -> errorFinal = r.mensaje
                 }
@@ -150,7 +158,7 @@ fun RadarScreen(
                 onTerminar()
             } else {
                 creandoCuenta = true
-                when (val r = AuthRepositorio.completarRegistro(actividadesElegidas, tiempo, construirRespuestas(), perfilActual)) {
+                when (val r = AuthRepositorio.completarRegistro(actividadesElegidas, tiempo, gusta, sabe, construirRespuestas(), perfilActual)) {
                     is ResultadoApi.Exito -> onTerminar()
                     is ResultadoApi.Error -> errorFinal = r.mensaje
                 }
@@ -221,10 +229,10 @@ fun RadarScreen(
                                 PreguntaView(
                                     pregunta = p,
                                     seleccion = respuestas[p.id].orEmpty(),
-                                    texto = "",
+                                    texto = textos[p.id].orEmpty(),
                                     habilitado = analisis == null && !analizando,
                                     onAlternar = { alternar(p.id, it, unica = p.tipo == "opcion_unica") },
-                                    onTexto = {}
+                                    onTexto = { textos[p.id] = it }
                                 )
                             }
                         }
@@ -407,7 +415,8 @@ private fun PreguntaView(
                 }
             }
 
-            "texto" -> Box(
+            "texto" -> Column {
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 93.dp)
@@ -417,7 +426,7 @@ private fun PreguntaView(
             ) {
                 BasicTextField(
                     value = texto,
-                    onValueChange = { if (it.length <= 300) onTexto(it) },
+                    onValueChange = { if (it.length <= MAX_ABIERTA) onTexto(it) },
                     enabled = habilitado,
                     textStyle = TextStyle(fontFamily = OutfitFont, fontSize = 15.sp, color = MkOscuro),
                     decorationBox = { campo ->
@@ -435,6 +444,17 @@ private fun PreguntaView(
                     },
                     modifier = Modifier.fillMaxSize()
                 )
+            }
+            val obligatoria = pregunta.id in PreguntasAbiertasFijas
+            val faltan = obligatoria && texto.trim().length < MIN_ABIERTA
+            Text(
+                text = (if (obligatoria) "Obligatoria · " else "") + "${texto.length}/$MAX_ABIERTA" +
+                    (if (faltan && texto.isNotEmpty()) " · escribe al menos $MIN_ABIERTA letras" else ""),
+                fontFamily = OutfitFont,
+                fontSize = 12.sp,
+                color = MkGris,
+                modifier = Modifier.padding(top = 4.dp, end = 4.dp).align(Alignment.End)
+            )
             }
         }
     }

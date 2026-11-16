@@ -101,6 +101,16 @@ interface ApiService {
     @POST("auth/login")
     suspend fun login(@Body datos: LoginRequest): Response<SesionResponse>
 
+    // ----- Olvidé mi PIN (4.7)
+    @POST("auth/recuperar/codigo")
+    suspend fun recuperarConCodigo(@Body datos: RecuperarConCodigoRequest): Response<MensajeRecuperacionResponse>
+
+    @POST("auth/recuperar/correo/solicitar")
+    suspend fun solicitarCodigoCorreo(@Body datos: SolicitarCodigoCorreoRequest): Response<MensajeRecuperacionResponse>
+
+    @POST("auth/recuperar/correo/confirmar")
+    suspend fun recuperarConCorreo(@Body datos: RecuperarConCorreoRequest): Response<MensajeRecuperacionResponse>
+
     @GET("reportes/motivos")
     suspend fun motivosReporte(): Response<MotivosResponse>
 
@@ -444,10 +454,12 @@ object AuthRepositorio {
     suspend fun completarRegistro(
         actividades: List<String>,
         tiempo: String,
+        gusta: String,
+        sabe: String,
         respuestas: List<RespuestaDinamicaDto>,
         perfil: PerfilResponse
     ): ResultadoApi<SesionResponse> =
-        enviarRegistro(ROL_VENDEDORA, RadarFinalRequest(actividades, tiempo, respuestas, perfil))
+        enviarRegistro(ROL_VENDEDORA, RadarFinalRequest(actividades, tiempo, gusta, sabe, respuestas, perfil))
 
     /** Compradora: su registro es corto, sin radar. Crea la cuenta e inicia la sesión. */
     suspend fun completarRegistroCompradora(): ResultadoApi<SesionResponse> =
