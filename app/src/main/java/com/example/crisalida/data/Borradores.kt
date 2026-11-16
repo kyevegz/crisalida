@@ -15,7 +15,11 @@ object Borradores {
     const val MAXIMO = 10
     private const val LISTA = "borradores_publicacion"
     private const val UNICO_ANTIGUO = "borrador_publicacion"
+    private const val INTERRUMPIDO = "borrador_interrumpido"
     private val candado = Any()
+
+    /** Borrador que Inicio debe abrir cuando la usuaria elige «Continuar» (solo en memoria). */
+    var porAbrir: String? = null
 
     data class Borrador(val id: String, val actualizadoEn: Long, val datos: String) {
         private fun json() = try { JSONObject(datos) } catch (e: Exception) { JSONObject() }
@@ -69,6 +73,23 @@ object Borradores {
         }
     }
 
+    /** Marca (cifrado) cuál borrador se guardó porque la sesión se cerró por inactividad. */
+    fun marcarInterrumpido(contexto: Context, id: String) {
+        AlmacenamientoCifrado.guardar(contexto, INTERRUMPIDO, id)
+    }
+
+    /** El borrador guardado por inactividad, si todavía existe; null si no hay ninguno que ofrecer. */
+    fun interrumpido(contexto: Context): Borrador? {
+        synchronized(candado) {
+            val id = AlmacenamientoCifrado.leer(contexto, INTERRUMPIDO) ?: return null
+            return leerLista(contexto).firstOrNull { it.id == id }
+        }
+    }
+
+    fun olvidarInterrumpido(contexto: Context) {
+        AlmacenamientoCifrado.borrar(contexto, INTERRUMPIDO)
+    }
+
     /**
      * Pasa a la lista el borrador único de versiones anteriores (sin cifrar o cifrado de una sola ranura).
      * No pierde nada: el viejo se borra solo DESPUÉS de que la lista nueva se guardó bien,
@@ -85,4 +106,20 @@ object Borradores {
             if (escribirLista(contexto, lista)) AlmacenamientoCifrado.borrar(contexto, UNICO_ANTIGUO)
         }
     }
-}//se me olvidó crear la branch piipipi
+}
+
+/**
+ * Formularios con algo escrito que se guardan solos antes de que la sesión se cierre por inactividad.
+ * Cada pantalla se registra mientras está abierta y se quita al salir.
+ */
+object FormulariosAbiertos {
+    private val guardadores = mutableListOf<() -> Unit>()
+
+    fun registrar(guardar: () -> Unit) { guardadores.add(guardar) }
+    fun quitar(guardar: () -> Unit) { guardadores.remove(guardar) }
+
+    /** Se llama justo ANTES de SesionActual.cerrar(): después ya no se podría descifrar ni cifrar nada. */
+    fun guardarTodo() {
+        guardadores.toList().forEach { try { it() } catch (e: Exception) { /* nunca debe impedir el cierre */ } }
+    }
+}

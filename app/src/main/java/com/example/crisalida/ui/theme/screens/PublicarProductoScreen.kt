@@ -10,6 +10,7 @@ import org.json.JSONObject
 import androidx.core.content.ContextCompat
 import com.example.crisalida.data.AlmacenamientoCifrado
 import com.example.crisalida.data.Borradores
+import com.example.crisalida.data.FormulariosAbiertos
 import com.example.crisalida.data.ColaEnvios
 import com.example.crisalida.data.FotoRemota
 import com.example.crisalida.data.FotosCamara
@@ -192,22 +193,23 @@ fun PublicarProductoScreen(
         zonaPublica = ""; categoriaSeleccionada = null; modalidadServicio = 1; tipoCobroServicio = 1; opcionEntrega = 1
     }
 
+    fun datosBorrador(): String = JSONObject()
+        .put("tipo", tipoPublicacion).put("categoria", categoriaSeleccionada ?: "")
+        .put("titulo", tituloDescriptivo).put("descripcion", descripcion)
+        .put("insumos", costoInsumos).put("horas", horasDedicacion).put("precio", precioFinal)
+        .put("modalidad", modalidadServicio).put("cobro", tipoCobroServicio).put("entrega", opcionEntrega)
+        .put("zona", zonaPublica).toString()
+
     fun guardarBorrador() {
         if (tituloDescriptivo.isBlank() && descripcion.isBlank() && precioFinal.isBlank()) {
             mensajeBorrador = "Escribe al menos el título o la descripción para guardar un borrador."
             return
         }
-        val j = JSONObject()
-            .put("tipo", tipoPublicacion).put("categoria", categoriaSeleccionada ?: "")
-            .put("titulo", tituloDescriptivo).put("descripcion", descripcion)
-            .put("insumos", costoInsumos).put("horas", horasDedicacion).put("precio", precioFinal)
-            .put("modalidad", modalidadServicio).put("cobro", tipoCobroServicio).put("entrega", opcionEntrega)
-            .put("zona", zonaPublica)
         if (borradorId == null && Borradores.lleno(contexto)) {
             mensajeBorrador = "Ya tienes ${Borradores.MAXIMO} borradores. Elimina alguno para guardar uno nuevo."
             return
         }
-        val id = Borradores.guardar(contexto, borradorId, j.toString())
+        val id = Borradores.guardar(contexto, borradorId, datosBorrador())
         if (id == null) {
             mensajeBorrador = "No pudimos guardar el borrador en este teléfono. Intenta de nuevo."
             return
@@ -216,6 +218,20 @@ fun PublicarProductoScreen(
         borradoresGuardados = Borradores.listar(contexto)
         mensajeBorrador = "Borrador guardado, cifrado, en este teléfono. Puedes tener varios y abrirlos desde «Mis borradores». " +
                 "No guarda las fotos ni tu dirección privada: esas hay que volver a agregarlas."
+    }
+
+    // si la sesión se cierra por inactividad con el formulario a medias, se guarda como borrador antes de cerrar
+    val guardarPorInactividad = remember<() -> Unit> {
+        {
+            val hayContenido = tituloDescriptivo.isNotBlank() || descripcion.isNotBlank() || precioFinal.isNotBlank()
+            if (!editando && !publicacionCreada && hayContenido && (borradorId != null || !Borradores.lleno(contexto))) {
+                Borradores.guardar(contexto, borradorId, datosBorrador())?.let { Borradores.marcarInterrumpido(contexto, it) }
+            }
+        }
+    }
+    DisposableEffect(Unit) {
+        FormulariosAbiertos.registrar(guardarPorInactividad)
+        onDispose { FormulariosAbiertos.quitar(guardarPorInactividad) }
     }
 
     fun abrirBorrador(b: Borradores.Borrador) {
@@ -243,6 +259,11 @@ fun PublicarProductoScreen(
             borradoresGuardados = withContext(Dispatchers.IO) {
                 Borradores.migrar(contexto)
                 Borradores.listar(contexto)
+            }
+            // la usuaria eligió «Continuar» en Inicio tras volver a iniciar sesión
+            Borradores.porAbrir?.let { id ->
+                Borradores.porAbrir = null
+                borradoresGuardados.firstOrNull { it.id == id }?.let { abrirBorrador(it) }
             }
         }
     }

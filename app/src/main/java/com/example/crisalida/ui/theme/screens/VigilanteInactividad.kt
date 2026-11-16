@@ -16,6 +16,7 @@ import kotlinx.coroutines.delay
 import androidx.compose.runtime.getValue
 import androidx.activity.compose.LocalActivity
 import com.example.crisalida.data.InactividadSesion
+import com.example.crisalida.data.FormulariosAbiertos
 // Vigila el tiempo sin tocar la pantalla (los toques los registra MainActivity.dispatchTouchEvent).
 // Cuando se cumple el tiempo la sesión se cierra SIN avisar:
 //  - con la app abierta (o en segundo plano): se cierra la sesión y se saca a la usuaria de la app,
@@ -35,6 +36,7 @@ fun VigilanteInactividad(navController: NavHostController) {
     DisposableEffect(actividad) {
         val observador = LifecycleEventObserver { _, evento ->
             if (evento == Lifecycle.Event.ON_START && `InactividadSesion`.debeCerrar()) {
+                FormulariosAbiertos.guardarTodo()   // guarda el formulario abierto ANTES de cerrar la sesión
                 SesionActual.cerrar()
                 navController.navigate("login") { popUpTo(0) { inclusive = true } }
             }
@@ -47,6 +49,7 @@ fun VigilanteInactividad(navController: NavHostController) {
         while (true) {
             if (tecladoVisible) `InactividadSesion`.registrarActividad()
             if (`InactividadSesion`.debeCerrar()) {
+                FormulariosAbiertos.guardarTodo()   // guarda el formulario abierto ANTES de cerrar la sesión
                 SesionActual.cerrar()
                 actividad?.finishAndRemoveTask()
             }
