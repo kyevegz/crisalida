@@ -76,6 +76,10 @@ data class NivelesResponse(
 /** Flores que da cada acción: venta, reto, publicacion, nivel, bienestar_emocion, bienestar_monitoreo, ... */
 data class ReglasResponse(val reglas: Map<String, Int>)
 
+/** Frases de «Respira con Lilu»: el servidor elige unas pocas al azar según el estado de Lilu ("normal" o "reposo"). */
+data class FraseApoyoDto(val id: Int = 0, val texto: String = "")
+data class FrasesApoyoResponse(val estado: String = "normal", val frases: List<FraseApoyoDto> = emptyList())
+
 data class AvatarRequest(val avatar: String)
 data class AvatarResponse(val avatar: String)
 
@@ -257,6 +261,10 @@ object ProgresoRepositorio {
     suspend fun cambiarAvatar(emoji: String): ResultadoApi<AvatarResponse> =
         llamarApi { RetrofitCliente.api.cambiarAvatar(AvatarRequest(emoji)) }
             .also { if (it is ResultadoApi.Exito) { SesionActual.avatar = it.datos.avatar; avisarCambio() } }
+}
+
+object FrasesRepositorio {
+    suspend fun apoyo(): ResultadoApi<FrasesApoyoResponse> = llamarApi { RetrofitCliente.api.frasesApoyo() }
 }
 
 object MarketplaceRepositorio {
