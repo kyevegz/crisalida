@@ -73,6 +73,22 @@ object Borradores {
         }
     }
 
+    /**
+     * Borra TODOS los borradores de la usuaria actual (la lista, la marca de «interrumpido» y el borrador único
+     * de versiones anteriores, cifrado o sin cifrar). Lo usa «Borrar mi historial». La salida de emergencia y
+     * cerrar sesión borran todo el almacenamiento cifrado con [BorradoLocal.todo].
+     */
+    fun borrarTodos(contexto: Context) {
+        synchronized(candado) {
+            AlmacenamientoCifrado.borrar(contexto, LISTA)
+            AlmacenamientoCifrado.borrar(contexto, INTERRUMPIDO)
+            AlmacenamientoCifrado.borrar(contexto, UNICO_ANTIGUO)
+            contexto.applicationContext.getSharedPreferences("crisalida_borradores", Context.MODE_PRIVATE)
+                .edit().remove("publicacion").commit()
+            porAbrir = null
+        }
+    }
+
     /** Marca (cifrado) cuál borrador se guardó porque la sesión se cerró por inactividad. */
     fun marcarInterrumpido(contexto: Context, id: String) {
         AlmacenamientoCifrado.guardar(contexto, INTERRUMPIDO, id)

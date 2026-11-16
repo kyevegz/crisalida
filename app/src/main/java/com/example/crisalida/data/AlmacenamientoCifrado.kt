@@ -134,23 +134,37 @@ object AlmacenamientoCifrado {
     }
 
     /**
-     * Borra TODO lo local cifrado (de todas las usuarias de este teléfono) y también la clave del Keystore.
-     * Se escribe de forma inmediata (commit): en la salida de emergencia la app se cierra enseguida.
-     * También elimina el borrador antiguo que se guardaba sin cifrar.
+     * Borra TODO lo local cifrado (de todas las usuarias de este teléfono): borradores, cola de envíos, fotos
+     * pendientes, último contenido guardado y la clave del Keystore. Sin la clave, lo que hubiera quedado en
+     * el disco ya no se puede descifrar. Se escribe de forma inmediata (commit): en la salida de emergencia
+     * la app se cierra enseguida. También elimina el borrador antiguo que se guardaba sin cifrar.
+     *
+     * Devuelve true si después de borrar se comprobó que no queda nada (datos, archivos ni clave).
      */
-    fun borrarTodo(contexto: Context) {
+    fun borrarTodo(contexto: Context): Boolean {
+        val app = contexto.applicationContext
+        try { prefs(app).edit().clear().commit() } catch (e: Exception) { }
+        try { app.getSharedPreferences(ARCHIVO_ANTIGUO, Context.MODE_PRIVATE).edit().clear().commit() } catch (e: Exception) { }
+        try { carpetaArchivos(app).deleteRecursively() } catch (e: Exception) { }   // fotos de los envíos pendientes
         try {
-            prefs(contexto).edit().clear().commit()
-            carpetaArchivos(contexto).deleteRecursively()   // fotos de los envíos pendientes
-            contexto.applicationContext.getSharedPreferences(ARCHIVO_ANTIGUO, Context.MODE_PRIVATE)
-                .edit().clear().commit()
             KeyStore.getInstance(PROVEEDOR).apply { load(null) }.let {
                 if (it.containsAlias(ALIAS)) it.deleteEntry(ALIAS)
             }
-        } catch (e: Exception) {
-            // si el Keystore falla, al menos los datos ya se borraron arriba (sin la clave no se pueden leer)
-        }
+        } catch (e: Exception) { }
+        // los archivos de preferencias vacíos también se eliminan
+        try { app.deleteSharedPreferences(ARCHIVO) } catch (e: Exception) { }
+        try { app.deleteSharedPreferences(ARCHIVO_ANTIGUO) } catch (e: Exception) { }
+        return quedaVacio(app)
     }
+
+    /** Comprueba que no queda ningún dato, archivo ni clave locales. */
+    private fun quedaVacio(app: Context): Boolean = try {
+        val claveBorrada = !KeyStore.getInstance(PROVEEDOR).apply { load(null) }.containsAlias(ALIAS)
+        claveBorrada &&
+                prefs(app).all.isEmpty() &&
+                app.getSharedPreferences(ARCHIVO_ANTIGUO, Context.MODE_PRIVATE).all.isEmpty() &&
+                !carpetaArchivos(app).exists()
+    } catch (e: Exception) { false }
 
     private const val ARCHIVO_ANTIGUO = "crisalida_borradores"
 

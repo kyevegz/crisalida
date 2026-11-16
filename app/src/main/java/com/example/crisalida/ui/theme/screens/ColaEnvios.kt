@@ -111,6 +111,16 @@ object ColaEnvios {
     }
 
     /**
+     * Salida de emergencia y cerrar sesión: cancela el envío programado y vacía la memoria.
+     * Lo que estaba en disco lo elimina [AlmacenamientoCifrado.borrarTodo].
+     */
+    fun alBorrarTodo() {
+        pendientes = emptyList()
+        val c = contexto ?: return
+        try { WorkManager.getInstance(c).cancelUniqueWork(TRABAJO) } catch (e: Exception) { }
+    }
+
+    /**
      * Intenta enviar de inmediato. Si no hay conexión, lo deja en la cola y devuelve Exito(alEncolar()) para que la
      * pantalla diga «guardado, se enviará». Cualquier otro error (el servidor lo rechazó) se devuelve tal cual.
      */
