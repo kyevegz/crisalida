@@ -31,9 +31,12 @@ data class Bloque1Response(val preguntas: List<PreguntaDto>)
  * (un servidor que aún no se actualiza) la app las agrega con el mismo texto, así la usuaria nunca se queda sin ellas.
  */
 fun List<PreguntaDto>.conAbiertasFijas(): List<PreguntaDto> {
-    val faltantes = buildList {
-        if (none { it.id == "gusta" }) add(PreguntaDto("gusta", "texto", "¿Qué te gusta hacer?", emptyList(), "Cuéntanos con tus palabras..."))
-        if (none { it.id == "sabe" }) add(PreguntaDto("sabe", "texto", "¿Qué sabes hacer?", emptyList(), "Lo que sabes hacer, aunque nunca lo hayas cobrado..."))
+    val faltantes = mutableListOf<PreguntaDto>()
+    if (this.none { p -> p.id == "gusta" }) {
+        faltantes.add(PreguntaDto("gusta", "texto", "¿Qué te gusta hacer?", emptyList(), "Cuéntanos con tus palabras..."))
+    }
+    if (this.none { p -> p.id == "sabe" }) {
+        faltantes.add(PreguntaDto("sabe", "texto", "¿Qué sabes hacer?", emptyList(), "Lo que sabes hacer, aunque nunca lo hayas cobrado..."))
     }
     return this + faltantes
 }
