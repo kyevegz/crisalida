@@ -115,4 +115,20 @@ object RadarRepositorio {
         respuestas: List<RespuestaDinamicaDto>
     ): ResultadoApi<PerfilResponse> =
         llamarApi { RetrofitCliente.api.radarFinalizar(FinalizarRequest(actividades, tiempo, gusta, sabe, respuestas)) }
+
+    /** Una cuenta que ya existe ACEPTA su resultado (tal cual o editado): hasta aquí se guarda en el servidor (8.3). */
+    suspend fun aceptar(
+        actividades: List<String>,
+        tiempo: String,
+        gusta: String,
+        sabe: String,
+        respuestas: List<RespuestaDinamicaDto>,
+        perfil: PerfilResponse
+    ): ResultadoApi<PerfilResponse> =
+        llamarApi { RetrofitCliente.api.radarAceptar(RadarFinalRequest(actividades, tiempo, gusta, sabe, respuestas, perfil)) }
 }
+
+// Límites del resultado editable (los mismos que valida el servidor)
+const val MAX_HABILIDADES_PERFIL = 4
+const val MAX_TITULO_HABILIDAD = 60
+const val MAX_DESCRIPCION_HABILIDAD = 160

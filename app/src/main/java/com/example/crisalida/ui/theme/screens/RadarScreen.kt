@@ -118,7 +118,10 @@ fun RadarScreen(
     val algunaRespondida = analisis?.preguntas.orEmpty().any {
         respuestas[it.id].orEmpty().isNotEmpty() || textos[it.id].orEmpty().isNotBlank()
     }
-    val puedeTerminar = perfil != null || (analisis != null && algunaRespondida)
+    // El resultado editable (8.3): lo que ve y cambia la usuaria. Hasta que lo acepta, solo vive en esta pantalla.
+    val habilidades = remember { mutableStateListOf<HabilidadDto>() }
+    val habilidadesValidas = habilidades.isNotEmpty() && habilidades.all { it.titulo.trim().length >= 3 }
+    val puedeTerminar = if (perfil != null) habilidadesValidas else (analisis != null && algunaRespondida)
 
     fun analizar() {
         val tiempo = tiempoElegido ?: return
@@ -150,19 +153,33 @@ fun RadarScreen(
         scope.launch {
             errorFinal = null
             if (perfilActual == null) {
+                // Primer «Terminar»: el servidor solo PROPONE el resultado. No se guarda nada todavía.
                 detectando = true
                 when (val r = RadarRepositorio.finalizar(actividadesElegidas, tiempo, gusta, sabe, construirRespuestas())) {
-                    is ResultadoApi.Exito -> perfil = r.datos
+                    is ResultadoApi.Exito -> {
+                        perfil = r.datos
+                        habilidades.clear()
+                        habilidades.addAll(r.datos.habilidades)
+                    }
                     is ResultadoApi.Error -> errorFinal = r.mensaje
                 }
                 detectando = false
-            } else if (yaTieneCuenta) {
-                onTerminar()
             } else {
+                // Segundo «Aceptar»: lo que ve ahora (con sus cambios) es lo que se guarda
+                val aceptado = perfilActual.copy(
+                    habilidades = habilidades.map { it.copy(titulo = it.titulo.trim(), descripcion = it.descripcion.trim()) }
+                )
                 creandoCuenta = true
-                when (val r = AuthRepositorio.completarRegistro(actividadesElegidas, tiempo, gusta, sabe, construirRespuestas(), perfilActual)) {
-                    is ResultadoApi.Exito -> onTerminar()
-                    is ResultadoApi.Error -> errorFinal = r.mensaje
+                if (yaTieneCuenta) {
+                    when (val r = RadarRepositorio.aceptar(actividadesElegidas, tiempo, gusta, sabe, construirRespuestas(), aceptado)) {
+                        is ResultadoApi.Exito -> onTerminar()
+                        is ResultadoApi.Error -> errorFinal = r.mensaje
+                    }
+                } else {
+                    when (val r = AuthRepositorio.completarRegistro(actividadesElegidas, tiempo, gusta, sabe, construirRespuestas(), aceptado)) {
+                        is ResultadoApi.Exito -> onTerminar()
+                        is ResultadoApi.Error -> errorFinal = r.mensaje
+                    }
                 }
                 creandoCuenta = false
             }
@@ -317,22 +334,60 @@ fun RadarScreen(
                         Spacer(modifier = Modifier.height(38.dp))
                         TarjetaRosa(titulo = "¡Tus habilidades han sido detectadas!", colorTitulo = MkVino) {
                             Text(
-                                text = "Después de este cuestionario, se harán saber los resultados detectados por el radar, esperando que sirvan como guía en este nuevo camino que haz emprendido <3.",
+                                text = "Esto es una propuesta: cámbiala como quieras. No se guarda hasta que pulses «Aceptar». Si sales ahora, no queda nada guardado.",
                                 fontFamily = OutfitFont,
                                 fontSize = 16.sp,
                                 lineHeight = 22.sp,
                                 color = Color.Black
                             )
-                            //resumen de lo detectado
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = p.habilidades.joinToString(" · ") { it.titulo },
-                                fontFamily = OutfitFont,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 14.sp,
-                                lineHeight = 20.sp,
-                                color = MkVino
-                            )
+                            val bloqueado = detectando || creandoCuenta
+                            habilidades.forEachIndexed { i, h ->
+                                Spacer(modifier = Modifier.height(16.dp))
+                                CampoEditable(
+                                    valor = h.titulo,
+                                    etiqueta = "Habilidad",
+                                    maximo = MAX_TITULO_HABILIDAD,
+                                    habilitado = !bloqueado,
+                                    negrita = true,
+                                    error = h.titulo.trim().length < 3,
+                                    onCambio = { habilidades[i] = h.copy(titulo = it) }
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                CampoEditable(
+                                    valor = h.descripcion,
+                                    etiqueta = "Descripción (opcional)",
+                                    maximo = MAX_DESCRIPCION_HABILIDAD,
+                                    habilitado = !bloqueado,
+                                    negrita = false,
+                                    error = false,
+                                    onCambio = { habilidades[i] = h.copy(descripcion = it) }
+                                )
+                                if (habilidades.size > 1) {
+                                    TextButton(
+                                        onClick = { habilidades.removeAt(i) },
+                                        enabled = !bloqueado,
+                                        modifier = Modifier.align(Alignment.End)
+                                    ) {
+                                        Text("Quitar", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkVino)
+                                    }
+                                }
+                            }
+                            if (habilidades.size < MAX_HABILIDADES_PERFIL) {
+                                TextButton(
+                                    onClick = { habilidades.add(HabilidadDto("", "", p.habilidades.firstOrNull()?.categoria.orEmpty())) },
+                                    enabled = !bloqueado
+                                ) {
+                                    Text("+ Agregar una habilidad", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkVino)
+                                }
+                            }
+                            if (!habilidadesValidas) {
+                                Text(
+                                    text = "Cada habilidad necesita un nombre de al menos 3 letras.",
+                                    fontFamily = OutfitFont,
+                                    fontSize = 13.sp,
+                                    color = MkVino
+                                )
+                            }
                         }
                     }
                 }
@@ -345,7 +400,7 @@ fun RadarScreen(
                         MensajeError(errorFinal)
                         Spacer(modifier = Modifier.height(10.dp))
                         BotonPrincipal(
-                            texto = "Terminar",
+                            texto = if (perfil == null) "Terminar" else "Aceptar",
                             tamano = 22.sp,
                             habilitado = puedeTerminar,
                             cargando = detectando || creandoCuenta,
@@ -668,6 +723,51 @@ private fun BotonPrincipal(
                 color = MkTextoBoton
             )
         }
+    }
+}
+
+// Campo de texto sencillo para editar el resultado (8.3)
+@Composable
+private fun CampoEditable(
+    valor: String,
+    etiqueta: String,
+    maximo: Int,
+    habilitado: Boolean,
+    negrita: Boolean,
+    error: Boolean,
+    onCambio: (String) -> Unit
+) {
+    Column {
+        Text(text = etiqueta, fontFamily = OutfitFont, fontSize = 12.sp, color = MkGris)
+        Spacer(modifier = Modifier.height(2.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color.White)
+                .border(1.dp, if (error) MkVino else Color.Transparent, RoundedCornerShape(10.dp))
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+        ) {
+            BasicTextField(
+                value = valor,
+                onValueChange = { if (it.length <= maximo) onCambio(it) },
+                enabled = habilitado,
+                textStyle = TextStyle(
+                    fontFamily = OutfitFont,
+                    fontWeight = if (negrita) FontWeight.Medium else FontWeight.Normal,
+                    fontSize = 15.sp,
+                    color = MkOscuro
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        Text(
+            text = "${valor.length}/$maximo",
+            fontFamily = OutfitFont,
+            fontSize = 11.sp,
+            color = MkGris,
+            modifier = Modifier.padding(top = 2.dp, end = 4.dp).align(Alignment.End)
+        )
     }
 }
 
