@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.FotoRemota
+import com.example.crisalida.data.Borradores
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.RetosRepositorio
@@ -84,6 +85,17 @@ fun HomeScreen(
     val reto: RetoDto? = (retoCarga.estado as? Carga.Lista)?.datos?.retos?.firstOrNull()
     var aceptando by remember { mutableStateOf(false) }
     var avisoReto by remember { mutableStateOf<String?>(null) }
+
+    // tras una sesión cerrada por inactividad con un formulario abierto: se ofrece seguir con ese borrador
+    val contextoBorrador = androidx.compose.ui.platform.LocalContext.current
+    var borradorInterrumpido by remember { mutableStateOf<Borradores.Borrador?>(null) }
+    LaunchedEffect(SesionActual.usuariaId) {
+        if (SesionActual.token != null && !SesionActual.esCompradora && !SesionActual.esCamuflaje) {
+            borradorInterrumpido = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                Borradores.interrumpido(contextoBorrador)
+            }
+        }
+    }
 
     CrisalidaScaffold(
         currentTitle = "Inicio",
@@ -556,6 +568,33 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
+    }
+
+    borradorInterrumpido?.let { b ->
+        AlertDialog(
+            onDismissRequest = { Borradores.olvidarInterrumpido(contextoBorrador); borradorInterrumpido = null },
+            title = { Text("Tenías un borrador sin terminar", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTextoOscuro) },
+            text = {
+                Text(
+                    "Tu sesión se cerró por inactividad y guardamos «${b.titulo}» en este teléfono, cifrado. ¿Quieres continuarlo?",
+                    fontFamily = JakartaSansFont, color = MkTextoOscuro, modifier = Modifier.verticalScroll(rememberScrollState())
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    Borradores.olvidarInterrumpido(contextoBorrador)
+                    Borradores.porAbrir = b.id
+                    borradorInterrumpido = null
+                    onNavigate("publicar_producto")
+                }) { Text("Continuar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkMorado) }
+            },
+            dismissButton = {
+                TextButton(onClick = { Borradores.olvidarInterrumpido(contextoBorrador); borradorInterrumpido = null }) {
+                    Text("Ahora no", fontFamily = JakartaSansFont, color = MkMorado)
+                }
+            },
+            containerColor = Color.White
+        )
     }
 
     avisoReto?.let { texto ->
