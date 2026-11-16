@@ -205,6 +205,7 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
         ConEscalaDeTexto(tope = 2f) {
             RadarScreen(
                 yaTieneCuenta = true,
+                onAbandonar = { navController.popBackStack() },   // salió del radar: ya se borró su avance local
                 onTerminar = {
                     ProgresoRepositorio.avisarCambio()
                     navController.popBackStack()

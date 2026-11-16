@@ -429,6 +429,9 @@ object AuthRepositorio {
 
     fun limpiarCodigoRecuperacion() { codigoRecuperacion = null }
 
+    /** Seudónimo que se está registrando (solo mientras dura el registro). Sirve para ligar el avance local del radar (8.5). */
+    fun seudonimoPendiente(): String? = pendiente?.seudonimo
+
     // Casillas del aviso de privacidad y de mayoría de edad. La pantalla del aviso (issue siguiente)
     // las llena antes de crear la cuenta; mientras no estén marcadas el servidor rechaza el registro.
     var aceptaAviso: Boolean = false
