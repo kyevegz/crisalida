@@ -162,7 +162,8 @@ fun MarketplaceScreen(
                     producto = producto,
                     modifier = Modifier.padding(start = MargenIzq, end = MargenDer, top = 14.dp),
                     onAbrir = { onAbrirDetalle(producto.id) },
-                    onComprarClick = { onAbrirDetalle(producto.id) }
+                    onComprarClick = { onAbrirDetalle(producto.id) },
+                    onBloqueada = catalogo.recargar   // al bloquear, la lista se vuelve a pedir sin lo de esa persona
                 )
             }
         }
@@ -196,7 +197,8 @@ private fun ProductoCard(
     producto: ProductoMarketplaceUi,
     modifier: Modifier = Modifier,
     onAbrir: () -> Unit = {},
-    onComprarClick: () -> Unit
+    onComprarClick: () -> Unit,
+    onBloqueada: () -> Unit = {}
 ) {
     Card(
         shape = RoundedCornerShape(10.dp),
@@ -242,6 +244,14 @@ private fun ProductoCard(
                         contentDescription = null,
                         tint = MkGrisContador,
                         modifier = Modifier.size(48.dp)
+                    )
+                }
+                // reportar o bloquear a quien publicó (en tus propias publicaciones no aparece)
+                if (!producto.esMia) {
+                    IconosReportarBloquear(
+                        objetivo = ObjetivoSeguridad.PUBLICACION, objetivoId = producto.id, nombre = producto.vendedora,
+                        puedeBloquear = true, onBloqueada = onBloqueada,
+                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
                     )
                 }
             }

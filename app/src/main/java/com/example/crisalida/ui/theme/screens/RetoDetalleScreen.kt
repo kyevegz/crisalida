@@ -81,7 +81,7 @@ fun RetoDetalleScreen(
                                 .verticalScroll(rememberScrollState())
                                 .padding(horizontal = 20.dp)
                         ) {
-                            Contenido(reto, ocupado, onAceptar = {
+                            Contenido(reto, ocupado, onVolver = onVolver, onAceptar = {
                                 ejecutar({ RetosRepositorio.aceptar(reto.retoId) },
                                     "¡Reto aceptado! Lo encuentras en «Mis retos». Cuando termines, márcalo como entregado.")
                             }, onEntregar = {
@@ -117,6 +117,7 @@ fun RetoDetalleScreen(
 private fun ColumnScope.Contenido(
     reto: RetoDto,
     ocupado: Boolean,
+    onVolver: () -> Unit,
     onAceptar: () -> Unit,
     onEntregar: () -> Unit,
     onSoltar: () -> Unit
@@ -185,6 +186,14 @@ private fun ColumnScope.Contenido(
             else -> Boton("Aceptar el reto", !ocupado, onAceptar)
         }
     }
+    // reportar o bloquear a quien publicó el reto (privado). No aparece en el reto que publicaste tú misma.
+    if (!reto.esMio) {
+        Spacer(Modifier.height(12.dp))
+        BotonesReportarBloquear(
+            objetivo = ObjetivoSeguridad.RETO, objetivoId = reto.retoId, nombre = reto.contratista,
+            puedeBloquear = reto.bloqueable, onBloqueada = onVolver
+        )
+    }
     Spacer(Modifier.height(28.dp))
 }
 
@@ -239,7 +248,7 @@ private fun RetoDetallePreview() {
                 contratista = "Mermeladas La Abuela", aceptacionId = "a1", estado = "aceptado",
                 imagenRuta = null, miEstado = "aceptado"
             ),
-            ocupado = false, onAceptar = {}, onEntregar = {}, onSoltar = {}
+            ocupado = false, onVolver = {}, onAceptar = {}, onEntregar = {}, onSoltar = {}
         )
     }
 }
