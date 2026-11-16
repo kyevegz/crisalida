@@ -87,7 +87,7 @@ fun RadarScreen(
     LaunchedEffect(intentoCarga) {
         errorCarga = null
         when (val r = RadarRepositorio.bloque1()) {
-            is ResultadoApi.Exito -> bloque1 = r.datos.preguntas
+            is ResultadoApi.Exito -> bloque1 = r.datos.preguntas.conAbiertasFijas()
             is ResultadoApi.Error -> errorCarga = r.mensaje
         }
     }
