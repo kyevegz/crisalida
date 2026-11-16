@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
+import com.example.crisalida.data.ColaEnvios
 import com.example.crisalida.data.FotoRemota
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.PublicacionesRepositorio
@@ -101,6 +102,7 @@ fun PerfilScreen(
     var mostrarSelectorAvatar by remember { mutableStateOf(false) }
     var avatarSeleccionado by remember { mutableStateOf(SesionActual.avatar) }
     var mensajeInfo by remember { mutableStateOf<String?>(null) }
+    var confirmarCierre by remember { mutableStateOf(false) }   // avisa si hay envíos pendientes antes de cerrar sesión
 
     // Todo viene del servidor
     val progreso = rememberProgreso()
@@ -245,6 +247,7 @@ fun PerfilScreen(
                     TarjetaCompletarDatos(onAbrirConfiguracion)
                     Spacer(modifier = Modifier.height(16.dp))
                 }
+                TarjetaEnviosPendientes()   // lo que se guardó sin conexión y espera internet (si no hay nada, no se ve)
                 // La compradora solo ve lo suyo: sus datos (arriba), mis compras y ajustes.
                 // Nivel, portafolio y habilidades son de la vendedora.
                 if (SesionActual.esCompradora) {
@@ -546,8 +549,14 @@ fun PerfilScreen(
                     }
                 }   // fin de lo que no ve la compradora
                 Spacer(modifier = Modifier.height(20.dp))
+                if (confirmarCierre) {
+                    AvisoCerrarConEnviosPendientes(
+                        onCerrarIgual = { confirmarCierre = false; onCerrarSesion() },
+                        onVolver = { confirmarCierre = false }
+                    )
+                }
                 OutlinedButton(
-                    onClick = onCerrarSesion,
+                    onClick = { if (ColaEnvios.cantidad > 0) confirmarCierre = true else onCerrarSesion() },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
                     shape = RoundedCornerShape(8.dp)
                 ) {
