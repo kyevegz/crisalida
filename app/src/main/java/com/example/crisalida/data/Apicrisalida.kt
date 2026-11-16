@@ -138,6 +138,9 @@ interface ApiService {
     @GET("progreso/reglas")
     suspend fun reglasFlores(): Response<ReglasResponse>
 
+    @GET("frases-apoyo")
+    suspend fun frasesApoyo(): Response<FrasesApoyoResponse>
+
     @PUT("perfil/avatar")
     suspend fun cambiarAvatar(@Body datos: AvatarRequest): Response<AvatarResponse>
 

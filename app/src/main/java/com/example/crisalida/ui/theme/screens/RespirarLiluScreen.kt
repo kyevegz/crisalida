@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.crisalida.data.FrasesRepositorio
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.ui.theme.screens.rememberProgreso
 import com.example.crisalida.ui.theme.screens.Carga
@@ -72,7 +73,13 @@ fun RespirarLiluScreen(
     val progreso = rememberProgreso()
     val lilu = (progreso.estado as? Carga.Lista)?.datos?.lilu
     val etapa = lilu?.etapa
-    val reposo = lilu?.reposo == true
+    // Las frases se piden al servidor cada vez que se abre la pantalla (al azar, según el estado de Lilu).
+    // Si no hay conexión o el servidor falla, se usan las frases guardadas en la app: nunca queda vacía.
+    val frasesServidor = rememberCarga { soloVendedora { FrasesRepositorio.apoyo() } }
+    val respuestaFrases = (frasesServidor.estado as? Carga.Lista)?.datos
+    val reposo = lilu?.reposo == true || respuestaFrases?.estado == "reposo"
+    val frases: List<String> = respuestaFrases?.frases?.map { it.texto.trim() }?.filter { it.isNotEmpty() }
+        ?.takeIf { it.isNotEmpty() } ?: frasesDeRespaldo(reposo)
     CrisalidaScaffold(
         currentTitle = "Respirar con Lilu",
         selectedTab = 4,
@@ -162,25 +169,12 @@ fun RespirarLiluScreen(
                     verticalArrangement = Arrangement.spacedBy(22.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    FraseFlotante(
-                        texto = "No eres lo que te ha tocado vivir, eres lo que eres capaz de superar",
-                        align = TextAlign.Start
-                    )
-
-                    FraseFlotante(
-                        texto = "Tu fuerza no se mide por lo que aguantas en silencio, sino por tu valentía para buscar paz y libertad",
-                        align = TextAlign.End
-                    )
-
-                    FraseFlotante(
-                        texto = "Tienes derecho a que todos los minutos de tu vida sean de libertad, de felicidad y de paz",
-                        align = TextAlign.Start
-                    )
-
-                    FraseFlotante(
-                        texto = "Permítete no tener todas las respuestas resueltas ahora. La independencia se construye también en los días donde simplemente eliges cuidarte y respirar",
-                        align = TextAlign.Center
-                    )
+                    frases.forEachIndexed { i, frase ->
+                        FraseFlotante(
+                            texto = frase,
+                            align = when (i % 4) { 0 -> TextAlign.Start; 1 -> TextAlign.End; 2 -> TextAlign.Start; else -> TextAlign.Center }
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(36.dp))
@@ -223,6 +217,20 @@ fun RespirarLiluScreen(
         }
     }
 }
+
+// Frases guardadas en la app: se usan solo si el servidor no responde (son las de siempre; en reposo, unas sin reproche)
+private fun frasesDeRespaldo(reposo: Boolean): List<String> =
+    if (reposo) listOf(
+        "Qué bueno verte. Aquí estoy, sin prisas.",
+        "Descansar también es cuidarte.",
+        "Puedes ir a tu ritmo. Lilu va contigo.",
+        "Mereces un momento de calma, hoy y cuando quieras."
+    ) else listOf(
+        "No eres lo que te ha tocado vivir, eres lo que eres capaz de superar",
+        "Tu fuerza no se mide por lo que aguantas en silencio, sino por tu valentía para buscar paz y libertad",
+        "Tienes derecho a que todos los minutos de tu vida sean de libertad, de felicidad y de paz",
+        "Permítete no tener todas las respuestas resueltas ahora. La independencia se construye también en los días donde simplemente eliges cuidarte y respirar"
+    )
 
 //cada frase de apoyo
 @Composable
