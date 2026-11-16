@@ -117,14 +117,16 @@ fun BienestarScreen(
         }
     }
 
-    fun guardar(accion: suspend () -> ResultadoApi<FloresResponse>, alExito: () -> Unit) {
+    // alExito recibe true si el servidor lo CONFIRMÓ, y false si quedó guardado en la cola de envíos (sin conexión)
+    fun guardar(accion: suspend () -> ResultadoApi<FloresResponse>, alExito: (confirmado: Boolean) -> Unit) {
         if (guardando) return
         guardando = true
         scope.launch {
             when (val r = accion()) {
                 is ResultadoApi.Exito -> {
-                    alExito()
-                    aviso = if (r.datos.floresGanadas > 0) "🌸 ¡+${r.datos.floresGanadas} flores sumadas para Lilu!"
+                    alExito(!r.datos.enCola)
+                    aviso = if (r.datos.enCola) "Sin conexión: tu registro quedó guardado en tu teléfono y se enviará solo cuando vuelva el internet. Las flores se sumarán cuando el servidor lo confirme."
+                    else if (r.datos.floresGanadas > 0) "🌸 ¡+${r.datos.floresGanadas} flores sumadas para Lilu!"
                     else "Registro guardado ✓. Las flores de este bloque ya las ganaste hoy; puedes seguir registrando cuando quieras y mañana ganarás flores otra vez."
                 }
                 is ResultadoApi.Error -> aviso = r.mensaje
@@ -248,7 +250,7 @@ fun BienestarScreen(
                         Button(
                             onClick = {
                                 val e = emocionSeleccionada
-                                if (e != null) guardar({ BienestarRepositorio.guardarEmocion(e) }) { floresEmocionGuardadas = true; emocionSeleccionada = null; searchQuery = "" }
+                                if (e != null) guardar({ BienestarRepositorio.guardarEmocion(e) }) { confirmado -> if (confirmado) floresEmocionGuardadas = true; emocionSeleccionada = null; searchQuery = "" }
                             },
                             enabled = emocionSeleccionada != null && !guardando,
                             colors = ButtonDefaults.buttonColors(containerColor = ColorBotonEntrar),
@@ -346,7 +348,7 @@ fun BienestarScreen(
                                     onClick = {
                                         val t = tensionFisica; val c = claridadMental; val n = nivelEnergia
                                         if (t != null && c != null && n != null) {
-                                            guardar({ BienestarRepositorio.guardarMonitoreo(t, c, n) }) { floresMonitoreoGuardadas = true; tensionFisica = null; claridadMental = null; nivelEnergia = null }
+                                            guardar({ BienestarRepositorio.guardarMonitoreo(t, c, n) }) { confirmado -> if (confirmado) floresMonitoreoGuardadas = true; tensionFisica = null; claridadMental = null; nivelEnergia = null }
                                         }
                                     },
                                     enabled = monitoreoCompleto && !guardando, // solo si contestó los 3
@@ -430,7 +432,7 @@ fun BienestarScreen(
                             onClick = {
                                 if (hayPreguntaRespondida) {
                                     val respuestas = preguntasReflexion.indices.map { respuestasPreguntas[it].orEmpty() }
-                                    guardar({ BienestarRepositorio.guardarReflexion(respuestas) }) { floresPreguntasGuardadas = true; respuestasPreguntas.clear() }
+                                    guardar({ BienestarRepositorio.guardarReflexion(respuestas) }) { confirmado -> if (confirmado) floresPreguntasGuardadas = true; respuestasPreguntas.clear() }
                                 }
                             },
                             enabled = hayPreguntaRespondida && !guardando,
@@ -500,8 +502,8 @@ fun BienestarScreen(
                                 Button(
                                     onClick = {
                                         if (textoBitacora.isNotBlank()) {
-                                            guardar({ BienestarRepositorio.guardarBitacora(textoBitacora) }) {
-                                                floresBitacoraGuardadas = true
+                                            guardar({ BienestarRepositorio.guardarBitacora(textoBitacora) }) { confirmado ->
+                                                if (confirmado) floresBitacoraGuardadas = true
                                                 textoBitacora = ""
                                             }
                                         }

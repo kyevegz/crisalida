@@ -8,6 +8,7 @@ import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
+import java.io.File
 import javax.crypto.spec.GCMParameterSpec
 
 /**
@@ -86,6 +87,46 @@ object AlmacenamientoCifrado {
         }
     }
 
+    // ---------- archivos cifrados (las fotos de los envíos pendientes). Mismo cifrado y misma clave; un archivo por foto.
+
+    private fun carpetaArchivos(contexto: Context) = File(contexto.applicationContext.filesDir, "cola_envios")
+
+    /** Guarda [bytes] cifrados en un archivo llamado [nombre] (sin diagonales). Devuelve false si no se pudo. */
+    fun guardarArchivo(contexto: Context, nombre: String, bytes: ByteArray): Boolean {
+        val completo = nombreCompleto(nombre) ?: return false
+        return try {
+            val cifrador = Cipher.getInstance(TRANSFORMACION)
+            cifrador.init(Cipher.ENCRYPT_MODE, clave())
+            cifrador.updateAAD(completo.toByteArray(Charsets.UTF_8))
+            val paquete = cifrador.iv + cifrador.doFinal(bytes)
+            val carpeta = carpetaArchivos(contexto).also { it.mkdirs() }
+            File(carpeta, nombre).writeBytes(paquete)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /** Lee y descifra el archivo [nombre]. Devuelve null si no existe o no se puede leer. */
+    fun leerArchivo(contexto: Context, nombre: String): ByteArray? {
+        val completo = nombreCompleto(nombre) ?: return null
+        val archivo = File(carpetaArchivos(contexto), nombre)
+        if (!archivo.exists()) return null
+        return try {
+            val paquete = archivo.readBytes()
+            val cifrador = Cipher.getInstance(TRANSFORMACION)
+            cifrador.init(Cipher.DECRYPT_MODE, clave(), GCMParameterSpec(BITS_ETIQUETA, paquete, 0, LARGO_IV))
+            cifrador.updateAAD(completo.toByteArray(Charsets.UTF_8))
+            cifrador.doFinal(paquete, LARGO_IV, paquete.size - LARGO_IV)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    fun borrarArchivo(contexto: Context, nombre: String) {
+        try { File(carpetaArchivos(contexto), nombre).delete() } catch (e: Exception) { }
+    }
+
     /** Borra un dato de la usuaria actual. */
     fun borrar(contexto: Context, nombre: String) {
         val completo = nombreCompleto(nombre) ?: return
@@ -100,6 +141,7 @@ object AlmacenamientoCifrado {
     fun borrarTodo(contexto: Context) {
         try {
             prefs(contexto).edit().clear().commit()
+            carpetaArchivos(contexto).deleteRecursively()   // fotos de los envíos pendientes
             contexto.applicationContext.getSharedPreferences(ARCHIVO_ANTIGUO, Context.MODE_PRIVATE)
                 .edit().clear().commit()
             KeyStore.getInstance(PROVEEDOR).apply { load(null) }.let {

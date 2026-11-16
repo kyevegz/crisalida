@@ -185,7 +185,8 @@ data class BitacoraRequest(val texto: String)
 data class FloresResponse(
     val id: String? = null,
     @SerializedName("flores_ganadas") val floresGanadas: Int,
-    @SerializedName("ya_registrado_hoy") val yaRegistradoHoy: Boolean
+    @SerializedName("ya_registrado_hoy") val yaRegistradoHoy: Boolean,
+    val enCola: Boolean = false   // solo la app lo pone: se guardó sin conexión y AÚN no lo confirma el servidor (cero flores)
 )
 
 data class BienestarHoyResponse(
@@ -278,14 +279,25 @@ object RetosRepositorio {
 
     suspend fun aceptar(retoId: String): ResultadoApi<AceptacionResponse> = llamarApi { RetrofitCliente.api.aceptarReto(retoId) }
 
-    suspend fun entregar(aceptacionId: String): ResultadoApi<EstadoResponse> = llamarApi { RetrofitCliente.api.entregarReto(aceptacionId) }
+    /** Sin conexión, la entrega queda en la cola de envíos y devuelve estado = ColaEnvios.ESTADO_EN_COLA. */
+    suspend fun entregar(aceptacionId: String): ResultadoApi<EstadoResponse> =
+        ColaEnvios.enviar(TipoEnvio.ENTREGA_RETO, aceptacionId, alEncolar = { EstadoResponse(ColaEnvios.ESTADO_EN_COLA) }) { clave ->
+            RetrofitCliente.api.entregarReto(aceptacionId, clave)
+        }
 
     suspend fun abandonar(aceptacionId: String): ResultadoApi<EstadoResponse> = llamarApi { RetrofitCliente.api.abandonarReto(aceptacionId) }
 }
 
 object PublicacionesRepositorio {
-    suspend fun publicar(datos: PublicacionRequest): ResultadoApi<PublicacionCreadaResponse> =
-        llamarApi { RetrofitCliente.api.publicar(datos) }
+    /**
+     * Publica. Si no hay conexión, la publicación (y sus [fotos], ya comprimidas) queda en la cola de envíos y la
+     * respuesta trae estado = ColaEnvios.ESTADO_EN_COLA y 0 flores: todavía NO está publicada.
+     */
+    suspend fun publicar(datos: PublicacionRequest, fotos: List<ByteArray> = emptyList()): ResultadoApi<PublicacionCreadaResponse> =
+        ColaEnvios.enviar(
+            TipoEnvio.PUBLICACION, ColaEnvios.aJson(datos), fotos,
+            alEncolar = { PublicacionCreadaResponse(id = "", estado = ColaEnvios.ESTADO_EN_COLA, floresGanadas = 0) }
+        ) { clave -> RetrofitCliente.api.publicar(datos, clave) }
             .also { if (it is ResultadoApi.Exito) ProgresoRepositorio.avisarCambio() }
 
     suspend fun mias(): ResultadoApi<CatalogoResponse> = llamarApi { RetrofitCliente.api.misPublicaciones() }
@@ -317,17 +329,36 @@ object BienestarRepositorio {
 
     suspend fun hoy(): ResultadoApi<BienestarHoyResponse> = llamarApi { RetrofitCliente.api.bienestarHoy() }
 
-    suspend fun guardarEmocion(emocion: String): ResultadoApi<FloresResponse> =
-        llamarApi { RetrofitCliente.api.guardarEmocion(EmocionRequest(emocion)) }.avisandoFlores()
+    // Sin conexión, el registro queda en la cola de envíos: 0 flores y enCola = true hasta que el servidor lo confirme
+    private fun floresEnCola() = FloresResponse(floresGanadas = 0, yaRegistradoHoy = false, enCola = true)
 
-    suspend fun guardarMonitoreo(tension: Int, claridad: Int, energia: Int): ResultadoApi<FloresResponse> =
-        llamarApi { RetrofitCliente.api.guardarMonitoreo(MonitoreoRequest(tension, claridad, energia)) }.avisandoFlores()
+    suspend fun guardarEmocion(emocion: String): ResultadoApi<FloresResponse> {
+        val cuerpo = EmocionRequest(emocion)
+        return ColaEnvios.enviar(TipoEnvio.EMOCION, ColaEnvios.aJson(cuerpo), alEncolar = { floresEnCola() }) { clave ->
+            RetrofitCliente.api.guardarEmocion(cuerpo, clave)
+        }.avisandoFlores()
+    }
 
-    suspend fun guardarReflexion(respuestas: List<String>): ResultadoApi<FloresResponse> =
-        llamarApi { RetrofitCliente.api.guardarReflexion(ReflexionRequest(respuestas)) }.avisandoFlores()
+    suspend fun guardarMonitoreo(tension: Int, claridad: Int, energia: Int): ResultadoApi<FloresResponse> {
+        val cuerpo = MonitoreoRequest(tension, claridad, energia)
+        return ColaEnvios.enviar(TipoEnvio.MONITOREO, ColaEnvios.aJson(cuerpo), alEncolar = { floresEnCola() }) { clave ->
+            RetrofitCliente.api.guardarMonitoreo(cuerpo, clave)
+        }.avisandoFlores()
+    }
 
-    suspend fun guardarBitacora(texto: String): ResultadoApi<FloresResponse> =
-        llamarApi { RetrofitCliente.api.guardarBitacora(BitacoraRequest(texto)) }.avisandoFlores()
+    suspend fun guardarReflexion(respuestas: List<String>): ResultadoApi<FloresResponse> {
+        val cuerpo = ReflexionRequest(respuestas)
+        return ColaEnvios.enviar(TipoEnvio.REFLEXION, ColaEnvios.aJson(cuerpo), alEncolar = { floresEnCola() }) { clave ->
+            RetrofitCliente.api.guardarReflexion(cuerpo, clave)
+        }.avisandoFlores()
+    }
+
+    suspend fun guardarBitacora(texto: String): ResultadoApi<FloresResponse> {
+        val cuerpo = BitacoraRequest(texto)
+        return ColaEnvios.enviar(TipoEnvio.BITACORA, ColaEnvios.aJson(cuerpo), alEncolar = { floresEnCola() }) { clave ->
+            RetrofitCliente.api.guardarBitacora(cuerpo, clave)
+        }.avisandoFlores()
+    }
 
     suspend fun entradas(subtipo: String): ResultadoApi<EntradasBienestarResponse> =
         llamarApi { RetrofitCliente.api.entradasBienestar(subtipo) }

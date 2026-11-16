@@ -9,6 +9,7 @@ import android.net.Uri
 import org.json.JSONObject
 import androidx.core.content.ContextCompat
 import com.example.crisalida.data.AlmacenamientoCifrado
+import com.example.crisalida.data.ColaEnvios
 import com.example.crisalida.data.FotoRemota
 import com.example.crisalida.data.FotosCamara
 import com.example.crisalida.data.MarketplaceRepositorio
@@ -308,14 +309,22 @@ fun PublicarProductoScreen(
         }
         publicando = true
         scope.launch {
-            when (val r = PublicacionesRepositorio.publicar(peticion)) {
+            // las fotos se comprimen ANTES de publicar: si no hay internet, se guardan cifradas junto con la publicación pendiente
+            val preparadas = withContext(Dispatchers.IO) { imagenesSeleccionadas.toList().map { prepararFoto(contexto, it) } }
+            val fotos = preparadas.filterNotNull()
+            when (val r = PublicacionesRepositorio.publicar(peticion, fotos)) {
                 is ResultadoApi.Error -> mensajePublicar = r.mensaje
-                is ResultadoApi.Exito -> {
+                is ResultadoApi.Exito -> if (r.datos.estado == ColaEnvios.ESTADO_EN_COLA) {
+                    // sin conexión: NO está publicada todavía y no se muestran flores hasta que el servidor confirme
+                    publicacionCreada = true
+                    AlmacenamientoCifrado.borrar(contexto, BORRADOR_PUBLICACION)
+                    mensajePublicar = "Sin conexión: tu publicación quedó guardada en tu teléfono y se enviará sola cuando vuelva el internet. " +
+                            "Puedes cancelarla desde tu Perfil. Las flores se sumarán cuando el servidor la confirme."
+                } else {
                     //con la publicación creada, se suben las fotos comprimidas, sin metadatos
-                    var fallidas = 0
-                    for (uri in imagenesSeleccionadas.toList()) {
-                        val bytes = withContext(Dispatchers.IO) { prepararFoto(contexto, uri) }
-                        val subida = if (bytes == null) null else PublicacionesRepositorio.subirFoto(r.datos.id, bytes)
+                    var fallidas = preparadas.size - fotos.size
+                    for (bytes in fotos) {
+                        val subida = PublicacionesRepositorio.subirFoto(r.datos.id, bytes)
                         if (subida !is ResultadoApi.Exito) fallidas++
                     }
                     publicacionCreada = true

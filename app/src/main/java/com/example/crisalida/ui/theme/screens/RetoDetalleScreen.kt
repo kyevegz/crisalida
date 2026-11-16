@@ -23,6 +23,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.crisalida.data.ColaEnvios
+import com.example.crisalida.data.EstadoResponse
 import com.example.crisalida.data.FotoRemota
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.ResultadoApi
@@ -54,7 +56,8 @@ fun RetoDetalleScreen(
         ocupado = true
         scope.launch {
             aviso = when (val r = accion()) {
-                is ResultadoApi.Exito -> exito
+                is ResultadoApi.Exito ->
+                    if ((r.datos as? EstadoResponse)?.estado == ColaEnvios.ESTADO_EN_COLA) "Sin conexión: tu entrega quedó guardada en tu teléfono y se enviará sola cuando vuelva el internet. Se marcará como entregada cuando el servidor lo confirme." else exito
                 is ResultadoApi.Error -> r.mensaje
             }
             ocupado = false
@@ -83,7 +86,7 @@ fun RetoDetalleScreen(
                                     "¡Reto aceptado! Lo encuentras en «Mis retos». Cuando termines, márcalo como entregado.")
                             }, onEntregar = {
                                 ejecutar({ RetosRepositorio.entregar(reto.aceptacionId.orEmpty()) },
-                                    "¡Entregado! Cuando el contratista lo valide, recibirás tus flores.")
+                                    "¡Entregado! Cuando quien publicó el reto lo valide, recibirás tus flores.")
                             }, onSoltar = {
                                 ejecutar({ RetosRepositorio.abandonar(reto.aceptacionId.orEmpty()) },
                                     "Soltaste el reto. Volvió al tablero para otra persona.")

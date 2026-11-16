@@ -19,6 +19,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.crisalida.data.AuthRepositorio
+import com.example.crisalida.data.ColaEnvios
 import com.example.crisalida.data.EstadoConexion
 import com.example.crisalida.data.ROL_COMPRADORA
 import com.example.crisalida.data.ROL_VENDEDORA
@@ -26,6 +27,7 @@ import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.theme.screens.AvisoPendienteScreen
 import com.example.crisalida.ui.theme.screens.AvisoSinConexion
+import com.example.crisalida.ui.theme.screens.VigilanteCola
 import com.example.crisalida.ui.theme.screens.CodigoRecuperacionScreen
 import com.example.crisalida.ui.theme.screens.CompletarDatosScreen
 import com.example.crisalida.ui.theme.screens.ElegirRolScreen
@@ -71,6 +73,7 @@ class MainActivity : ComponentActivity() {
         AjustesTexto.cargar(applicationContext)   // tamaño de letra elegido, guardado en el teléfono
         InactividadSesion.cargar(applicationContext)   // minutos de inactividad elegidos, guardados en el teléfono
         ProteccionPantalla.cargar(applicationContext)   // si se bloquean las capturas, guardado en el teléfono
+        ColaEnvios.iniciar(applicationContext)          // cola de envíos pendientes (se envían al volver el internet)
         EstadoConexion.iniciar(applicationContext)      // si hay internet (también al abrir la app ya sin conexión)
         setContent {
             MaterialTheme {
@@ -78,6 +81,7 @@ class MainActivity : ComponentActivity() {
                 val scope = rememberCoroutineScope()   // para llamar al servidor sin trabar la pantalla
 
                 VigilanteInactividad(navController)   // cierra la sesión si pasa el tiempo elegido sin tocar la pantalla
+                VigilanteCola()                       // envía lo pendiente en cuanto vuelve el internet
                 VigilantePantalla(navController)      // oculta la app en recientes y bloquea capturas en pantallas sensibles
 
                 Box(Modifier.fillMaxSize()) {

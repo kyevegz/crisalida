@@ -11,6 +11,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -156,7 +157,7 @@ interface ApiService {
 
     // ----- Publicaciones (portafolio)
     @POST("publicaciones")
-    suspend fun publicar(@Body datos: PublicacionRequest): Response<PublicacionCreadaResponse>
+    suspend fun publicar(@Body datos: PublicacionRequest, @Header("Idempotency-Key") clave: String?): Response<PublicacionCreadaResponse>
 
     @GET("publicaciones/mias")
     suspend fun misPublicaciones(): Response<CatalogoResponse>
@@ -191,7 +192,7 @@ interface ApiService {
     suspend fun aceptarReto(@Path("id") retoId: String): Response<AceptacionResponse>
 
     @POST("retos/aceptaciones/{id}/entregar")
-    suspend fun entregarReto(@Path("id") aceptacionId: String): Response<EstadoResponse>
+    suspend fun entregarReto(@Path("id") aceptacionId: String, @Header("Idempotency-Key") clave: String?): Response<EstadoResponse>
 
     @POST("retos/aceptaciones/{id}/abandonar")
     suspend fun abandonarReto(@Path("id") aceptacionId: String): Response<EstadoResponse>
@@ -201,16 +202,16 @@ interface ApiService {
     suspend fun bienestarHoy(): Response<BienestarHoyResponse>
 
     @POST("bienestar/emocion")
-    suspend fun guardarEmocion(@Body datos: EmocionRequest): Response<FloresResponse>
+    suspend fun guardarEmocion(@Body datos: EmocionRequest, @Header("Idempotency-Key") clave: String?): Response<FloresResponse>
 
     @POST("bienestar/monitoreo")
-    suspend fun guardarMonitoreo(@Body datos: MonitoreoRequest): Response<FloresResponse>
+    suspend fun guardarMonitoreo(@Body datos: MonitoreoRequest, @Header("Idempotency-Key") clave: String?): Response<FloresResponse>
 
     @POST("bienestar/reflexion")
-    suspend fun guardarReflexion(@Body datos: ReflexionRequest): Response<FloresResponse>
+    suspend fun guardarReflexion(@Body datos: ReflexionRequest, @Header("Idempotency-Key") clave: String?): Response<FloresResponse>
 
     @POST("bienestar/bitacora")
-    suspend fun guardarBitacora(@Body datos: BitacoraRequest): Response<FloresResponse>
+    suspend fun guardarBitacora(@Body datos: BitacoraRequest, @Header("Idempotency-Key") clave: String?): Response<FloresResponse>
 
     @GET("bienestar/entradas")
     suspend fun entradasBienestar(@Query("subtipo") subtipo: String): Response<EntradasBienestarResponse>
@@ -251,9 +252,11 @@ object SesionActual {
         avatar = s.avatar
         modo = s.modo
         rol = s.rol ?: ROL_VENDEDORA
+        ColaEnvios.alIniciarSesion()   // retoma los envíos que quedaron pendientes (cifrados) de esta usuaria
     }
 
     fun cerrar() {
+        ColaEnvios.alCerrarSesion()
         token = null
         tokenRegistro = null
         AuthRepositorio.cancelarRegistro()   // borra de la memoria el seudónimo y PIN pendientes
@@ -323,7 +326,7 @@ suspend fun <T> llamarApi(llamada: suspend () -> Response<T>): ResultadoApi<T> {
 }
 
 /** El servidor manda {"detail": "texto"} o, en validaciones, {"detail": [{"msg": "..."}]} */
-private fun extraerMensaje(cuerpo: String?): String {
+internal fun extraerMensaje(cuerpo: String?): String {
     val generico = "Algo salió mal. Intenta de nuevo."
     if (cuerpo.isNullOrBlank()) return generico
     return try {
