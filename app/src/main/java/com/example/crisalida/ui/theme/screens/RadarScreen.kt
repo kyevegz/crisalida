@@ -114,9 +114,11 @@ fun RadarScreen(
     val abiertasValidas = gusta.length >= MIN_ABIERTA && sabe.length >= MIN_ABIERTA
     val puedeAnalizar = actividadesElegidas.isNotEmpty() && tiempoElegido != null && abiertasValidas
 
-    val primeraRespondida = analisis?.preguntas?.firstOrNull()
-        ?.let { respuestas[it.id].orEmpty().isNotEmpty() } == true
-    val puedeTerminar = perfil != null || (analisis != null && primeraRespondida)
+    // Las preguntas dinámicas son hasta 6 y algunas son de texto libre y opcionales: basta con haber respondido alguna
+    val algunaRespondida = analisis?.preguntas.orEmpty().any {
+        respuestas[it.id].orEmpty().isNotEmpty() || textos[it.id].orEmpty().isNotBlank()
+    }
+    val puedeTerminar = perfil != null || (analisis != null && algunaRespondida)
 
     fun analizar() {
         val tiempo = tiempoElegido ?: return
@@ -289,7 +291,7 @@ fun RadarScreen(
                         BloqueCard(
                             numero = "2",
                             titulo = "Bloque II. Fase de adaptación",
-                            subtitulo = "Las siguientes preguntas se generan dinámicamente según tus intereses",
+                            subtitulo = "Estas preguntas (hasta 6) se arman según lo que nos contaste que te gusta y sabes hacer",
                             paddingInferior = 20.dp,
 
                             ) {
