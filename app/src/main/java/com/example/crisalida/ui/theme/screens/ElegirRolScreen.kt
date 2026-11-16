@@ -18,6 +18,7 @@ import com.example.crisalida.R
 import com.example.crisalida.data.ROL_COMPRADORA
 import com.example.crisalida.data.ROL_VENDEDORA
 import com.example.crisalida.ui.theme.*
+import com.example.crisalida.ui.theme.Paleta
 
 private const val ELEGIR_PRIVACIDAD = "Cero requisitos invasivos. Tu identidad real nunca será revelada a terceros, familiares ni contratistas."
 private const val ELEGIR_DESC_VENDER = "Ideal si te encuentras en una situación de vulnerabilidad y buscas obtener ingresos económicos."
@@ -153,7 +154,7 @@ private fun OpcionRol(titulo: String, descripcion: String, onClick: () -> Unit) 
                 fontFamily = OutfitFont,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
+                color = Paleta.blanco,
                 textAlign = TextAlign.Center
             )
         }

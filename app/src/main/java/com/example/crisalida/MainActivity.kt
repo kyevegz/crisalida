@@ -41,6 +41,9 @@ import com.example.crisalida.ui.theme.screens.RecuperarPinMetodoScreen
 import com.example.crisalida.ui.theme.screens.RadarScreen
 import com.example.crisalida.ui.theme.screens.VigilanteInactividad
 import com.example.crisalida.ui.theme.AjustesTexto
+import com.example.crisalida.ui.theme.CrisalidaTemaApp
+import com.example.crisalida.ui.theme.CrisalidaTemaClaroFijo
+import com.example.crisalida.ui.theme.Paleta
 import com.example.crisalida.ui.theme.ConEscalaDeTexto
 import com.example.crisalida.ui.theme.screens.RegisterScreen
 import com.example.crisalida.ui.theme.screens.GaleriaMariposasScreen
@@ -75,13 +78,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AjustesTexto.cargar(applicationContext)   // tamaño de letra elegido, guardado en el teléfono
+        Paleta.cargar(applicationContext)         // modo claro u oscuro elegido, guardado en el teléfono
         InactividadSesion.cargar(applicationContext)   // minutos de inactividad elegidos, guardados en el teléfono
         ProteccionPantalla.cargar(applicationContext)   // si se bloquean las capturas, guardado en el teléfono
         CacheLocal.iniciar(applicationContext)          // última versión de mascota, portafolio y bitácora (para verlos sin conexión)
         ColaEnvios.iniciar(applicationContext)          // cola de envíos pendientes (se envían al volver el internet)
         EstadoConexion.iniciar(applicationContext)      // si hay internet (también al abrir la app ya sin conexión)
         setContent {
-            MaterialTheme {
+            CrisalidaTemaApp {
                 val navController = rememberNavController()
                 val scope = rememberCoroutineScope()   // para llamar al servidor sin trabar la pantalla
 
@@ -305,14 +309,16 @@ class MainActivity : ComponentActivity() {
 
                         //galería de mariposas (app de camuflaje)
                         composable("camuflaje") {
-                            GaleriaMariposasScreen(
-                                onCerrar = {
-                                    SesionActual.cerrar()
-                                    navController.navigate("login") {
-                                        popUpTo(0) { inclusive = true }
+                            CrisalidaTemaClaroFijo {
+                                GaleriaMariposasScreen(
+                                    onCerrar = {
+                                        SesionActual.cerrar()
+                                        navController.navigate("login") {
+                                            popUpTo(0) { inclusive = true }
+                                        }
                                     }
-                                }
-                            )
+                                )
+                            }
                         }
 
                         //home, retos, marketplace, bienestar, mascota, perfil, etc.

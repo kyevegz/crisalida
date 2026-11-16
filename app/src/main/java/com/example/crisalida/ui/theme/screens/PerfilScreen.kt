@@ -56,18 +56,19 @@ import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
 import kotlinx.coroutines.launch
 import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
-private val MkTitulo = Color(0xFF7F284F)
-private val MkSubtitulo = Color(0xFF545454)
-private val MkBarraProgreso = Color(0xFFB82C67)
-private val MkBarraFondo = Color(0xFFE8D7DD)
-private val MkVerdeActivoFondo = Color(0xFFD4EDDA)
-private val MkVerdeActivoTexto = Color(0xFF155724)
-private val MkAmarilloEncargoFondo = Color(0xFFFFF3CD)
-private val MkAmarilloEncargoTexto = Color(0xFF856404)
-private val MkGrisPausadoFondo = Color(0xFFE2D8DE)
-private val MkGrisPausadoTexto = Color(0xFF4A3B43)
-private val MkFondoCard = Color(0xFFFFFFFF)
-private val MkFondoItem = Color(0xFFEFE8EC)
+import com.example.crisalida.ui.theme.Paleta
+private val MkTitulo: Color get() = Paleta.titulo
+private val MkSubtitulo: Color get() = Paleta.textoGris
+private val MkBarraProgreso: Color get() = Paleta.barraProgreso
+private val MkBarraFondo: Color get() = Paleta.barraFondo
+private val MkVerdeActivoFondo: Color get() = Paleta.verdeSuaveFondo
+private val MkVerdeActivoTexto: Color get() = Paleta.verdeSuaveTexto
+private val MkAmarilloEncargoFondo: Color get() = Paleta.amarilloFondo
+private val MkAmarilloEncargoTexto: Color get() = Paleta.amarilloTexto
+private val MkGrisPausadoFondo: Color get() = Paleta.fondoPausado
+private val MkGrisPausadoTexto: Color get() = Paleta.textoAyuda
+private val MkFondoCard: Color get() = Paleta.superficie
+private val MkFondoItem: Color get() = Paleta.fondoItem
 //lista con todos los iconos para ponerse de foto de perfil
 private val Avatares = listOf("🐱", "🦋", "🌸", "🌿", "⭐", "🌙", "🪻", "🫐", "🌀","🍓","☕","🍊","🍋","🍒","🌽","🍄","🍄‍🟫","🌷","🌺","🌱","🍁","🍂","🫧","🌝","🌈","❄️","💧","💙","🖤","🩶","🤍","💚","💛","🧡","🤎","💜","🩷","❤️","🩵","💫","🔮","🪩","🪄","🪼","🦑","🪸","🦚","🐦‍🔥","🐣","🐧","🐌","🐝","🐲","🐸","🐶","🐺","🦝","🐮","🐷","🙉","👾","👽","👻","🐼","🐬","🦖","🐠","🐡","🐋","🦆","🐤","🐛","🐞")
 
@@ -154,7 +155,7 @@ fun PerfilScreen(
                             modifier = Modifier
                                 .size(110.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF8A6D9E)),
+                                .background(Paleta.acentoPerfil),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(text = avatarSeleccionado, fontSize = 50.sp)
@@ -163,7 +164,7 @@ fun PerfilScreen(
                             modifier = Modifier
                                 .size(32.dp)
                                 .clip(CircleShape)
-                                .background(Color.White)
+                                .background(Paleta.superficie)
                                 .padding(2.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -171,7 +172,7 @@ fun PerfilScreen(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .clip(CircleShape)
-                                    .background(Color(0xFF2E7D32)),
+                                    .background(Paleta.exitoFijo),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
@@ -179,7 +180,7 @@ fun PerfilScreen(
                                     fontFamily = OutfitFont,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 16.sp,
-                                    color = Color.White
+                                    color = Paleta.blanco
                                 )
                             }
                         }
@@ -483,11 +484,11 @@ fun PerfilScreen(
                         onClick = { onNavigate("publicar_producto") },
                         modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF005524))
+                        colors = ButtonDefaults.buttonColors(containerColor = Paleta.verdeOscuro)
                     ) {
                         Text(
                             text = "+  Añadir nuevo producto",
-                            fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White
+                            fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Paleta.blanco
                         )
                     }
 
@@ -616,9 +617,9 @@ fun PerfilScreen(
                             }
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)
+                    colors = ButtonDefaults.buttonColors(containerColor = Paleta.tituloFijo)
                 ) {
-                    Text(text = "Confirmar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(text = "Confirmar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = Paleta.blanco)
                 }
             },
             dismissButton = {
@@ -626,7 +627,7 @@ fun PerfilScreen(
                     Text(text = "Cancelar", fontFamily = JakartaSansFont, color = MkTitulo)
                 }
             },
-            containerColor = Color.White,
+            containerColor = Paleta.superficie,
             shape = RoundedCornerShape(12.dp)
         )
     }
@@ -641,7 +642,7 @@ fun PerfilScreen(
                     Text(text = "Entendido", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo)
                 }
             },
-            containerColor = Color.White,
+            containerColor = Paleta.superficie,
             shape = RoundedCornerShape(12.dp)
         )
     }
@@ -667,7 +668,7 @@ fun PerfilScreen(
                             modifier = Modifier
                                 .size(48.dp)
                                 .clip(CircleShape)
-                                .background(if (avatarSeleccionado == emoji) MkBarraFondo else Color.LightGray.copy(alpha = 0.3f))
+                                .background(if (avatarSeleccionado == emoji) MkBarraFondo else Paleta.fondoNeutro.copy(alpha = 0.3f))
                                 .clickable {
                                     val anterior = avatarSeleccionado
                                     avatarSeleccionado = emoji
@@ -692,7 +693,7 @@ fun PerfilScreen(
                     Text(text = "Cerrar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo)
                 }
             },
-            containerColor = Color.White,
+            containerColor = Paleta.superficie,
             shape = RoundedCornerShape(12.dp)
         )
     }
@@ -775,7 +776,7 @@ fun ItemPortafolioCardFiel(
                     modifier = Modifier
                         .size(72.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color.LightGray),
+                        .background(Paleta.fondoNeutro),
                     contentAlignment = Alignment.Center
                 ) {
                     if (pub.imagenRuta != null) {
@@ -834,7 +835,7 @@ fun ItemPortafolioCardFiel(
                         fontSize = 18.sp,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
-                        color = Color.Black
+                        color = Paleta.textoNegro
                     )
                     Text(
                         text = pub.precio,
@@ -853,7 +854,7 @@ fun ItemPortafolioCardFiel(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(6.dp))
-                    .background(Color.White)
+                    .background(Paleta.superficie)
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -889,7 +890,7 @@ fun ItemPortafolioCardFiel(
                             .weight(1.2f)
                             .heightIn(min = 38.dp),
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC5B8C2))
+                        colors = ButtonDefaults.buttonColors(containerColor = Paleta.fondoGrisPerfil)
                     ) {
                         Icon(imageVector = Icons.Outlined.PlayArrow, contentDescription = null, tint = MkTitulo, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
@@ -902,7 +903,7 @@ fun ItemPortafolioCardFiel(
                             .weight(1.3f)
                             .heightIn(min = 38.dp),
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Paleta.superficie)
                     ) {
                         Text(text = "Editar detalles", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
                         Spacer(modifier = Modifier.width(4.dp))
@@ -919,7 +920,7 @@ fun ItemPortafolioCardFiel(
                     //pedidos en curso
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFFDED2D9),
+                        color = Paleta.rosaGrisClaro,
                         modifier = Modifier
                             .heightIn(min = 38.dp)
                             .weight(0.9f)
@@ -944,7 +945,7 @@ fun ItemPortafolioCardFiel(
                             .heightIn(min = 38.dp)
                             .weight(1.3f),
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Paleta.superficie)
                     ) {
                         Text(text = "Editar detalles", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
                         Spacer(modifier = Modifier.width(2.dp))
@@ -955,7 +956,7 @@ fun ItemPortafolioCardFiel(
                     Surface(
                         onClick = onPausarClick,
                         shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFFDED2D9),
+                        color = Paleta.rosaGrisClaro,
                         modifier = Modifier
                             .size(38.dp)
                     ) {
@@ -1054,7 +1055,7 @@ private fun ContenidoPerfilCompradora(
                     .weight(1f)
                     .heightIn(min = 48.dp)
                     .clip(RoundedCornerShape(24.dp))
-                    .background(if (seleccionada) Color(0xFF7A1F4A) else Color.Transparent)
+                    .background(if (seleccionada) Paleta.avatarSeleccionado else Color.Transparent)
                     .selectable(selected = seleccionada, onClick = { pestana = i }, role = Role.Tab),
                 contentAlignment = Alignment.Center
             ) {
@@ -1063,7 +1064,7 @@ private fun ContenidoPerfilCompradora(
                     fontFamily = OutfitFont,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 15.sp,
-                    color = if (seleccionada) Color.White else MkSubtitulo
+                    color = if (seleccionada) Paleta.blanco else MkSubtitulo
                 )
             }
         }
@@ -1104,11 +1105,11 @@ private fun ContenidoPerfilCompradora(
             onClick = onPublicarReto,
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
             shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF005524))
+            colors = ButtonDefaults.buttonColors(containerColor = Paleta.verdeOscuro)
         ) {
             Text(
                 text = "+  Añadir nuevo reto",
-                fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White
+                fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Paleta.blanco
             )
         }
     } else {
@@ -1145,7 +1146,7 @@ private fun ContenidoPerfilCompradora(
 private fun TarjetaRetoPublicado(reto: RetoPublicadoUi) {
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFE9E1EA)),
+        colors = CardDefaults.cardColors(containerColor = Paleta.fondoTarjetaPerfil),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -1155,7 +1156,7 @@ private fun TarjetaRetoPublicado(reto: RetoPublicadoUi) {
                     modifier = Modifier
                         .size(64.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFFD9D9D9))
+                        .background(Paleta.neutroClaro)
                 ) {
                     FotoRemota(ruta = reto.imagenRuta, modifier = Modifier.fillMaxSize())
                 }
@@ -1165,10 +1166,10 @@ private fun TarjetaRetoPublicado(reto: RetoPublicadoUi) {
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(Color(0xFFB7DDB0))
+                                .background(Paleta.verdeBarraPerfil)
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         ) {
-                            Text(reto.categoria, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color(0xFF1B3F11))
+                            Text(reto.categoria, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Paleta.etiquetaVerdeTexto)
                         }
                         Spacer(modifier = Modifier.weight(1f))
                         Text(reto.estado, fontFamily = JakartaSansFont, fontSize = 11.sp, color = MkSubtitulo)
@@ -1176,9 +1177,9 @@ private fun TarjetaRetoPublicado(reto: RetoPublicadoUi) {
                     Text(
                         text = reto.titulo,
                         fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp,
-                        color = Color.Black, maxLines = 2, overflow = TextOverflow.Ellipsis
+                        color = Paleta.textoNegro, maxLines = 2, overflow = TextOverflow.Ellipsis
                     )
-                    Text(reto.precio, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.Black)
+                    Text(reto.precio, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Paleta.textoNegro)
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -1186,13 +1187,13 @@ private fun TarjetaRetoPublicado(reto: RetoPublicadoUi) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(6.dp))
-                    .background(Color(0xFFD3C8D6))
+                    .background(Paleta.lilaGris)
                     .padding(horizontal = 10.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Outlined.Event, contentDescription = "Fecha límite", tint = Color.Black, modifier = Modifier.size(18.dp))
+                Icon(Icons.Outlined.Event, contentDescription = "Fecha límite", tint = Paleta.textoNegro, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(reto.fechaLimite, fontFamily = JakartaSansFont, fontSize = 13.sp, color = Color.Black)
+                Text(reto.fechaLimite, fontFamily = JakartaSansFont, fontSize = 13.sp, color = Paleta.textoNegro)
             }
         }
     }
@@ -1201,7 +1202,7 @@ private fun TarjetaRetoPublicado(reto: RetoPublicadoUi) {
 @PreviewResponsivo
 @Composable
 private fun PreviewPerfilCompradora() {
-    Column(modifier = Modifier.background(Color(0xFFF2F0EF)).padding(16.dp)) {
+    Column(modifier = Modifier.background(Paleta.tarjetaGris).padding(16.dp)) {
         ContenidoPerfilCompradora(
             onPublicarReto = {},
             retos = listOf(
@@ -1243,9 +1244,9 @@ private fun TarjetaCompletarDatos(onAbrir: () -> Unit) {
                 onClick = onAbrir,
                 modifier = Modifier.heightIn(min = 48.dp),
                 shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)
+                colors = ButtonDefaults.buttonColors(containerColor = Paleta.tituloFijo)
             ) {
-                Text("Completar mis datos", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = Color.White)
+                Text("Completar mis datos", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = Paleta.blanco)
             }
         }
     }

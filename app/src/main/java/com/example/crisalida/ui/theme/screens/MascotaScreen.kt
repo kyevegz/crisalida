@@ -33,17 +33,18 @@ import androidx.compose.ui.unit.sp
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
-private val MkTitulo = Color(0xFF9D4067)
-private val MkSubtitulo = Color(0xFF545454)
-private val MkVerdeBoton = Color(0xFF1E681E)
-private val MkBarraProgreso = Color(0xFFB82C67)
-private val MkBarraFondo = Color(0xFFE8D7DD)
-private val MkVerdeCeroPerdida = Color(0xFFC7EBC3)
-private val MkVerdeCeroPerdidaTexto = Color(0xFF16521A)
-private val MkBotonCanjear = Color(0xFF7A2E50)
-private val MkIconoCajaFondo = Color(0xFFE3D3DC)
-private val MkIconoCajaColor = Color(0xFF6B3045)
-private val MkFondoCard = Color(0xFFFFFFFF)
+import com.example.crisalida.ui.theme.Paleta
+private val MkTitulo: Color get() = Paleta.tituloRosa
+private val MkSubtitulo: Color get() = Paleta.textoGris
+private val MkVerdeBoton: Color get() = Paleta.verdeBoton
+private val MkBarraProgreso: Color get() = Paleta.barraProgreso
+private val MkBarraFondo: Color get() = Paleta.barraFondo
+private val MkVerdeCeroPerdida: Color get() = Paleta.verdeCeroPerdidaFondo
+private val MkVerdeCeroPerdidaTexto: Color get() = Paleta.verdeCeroPerdidaTexto
+private val MkBotonCanjear: Color get() = Paleta.botonVino
+private val MkIconoCajaFondo: Color get() = Paleta.fondoIconoCaja
+private val MkIconoCajaColor: Color get() = Paleta.textoPrincipal
+private val MkFondoCard: Color get() = Paleta.superficie
 
 @Composable
 fun MascotaScreen(
@@ -245,7 +246,7 @@ private fun TarjetaObtenerFlores(
                 fontFamily = OutfitFont,
                 fontWeight = FontWeight.Bold,
                 fontSize = 17.sp,
-                color = Color.Black
+                color = Paleta.textoNegro
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
@@ -289,13 +290,13 @@ private fun TarjetaObtenerFlores(
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
-                        color = Color.White
+                        color = Paleta.blanco
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Icon(
                         imageVector = Icons.Outlined.LocalFlorist,
                         contentDescription = "Flor",
-                        tint = Color.White,
+                        tint = Paleta.blanco,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -323,7 +324,7 @@ private fun TarjetaInformativaFlores(
                 fontFamily = OutfitFont,
                 fontWeight = FontWeight.Bold,
                 fontSize = 17.sp,
-                color = Color.Black
+                color = Paleta.textoNegro
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
@@ -408,7 +409,7 @@ private fun ImagenLilu(etapa: Int?, reposo: Boolean, tamano: Dp) {
         modifier = Modifier
             .size(tamano)
             .clip(CircleShape)
-            .background(Color(0xFFEFE6EB)),
+            .background(Paleta.fondoCajaMascota),
         contentAlignment = Alignment.Center
     ) {
         Image(
@@ -512,7 +513,7 @@ private fun DatosLilu(
                 fontFamily = OutfitFont,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 17.sp,
-                color = Color.White
+                color = Paleta.blanco
             )
         }
     }

@@ -39,6 +39,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.ByteArrayOutputStream
+import com.example.crisalida.ui.theme.Paleta
 
 /* ================================================================
  * Fotos de productos/servicios, sin librerías extra.
@@ -160,10 +161,10 @@ fun FotoRemota(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(Color(0x99000000)),
+                    .background(Paleta.veloFoto),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Outlined.CloudDownload, contentDescription = null, tint = Color.White)
+                Icon(Icons.Outlined.CloudDownload, contentDescription = null, tint = Paleta.blanco)
             }
         }
     } else {

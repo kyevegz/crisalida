@@ -42,19 +42,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.example.crisalida.ui.theme.Paleta
 
-private val MkTitulo = Color(0xFF9D4067)
-private val MkGris = Color(0xFF545454)
-private val MkTarjeta = Color(0xFFF2F0EF)
-private val MkLila = Color(0xFFCBB6CC)
-private val MkOscuro = Color(0xFF3B1F40)
-private val MkBadge = Color(0xFFFFB5D5)
-private val MkRosaTarjeta = Color(0xFFF1D3DF)
-private val MkVino = Color(0xFF62012A)
-private val MkBoton = Color(0xFFA47DAB)
-private val MkTextoBoton = Color(0xFFFDF0FF)
-private val MkPlaceholder = Color(0xFF836B86)
-private val MkTextoPregunta = Color(0xFF262626)
+private val MkTitulo: Color get() = Paleta.tituloRosa
+private val MkGris: Color get() = Paleta.textoGris
+private val MkTarjeta: Color get() = Paleta.tarjetaGris
+private val MkLila: Color get() = Paleta.lila
+private val MkOscuro: Color get() = Paleta.oscuro
+private val MkBadge: Color get() = Paleta.insignia
+private val MkRosaTarjeta: Color get() = Paleta.rosaTarjeta
+private val MkVino: Color get() = Paleta.vino
+private val MkBoton: Color get() = Paleta.moradoAcento
+private val MkTextoBoton: Color get() = Paleta.textoSobreMorado
+private val MkPlaceholder: Color get() = Paleta.placeholderMorado
+private val MkTextoPregunta: Color get() = Paleta.textoPregunta
 
 private const val MIN_ABIERTA = 3     // las 2 preguntas abiertas fijas no pueden ir vacías
 private const val MAX_DINAMICAS_ESTIMADAS = 6   // el Bloque II trae hasta 6 preguntas (8.2)
@@ -519,7 +520,7 @@ fun RadarScreen(
                                 fontFamily = OutfitFont,
                                 fontSize = 16.sp,
                                 lineHeight = 22.sp,
-                                color = Color.Black
+                                color = Paleta.textoNegro
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
@@ -603,7 +604,7 @@ fun RadarScreen(
                                         fontFamily = OutfitFont,
                                         fontSize = 16.sp,
                                         lineHeight = 22.sp,
-                                        color = Color.Black
+                                        color = Paleta.textoNegro
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(20.dp))
@@ -774,7 +775,7 @@ private fun PreguntaView(
                         modifier = Modifier
                             .heightIn(min = 26.dp)
                             .clip(CircleShape)
-                            .background(if (marcada) MkOscuro else MkLila)
+                            .background(if (marcada) Paleta.oscuroRelleno else MkLila)
                             .clickable(enabled = habilitado) { onAlternar(opcion.id) }
                             .padding(horizontal = 15.dp, vertical = 2.dp),
                         contentAlignment = Alignment.Center
@@ -784,7 +785,7 @@ private fun PreguntaView(
                             fontFamily = OutfitFont,
                             fontWeight = FontWeight.Medium,
                             fontSize = 18.sp,
-                            color = if (marcada) MkLila else MkOscuro
+                            color = if (marcada) Paleta.lilaFijo else MkOscuro
                         )
                     }
                 }
@@ -864,10 +865,10 @@ private fun OpcionFila(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(MkOscuro),
+                    .background(Paleta.oscuroRelleno),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(imageVector = icono, contentDescription = null, tint = MkLila, modifier = Modifier.size(26.dp))
+                Icon(imageVector = icono, contentDescription = null, tint = Paleta.lilaFijo, modifier = Modifier.size(26.dp))
             }
             Spacer(modifier = Modifier.width(4.dp))
         } else {
@@ -963,7 +964,7 @@ private fun BloqueCard(
                         fontWeight = FontWeight.Medium,
                         fontSize = 18.sp,
                         lineHeight = 24.sp,
-                        color = Color.Black
+                        color = Paleta.textoNegro
                     )
                     Text(
                         text = subtitulo,
@@ -984,7 +985,7 @@ private fun BloqueCard(
 @Composable
 private fun TarjetaRosa(
     titulo: String,
-    colorTitulo: Color = Color.Black,
+    colorTitulo: Color = Paleta.textoNegro,
     contenido: @Composable ColumnScope.() -> Unit
 ) {
     Card(
@@ -1062,7 +1063,7 @@ private fun CampoEditable(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
-                .background(Color.White)
+                .background(Paleta.superficie)
                 .border(1.dp, if (error) MkVino else Color.Transparent, RoundedCornerShape(10.dp))
                 .padding(horizontal = 12.dp, vertical = 10.dp)
         ) {

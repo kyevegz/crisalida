@@ -27,6 +27,7 @@ import com.example.crisalida.data.DatosPersonalesRepositorio
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.ui.theme.*
 import kotlinx.coroutines.launch
+import com.example.crisalida.ui.theme.Paleta
 
 /** Cómo se abre la pantalla de datos opcionales. */
 enum class ModoDatos {
@@ -223,7 +224,7 @@ fun CompletarDatosScreen(
             Text(
                 text = it,
                 fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp,
-                color = Color(0xFF2E7D32), textAlign = TextAlign.Center,
+                color = Paleta.exito, textAlign = TextAlign.Center,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -243,11 +244,11 @@ fun CompletarDatosScreen(
             )
         ) {
             if (cargando) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.5.dp)
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Paleta.blanco, strokeWidth = 2.5.dp)
             } else {
                 Text(
                     text = if (paso == Paso.CODIGO) "Confirmar código" else if (soloCorreo) "Guardar correo" else "Guardar y continuar",
-                    fontFamily = OutfitFont, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color.White
+                    fontFamily = OutfitFont, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Paleta.blanco
                 )
             }
         }

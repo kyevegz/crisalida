@@ -27,10 +27,11 @@ import androidx.compose.ui.unit.sp
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
-private val MkTitulo = Color(0xFF7F284F)
-private val MkSubtitulo = Color(0xFF545454)
-private val MkVerdeBoton = Color(0xFF005524)
-private val MkFondoBotonVolver = Color(0xFFE2D4DA)
+import com.example.crisalida.ui.theme.Paleta
+private val MkTitulo: Color get() = Paleta.titulo
+private val MkSubtitulo: Color get() = Paleta.textoGris
+private val MkVerdeBoton: Color get() = Paleta.verdeOscuro
+private val MkFondoBotonVolver: Color get() = Paleta.fondoBotonVolver
 
 @Composable
 fun PortafolioScreen(
@@ -110,7 +111,7 @@ fun PortafolioScreen(
                             modifier = Modifier
                                 .size(90.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF8A6D9E)),
+                                .background(Paleta.acentoPerfil),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(text = avatarActual, fontSize = 40.sp)
@@ -119,7 +120,7 @@ fun PortafolioScreen(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(Color.White)
+                                .background(Paleta.superficie)
                                 .padding(2.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -127,7 +128,7 @@ fun PortafolioScreen(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .clip(CircleShape)
-                                    .background(Color(0xFF2E7D32)),
+                                    .background(Paleta.exitoFijo),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
@@ -135,7 +136,7 @@ fun PortafolioScreen(
                                     fontFamily = OutfitFont,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp,
-                                    color = Color.White
+                                    color = Paleta.blanco
                                 )
                             }
                         }
@@ -162,14 +163,14 @@ fun PortafolioScreen(
                             shape = RoundedCornerShape(8.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = MkVerdeBoton)
                         ) {
-                            Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Paleta.blanco, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "Añadir nuevo producto",
                                 fontFamily = OutfitFont,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
-                                color = Color.White
+                                color = Paleta.blanco
                             )
                         }
                     }
@@ -236,14 +237,14 @@ fun PortafolioScreen(
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MkVerdeBoton)
                 ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Paleta.blanco, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "Añadir nuevo producto",
                         fontFamily = OutfitFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        color = Color.White
+                        color = Paleta.blanco
                     )
                 }
 
@@ -288,9 +289,9 @@ fun PortafolioScreen(
                             }
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)
+                    colors = ButtonDefaults.buttonColors(containerColor = Paleta.tituloFijo)
                 ) {
-                    Text(text = "Confirmar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(text = "Confirmar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = Paleta.blanco)
                 }
             },
             dismissButton = {
@@ -298,7 +299,7 @@ fun PortafolioScreen(
                     Text(text = "Cancelar", fontFamily = JakartaSansFont, color = MkTitulo)
                 }
             },
-            containerColor = Color.White,
+            containerColor = Paleta.superficie,
             shape = RoundedCornerShape(12.dp)
         )
     }
@@ -312,7 +313,7 @@ fun PortafolioScreen(
                     Text(text = "Entendido", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo)
                 }
             },
-            containerColor = Color.White,
+            containerColor = Paleta.superficie,
             shape = RoundedCornerShape(12.dp)
         )
     }

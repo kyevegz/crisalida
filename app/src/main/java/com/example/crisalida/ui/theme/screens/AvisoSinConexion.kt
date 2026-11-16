@@ -39,6 +39,7 @@ import com.example.crisalida.data.EstadoConexion
 import com.example.crisalida.ui.theme.ColorTextoPrincipal
 import com.example.crisalida.ui.theme.JakartaSansFont
 import kotlinx.coroutines.delay
+import com.example.crisalida.ui.theme.Paleta
 
 // pantallas con barra de pestañas abajo: el aviso se sube para no taparla
 private val RUTAS_CON_BARRA_INFERIOR = setOf("retos", "marketplace", "home", "bienestar", "mascota", "perfil")
@@ -73,11 +74,11 @@ fun BoxScope.AvisoSinConexion(navController: NavHostController) {
                 .semantics { liveRegion = LiveRegionMode.Polite },
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Outlined.CloudOff, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+            Icon(Icons.Outlined.CloudOff, contentDescription = null, tint = Paleta.blanco, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(8.dp))
             Text(
                 "Sin conexión. Algunas funciones no están disponibles.",
-                fontFamily = JakartaSansFont, fontSize = 12.sp, color = Color.White, textAlign = TextAlign.Start
+                fontFamily = JakartaSansFont, fontSize = 12.sp, color = Paleta.blanco, textAlign = TextAlign.Start
             )
         }
     }

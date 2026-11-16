@@ -19,6 +19,7 @@ import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.ui.theme.*
 import kotlinx.coroutines.launch
 import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.Paleta
 private val Pestanas = listOf(
     "emocion" to "Emociones",
     "monitoreo" to "Monitoreo",
@@ -118,10 +119,10 @@ fun BienestarRegistrosScreen(
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = ColorBotonEntrar)
-                ) { Text("Borrar", color = Color.White) }
+                ) { Text("Borrar", color = Paleta.blanco) }
             },
             dismissButton = { TextButton(onClick = { porBorrar = null }) { Text("Cancelar", color = ColorBotonEntrar) } },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
     aviso?.let { t ->
@@ -129,7 +130,7 @@ fun BienestarRegistrosScreen(
             onDismissRequest = { aviso = null },
             text = { Text(t, fontFamily = JakartaSansFont) },
             confirmButton = { TextButton(onClick = { aviso = null }) { Text("Entendido", color = ColorBotonEntrar) } },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 }
@@ -138,7 +139,7 @@ fun BienestarRegistrosScreen(
 private fun TarjetaRegistro(e: EntradaBienestar, onBorrar: () -> Unit) {
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = Paleta.superficie),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier.fillMaxWidth()
     ) {

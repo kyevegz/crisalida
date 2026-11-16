@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
+import com.example.crisalida.ui.theme.Paleta
 
 private const val REG_PRIVACIDAD = "Cero requisitos invasivos. Tu identidad real nunca será revelada a terceros, familiares ni contratistas."
 private const val REG_NOTA_SEUDONIMO = "Es preferible que no uses tu nombre real"
@@ -236,7 +237,7 @@ fun RegisterScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
-                .background(Color(0xFFE2D4DA))
+                .background(Paleta.fondoBotonVolver)
                 .padding(12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -303,7 +304,7 @@ fun RegisterScreen(
             if (cargando) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = Color.White,
+                    color = Paleta.blanco,
                     strokeWidth = 2.5.dp
                 )
             } else {
@@ -312,7 +313,7 @@ fun RegisterScreen(
                     fontFamily = OutfitFont,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color.White
+                    color = Paleta.blanco
                 )
             }
         }

@@ -54,10 +54,11 @@ import com.example.crisalida.ui.theme.ColorBotonEntrar
 import com.example.crisalida.ui.theme.JakartaSansFont
 import com.example.crisalida.ui.theme.OutfitFont
 import kotlinx.coroutines.launch
+import com.example.crisalida.ui.theme.Paleta
 
-private val CuentaTitulo = Color(0xFF7F284F)
-private val CuentaTexto = Color(0xFF545454)
-private val CuentaExito = Color(0xFF2E7D32)
+private val CuentaTitulo: Color get() = Paleta.titulo
+private val CuentaTexto: Color get() = Paleta.textoGris
+private val CuentaExito: Color get() = Paleta.exito
 
 /**
  * Configuración → Cuenta.
@@ -199,7 +200,7 @@ private fun SeccionCambiarRol(onAbrirRadar: () -> Unit) {
                 }) { Text("Sí, cambiar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = CuentaTitulo) }
             },
             dismissButton = { TextButton(onClick = { confirmando = false }) { Text("Cancelar", color = CuentaTitulo) } },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 
@@ -225,7 +226,7 @@ private fun SeccionCambiarRol(onAbrirRadar: () -> Unit) {
             dismissButton = {
                 if (ofrecerRadar) TextButton(onClick = { exito = null; ofrecerRadar = false }) { Text("Más tarde", color = CuentaTitulo) }
             },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 
@@ -235,7 +236,7 @@ private fun SeccionCambiarRol(onAbrirRadar: () -> Unit) {
             title = { Text("Todavía no puedes cambiar de rol", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = CuentaTitulo) },
             text = { TextoCuenta(mensaje) },
             confirmButton = { TextButton(onClick = { enCursoMensaje = null }) { Text("Entendido", fontWeight = FontWeight.Bold, color = CuentaTitulo) } },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 }
@@ -304,7 +305,7 @@ private fun SeccionSuspender(mensaje: Pair<String, Boolean>?, ocupado: Boolean, 
                 }
             },
             dismissButton = { TextButton(onClick = { confirmando = false }) { Text("Cancelar", color = CuentaTitulo) } },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 }
@@ -340,7 +341,7 @@ private fun SeccionBorrar(onSuspender: () -> Unit, onCuentaBorrada: () -> Unit) 
                 TextButton(onClick = { paso = 2 }) { Text("Continuar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = CuentaTitulo) }
             },
             dismissButton = { TextButton(onClick = { paso = 0 }) { Text("Cancelar", color = CuentaTitulo) } },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 
@@ -354,7 +355,7 @@ private fun SeccionBorrar(onSuspender: () -> Unit, onCuentaBorrada: () -> Unit) 
                     Spacer(modifier = Modifier.height(10.dp))
                     CasillasPin(pin = pin, visible = false, onCambio = { pin = it })
                     error?.let {
-                        Text(it, fontFamily = JakartaSansFont, fontSize = 13.sp, color = Color(0xFFB3261E), modifier = Modifier.padding(top = 8.dp))
+                        Text(it, fontFamily = JakartaSansFont, fontSize = 13.sp, color = Paleta.error, modifier = Modifier.padding(top = 8.dp))
                     }
                 }
             },
@@ -376,11 +377,11 @@ private fun SeccionBorrar(onSuspender: () -> Unit, onCuentaBorrada: () -> Unit) 
                         }
                     },
                     enabled = pin.length == 6 && !borrando,
-                    colors = ButtonDefaults.buttonColors(containerColor = CuentaTitulo)
-                ) { Text(if (borrando) "Borrando…" else "Borrar para siempre", color = Color.White) }
+                    colors = ButtonDefaults.buttonColors(containerColor = Paleta.tituloFijo)
+                ) { Text(if (borrando) "Borrando…" else "Borrar para siempre", color = Paleta.blanco) }
             },
             dismissButton = { TextButton(onClick = { paso = 0; pin = "" }, enabled = !borrando) { Text("Cancelar", color = CuentaTitulo) } },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 
@@ -401,7 +402,7 @@ private fun SeccionBorrar(onSuspender: () -> Unit, onCuentaBorrada: () -> Unit) 
                 }
             },
             dismissButton = { TextButton(onClick = { enCurso = null }) { Text("Entendido", color = CuentaTitulo) } },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 }
@@ -413,7 +414,7 @@ private fun TituloCuenta(texto: String) {
         fontFamily = OutfitFont,
         fontWeight = FontWeight.Bold,
         fontSize = 17.sp,
-        color = Color.Black,
+        color = Paleta.textoNegro,
         modifier = Modifier.semantics { heading() }
     )
 }
@@ -434,7 +435,7 @@ private fun BotonCuenta(texto: String, descripcion: String = texto, habilitado: 
         shape = RoundedCornerShape(8.dp),
         colors = ButtonDefaults.buttonColors(containerColor = ColorBotonEntrar)
     ) {
-        Text(texto, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
+        Text(texto, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Paleta.blanco)
     }
 }
 
@@ -494,14 +495,14 @@ private fun FilaUbicacion(
     var mensaje by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = etiqueta, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.Black)
+        Text(text = etiqueta, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Paleta.textoNegro)
         if (!editando) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = valor ?: "Sin agregar",
                     fontFamily = JakartaSansFont,
                     fontSize = 15.sp,
-                    color = if (valor == null) CuentaTexto else Color.Black,
+                    color = if (valor == null) CuentaTexto else Paleta.textoNegro,
                     modifier = Modifier
                         .weight(1f)
                         .padding(end = 8.dp)
@@ -601,14 +602,14 @@ private fun FilaCorreo(datos: DatosPersonalesResponse, alCambiar: () -> Unit) {
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = "Correo", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.Black)
+        Text(text = "Correo", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Paleta.textoNegro)
         if (!editando) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = datos.correo ?: "Sin agregar",
                     fontFamily = JakartaSansFont,
                     fontSize = 15.sp,
-                    color = if (datos.correo == null) CuentaTexto else Color.Black,
+                    color = if (datos.correo == null) CuentaTexto else Paleta.textoNegro,
                     modifier = Modifier
                         .weight(1f)
                         .padding(end = 8.dp)

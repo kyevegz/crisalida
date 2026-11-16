@@ -37,6 +37,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.crisalida.ui.theme.Paleta
 
 /**
  * Envía lo pendiente en cuanto vuelve el internet mientras la app está abierta (WorkManager cubre el resto).
@@ -64,7 +65,7 @@ fun TarjetaEnviosPendientes() {
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = Paleta.superficie),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -94,7 +95,7 @@ fun TarjetaEnviosPendientes() {
                         }
                         Text(
                             estado, fontFamily = JakartaSansFont, fontSize = 12.sp,
-                            color = if (envio.error != null) Color(0xFFB3261E) else ColorPlaceholder
+                            color = if (envio.error != null) Paleta.error else ColorPlaceholder
                         )
                     }
                     TextButton(onClick = { porCancelar = envio }) {

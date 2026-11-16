@@ -33,11 +33,12 @@ import com.example.crisalida.ui.theme.*
 import com.example.crisalida.ui.theme.screens.rememberProgreso
 import com.example.crisalida.ui.theme.screens.Carga
 import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
-private val MkTitulo = Color(0xFF7F284F)
-private val MkSubtitulo = Color(0xFF545454)
-private val MkFondoBotonVolver = Color(0xFFE2D4DA)
-private val MkFondoTarjetaAyuda = Color(0xFFD8CCD3)
-private val MkTextoAyudaGris = Color(0xFF4A3B43)
+import com.example.crisalida.ui.theme.Paleta
+private val MkTitulo: Color get() = Paleta.titulo
+private val MkSubtitulo: Color get() = Paleta.textoGris
+private val MkFondoBotonVolver: Color get() = Paleta.fondoBotonVolver
+private val MkFondoTarjetaAyuda: Color get() = Paleta.fondoAyuda
+private val MkTextoAyudaGris: Color get() = Paleta.textoAyuda
 
 @Composable
 fun RespirarLiluScreen(
@@ -264,7 +265,7 @@ fun BotonTelefonoAyuda(
             context.startActivity(intent)
         },
         shape = RoundedCornerShape(10.dp),
-        color = Color.White.copy(alpha = 0.85f),
+        color = Paleta.blanco.copy(alpha = 0.85f),
         shadowElevation = 1.dp,
         modifier = Modifier.fillMaxWidth()
     ) {

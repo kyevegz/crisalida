@@ -32,6 +32,7 @@ import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.example.crisalida.ui.theme.Paleta
 
 /*
  * Olvidé mi PIN (issue 4.7). Tres pantallas, todas ANTES de iniciar sesión:
@@ -60,7 +61,7 @@ fun RecuperarPinMetodoScreen(onCodigo: () -> Unit, onCorreo: () -> Unit, onVolve
                 append(" que se te dio en tu registro.")
             },
             fontFamily = JakartaSansFont, fontSize = 17.sp, lineHeight = 25.sp,
-            color = Color(0xFF545454), textAlign = TextAlign.Center
+            color = Paleta.textoGris, textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))
         BotonMetodo("Código recuperación", onCodigo)
@@ -80,7 +81,7 @@ fun RecuperarPinMetodoScreen(onCodigo: () -> Unit, onCorreo: () -> Unit, onVolve
                 append(" vinculado puedes usarlo para cambiar tu PIN.")
             },
             fontFamily = JakartaSansFont, fontSize = 17.sp, lineHeight = 25.sp,
-            color = Color(0xFF545454), textAlign = TextAlign.Center
+            color = Paleta.textoGris, textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))
         BotonMetodo("Correo electrónico", onCorreo)
@@ -100,9 +101,9 @@ private fun BotonMetodo(texto: String, onClick: () -> Unit) {
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(containerColor = ColorBotonEntrar)
     ) {
-        Text(texto, fontFamily = OutfitFont, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, color = Color.White)
+        Text(texto, fontFamily = OutfitFont, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, color = Paleta.blanco)
         Spacer(modifier = Modifier.width(10.dp))
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Color.White)
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Paleta.blanco)
     }
 }
 
@@ -212,10 +213,10 @@ fun RecuperarPinCorreoScreen(onVolver: () -> Unit, onListo: () -> Unit) {
                     disabledContainerColor = ColorTextoPrincipal.copy(alpha = 0.4f)
                 )
             ) {
-                if (pidiendo) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                if (pidiendo) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Paleta.blanco, strokeWidth = 2.dp)
                 else Text(
                     if (espera > 0) "Reenviar en ${espera}s" else "Recibir correo",
-                    fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White
+                    fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Paleta.blanco
                 )
             }
         }
@@ -279,8 +280,8 @@ private fun BotonCambiar(habilitado: Boolean, cargando: Boolean, onClick: () -> 
             disabledContainerColor = ColorBotonEntrar.copy(alpha = 0.5f)
         )
     ) {
-        if (cargando) CircularProgressIndicator(modifier = Modifier.size(26.dp), color = Color.White, strokeWidth = 2.5.dp)
-        else Text("Cambiar", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 25.sp, color = Color.White)
+        if (cargando) CircularProgressIndicator(modifier = Modifier.size(26.dp), color = Paleta.blanco, strokeWidth = 2.5.dp)
+        else Text("Cambiar", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 25.sp, color = Paleta.blanco)
     }
 }
 
@@ -289,13 +290,13 @@ private fun DialogoListo(mensaje: String, onListo: () -> Unit) {
     AlertDialog(
         onDismissRequest = {},   // hay que tocar el botón: así se regresa al inicio de sesión
         title = { Text("PIN actualizado", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = ColorTextoPrincipal) },
-        text = { Text(mensaje, fontFamily = JakartaSansFont, color = Color(0xFF545454)) },
+        text = { Text(mensaje, fontFamily = JakartaSansFont, color = Paleta.textoGris) },
         confirmButton = {
             TextButton(onClick = onListo) {
                 Text("Ir a iniciar sesión", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = ColorTextoPrincipal)
             }
         },
-        containerColor = Color.White
+        containerColor = Paleta.superficie
     )
 }
 
@@ -365,7 +366,7 @@ private fun EncabezadoConOjo(titulo: String, visible: Boolean, onAlternar: () ->
             Icon(
                 imageVector = if (visible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
                 contentDescription = if (visible) "Ocultar" else "Ver",
-                tint = Color(0xFF7A7A7A), modifier = Modifier.size(20.dp)
+                tint = Paleta.iconoGris, modifier = Modifier.size(20.dp)
             )
         }
     }

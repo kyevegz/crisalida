@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.crisalida.ui.theme.ConEscalaLimitada
+import com.example.crisalida.ui.theme.PaletaGaleria
 
 // la app "falsa" que se abre con el PIN de camuflaje
 // todo es local, no pide nada al servidor. Para salir: menú ⋮ > Cerrar galería
@@ -46,28 +47,28 @@ private class Mariposa(
 private val Mariposas = listOf(
     Mariposa("Monarca", "Danaus plexippus",
         "Viaja hasta 4,000 km cada año desde Canadá hasta los bosques de oyamel de Michoacán y el Estado de México.",
-        Color(0xFFF08A24), Color(0xFFF5A742), Color(0xFF2B1B12), Color(0xFFFFE9C7), Color(0xFFFFD08A)),
+        PaletaGaleria.cF08A24, PaletaGaleria.cF5A742, PaletaGaleria.c2B1B12, PaletaGaleria.cFFE9C7, PaletaGaleria.cFFD08A),
     Mariposa("Azul morfo", "Morpho menelaus",
         "Sus alas no tienen pigmento azul: el color nace de la forma microscópica de sus escamas.",
-        Color(0xFF2F7DE1), Color(0xFF5AA0F2), Color(0xFF0E2A55), Color(0xFFD7EBFF), Color(0xFFA9D0FF)),
+        PaletaGaleria.c2F7DE1, PaletaGaleria.c5AA0F2, PaletaGaleria.c0E2A55, PaletaGaleria.cD7EBFF, PaletaGaleria.cA9D0FF),
     Mariposa("Cola de golondrina", "Papilio polyxenes",
         "Sus alas traseras terminan en pequeñas «colas», como las de una golondrina.",
-        Color(0xFF2B2B33), Color(0xFF3B3B47), Color(0xFFF5D547), Color(0xFFE6F2D6), Color(0xFFBFDDA0)),
+        PaletaGaleria.c2B2B33, PaletaGaleria.c3B3B47, PaletaGaleria.cF5D547, PaletaGaleria.cE6F2D6, PaletaGaleria.cBFDDA0),
     Mariposa("Mariposa blanca", "Pieris rapae",
         "Es una de las mariposas más comunes en huertos y jardines de todo el mundo.",
-        Color(0xFFFFFFFF), Color(0xFFF1F1F1), Color(0xFF4A4A4A), Color(0xFFD9EEF2), Color(0xFFB4DCE6)),
+        PaletaGaleria.cFFFFFF, PaletaGaleria.cF1F1F1, PaletaGaleria.c4A4A4A, PaletaGaleria.cD9EEF2, PaletaGaleria.cB4DCE6),
     Mariposa("Cuatro espejos", "Siproeta stelenes",
         "Sus alas verdes con bordes oscuros la hacen parecer una hoja iluminada por el sol.",
-        Color(0xFF5BBF5B), Color(0xFF7ED27E), Color(0xFF1E3D1E), Color(0xFFEAF7DF), Color(0xFFC6E8AE)),
+        PaletaGaleria.c5BBF5B, PaletaGaleria.c7ED27E, PaletaGaleria.c1E3D1E, PaletaGaleria.cEAF7DF, PaletaGaleria.cC6E8AE),
     Mariposa("Pavo real", "Junonia coenia",
         "Cada ala tiene «ojos» que confunden a los pájaros que intentan atraparla.",
-        Color(0xFF9C5B2E), Color(0xFFB7753E), Color(0xFF3E6FB5), Color(0xFFFFE3E0), Color(0xFFFFC2BB)),
+        PaletaGaleria.c9C5B2E, PaletaGaleria.cB7753E, PaletaGaleria.c3E6FB5, PaletaGaleria.cFFE3E0, PaletaGaleria.cFFC2BB),
     Mariposa("Mariposa rosa", "Eurema daira",
         "Le gusta posarse en flores pequeñas y pasa el día entre jardines soleados.",
-        Color(0xFFF28DB2), Color(0xFFF7B0CA), Color(0xFF7A2E50), Color(0xFFFFEAF2), Color(0xFFFFCFE1)),
+        PaletaGaleria.cF28DB2, PaletaGaleria.cF7B0CA, PaletaGaleria.c7A2E50, PaletaGaleria.cFFEAF2, PaletaGaleria.cFFCFE1),
     Mariposa("Atardecer", "Chlosyne janais",
         "Sus alas negras con franjas anaranjadas brillan como el cielo al caer la tarde.",
-        Color(0xFF202020), Color(0xFF2E2E2E), Color(0xFFFF7A2F), Color(0xFFFFE0CC), Color(0xFFFFB98F))
+        PaletaGaleria.c202020, PaletaGaleria.c2E2E2E, PaletaGaleria.cFF7A2F, PaletaGaleria.cFFE0CC, PaletaGaleria.cFFB98F)
 )
 
 @Composable
@@ -78,7 +79,7 @@ fun GaleriaMariposasScreen(onCerrar: () -> Unit) {
     var soloFavoritas by remember { mutableStateOf(false) }
     val visibles = if (soloFavoritas) Mariposas.filter { it.nombre in favoritas } else Mariposas
 
-    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFFBF8F3)).statusBarsPadding()) {
+    Column(modifier = Modifier.fillMaxSize().background(PaletaGaleria.cFBF8F3).statusBarsPadding()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 12.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -86,12 +87,12 @@ fun GaleriaMariposasScreen(onCerrar: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 // título grande: crece poco para que "mariposas" no se parta en pantallas chicas
                 ConEscalaLimitada(tope = 1.3f) {
-                    Text("Galería de mariposas", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color(0xFF3D2C1E))
+                    Text("Galería de mariposas", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = PaletaGaleria.c3D2C1E)
                 }
-                Text("${Mariposas.size} fotografías", fontSize = 13.sp, color = Color(0xFF8A7B6B))
+                Text("${Mariposas.size} fotografías", fontSize = 13.sp, color = PaletaGaleria.c8A7B6B)
             }
             Box {
-                TextButton(onClick = { menu = true }) { Text("⋮", fontSize = 24.sp, color = Color(0xFF3D2C1E)) }
+                TextButton(onClick = { menu = true }) { Text("⋮", fontSize = 24.sp, color = PaletaGaleria.c3D2C1E) }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                     DropdownMenuItem(text = { Text(if (soloFavoritas) "Ver todas" else "Solo favoritas ♥") }, onClick = { soloFavoritas = !soloFavoritas; menu = false })
                     DropdownMenuItem(text = { Text("Cerrar galería") }, onClick = { menu = false; onCerrar() })
@@ -103,7 +104,7 @@ fun GaleriaMariposasScreen(onCerrar: () -> Unit) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
                     "Aún no tienes favoritas. Toca el ♥ en alguna mariposa.",
-                    color = Color(0xFF8A7B6B), fontSize = 14.sp,
+                    color = PaletaGaleria.c8A7B6B, fontSize = 14.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 24.dp)
                 )
@@ -123,7 +124,7 @@ fun GaleriaMariposasScreen(onCerrar: () -> Unit) {
                 items(visibles, key = { it.nombre }) { m ->
                     Card(
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = PaletaGaleria.cFFFFFF),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                         modifier = Modifier.clickable { abierta = m }
                     ) {
@@ -137,13 +138,13 @@ fun GaleriaMariposasScreen(onCerrar: () -> Unit) {
                                 DibujoMariposa(m, Modifier.fillMaxSize().padding(14.dp))
                                 Text(
                                     if (m.nombre in favoritas) "♥" else "♡",
-                                    fontSize = 20.sp, color = Color(0xFFD64572),
+                                    fontSize = 20.sp, color = PaletaGaleria.cD64572,
                                     modifier = Modifier.align(Alignment.TopEnd).padding(10.dp)
                                 )
                             }
                             Column(modifier = Modifier.padding(12.dp)) {
-                                Text(m.nombre, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFF3D2C1E))
-                                Text(m.cientifico, fontSize = 12.sp, color = Color(0xFF8A7B6B))
+                                Text(m.nombre, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = PaletaGaleria.c3D2C1E)
+                                Text(m.cientifico, fontSize = 12.sp, color = PaletaGaleria.c8A7B6B)
                             }
                         }
                     }
@@ -154,7 +155,7 @@ fun GaleriaMariposasScreen(onCerrar: () -> Unit) {
 
     abierta?.let { m ->
         Dialog(onDismissRequest = { abierta = null }) {
-            Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
+            Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = PaletaGaleria.cFFFFFF)) {
                 // con scroll: en horizontal o con texto grande el contenido no cabe y los botones quedaban fuera
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     Box(
@@ -164,10 +165,10 @@ fun GaleriaMariposasScreen(onCerrar: () -> Unit) {
                             .background(Brush.verticalGradient(listOf(m.fondoArriba, m.fondoAbajo)))
                     ) { DibujoMariposa(m, Modifier.fillMaxSize().padding(24.dp)) }
                     Column(modifier = Modifier.padding(18.dp)) {
-                        Text(m.nombre, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = Color(0xFF3D2C1E))
-                        Text(m.cientifico, fontSize = 13.sp, color = Color(0xFF8A7B6B))
+                        Text(m.nombre, fontWeight = FontWeight.Bold, fontSize = 22.sp, color = PaletaGaleria.c3D2C1E)
+                        Text(m.cientifico, fontSize = 13.sp, color = PaletaGaleria.c8A7B6B)
                         Spacer(Modifier.height(10.dp))
-                        Text(m.dato, fontSize = 14.sp, lineHeight = 20.sp, color = Color(0xFF4F4034))
+                        Text(m.dato, fontSize = 14.sp, lineHeight = 20.sp, color = PaletaGaleria.c4F4034)
                         Spacer(Modifier.height(12.dp))
                         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                             // el texto largo cede espacio para que "Cerrar" siempre se vea
@@ -175,9 +176,9 @@ fun GaleriaMariposasScreen(onCerrar: () -> Unit) {
                                 onClick = { if (m.nombre in favoritas) favoritas.remove(m.nombre) else favoritas.add(m.nombre) },
                                 modifier = Modifier.weight(1f, fill = false)
                             ) {
-                                Text(if (m.nombre in favoritas) "♥ Quitar de favoritas" else "♡ Marcar favorita", color = Color(0xFFD64572))
+                                Text(if (m.nombre in favoritas) "♥ Quitar de favoritas" else "♡ Marcar favorita", color = PaletaGaleria.cD64572)
                             }
-                            TextButton(onClick = { abierta = null }) { Text("Cerrar", color = Color(0xFF3D2C1E)) }
+                            TextButton(onClick = { abierta = null }) { Text("Cerrar", color = PaletaGaleria.c3D2C1E) }
                         }
                     }
                 }
@@ -214,12 +215,12 @@ private fun DibujoMariposa(m: Mariposa, modifier: Modifier = Modifier) {
 
         //cuerpo y antenas
         drawRoundRect(
-            color = Color(0xFF3A2A20),
+            color = PaletaGaleria.c3A2A20,
             topLeft = Offset(cx - u * 0.05f, cy - u * 0.42f),
             size = Size(u * 0.10f, u * 0.84f),
             cornerRadius = CornerRadius(u * 0.05f)
         )
-        drawLine(Color(0xFF3A2A20), Offset(cx, cy - u * 0.40f), Offset(cx - u * 0.18f, cy - u * 0.66f), strokeWidth = u * 0.025f)
-        drawLine(Color(0xFF3A2A20), Offset(cx, cy - u * 0.40f), Offset(cx + u * 0.18f, cy - u * 0.66f), strokeWidth = u * 0.025f)
+        drawLine(PaletaGaleria.c3A2A20, Offset(cx, cy - u * 0.40f), Offset(cx - u * 0.18f, cy - u * 0.66f), strokeWidth = u * 0.025f)
+        drawLine(PaletaGaleria.c3A2A20, Offset(cx, cy - u * 0.40f), Offset(cx + u * 0.18f, cy - u * 0.66f), strokeWidth = u * 0.025f)
     }
 }

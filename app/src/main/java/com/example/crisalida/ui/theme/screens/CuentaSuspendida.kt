@@ -21,9 +21,10 @@ import com.example.crisalida.ui.theme.ColorBotonEntrar
 import com.example.crisalida.ui.theme.JakartaSansFont
 import com.example.crisalida.ui.theme.OutfitFont
 import kotlinx.coroutines.launch
+import com.example.crisalida.ui.theme.Paleta
 
-private val CsVino = Color(0xFF7F284F)
-private val CsGris = Color(0xFF545454)
+private val CsVino: Color get() = Paleta.titulo
+private val CsGris: Color get() = Paleta.textoGris
 
 /**
  * Aviso de «cuenta en reposo» con el botón «Reactivar» (issue 6.3). No se ve si la cuenta está activa.
@@ -38,7 +39,7 @@ fun AvisoCuentaSuspendida(modifier: Modifier = Modifier) {
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF3E3EA)),
+        colors = CardDefaults.cardColors(containerColor = Paleta.fondoCuentaSuspendida),
         modifier = modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite }
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
@@ -66,8 +67,8 @@ fun AvisoCuentaSuspendida(modifier: Modifier = Modifier) {
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = ColorBotonEntrar)
             ) {
-                if (ocupado) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
-                else Text("Reactivar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
+                if (ocupado) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Paleta.blanco, strokeWidth = 2.dp)
+                else Text("Reactivar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Paleta.blanco)
             }
         }
     }
@@ -77,7 +78,7 @@ fun AvisoCuentaSuspendida(modifier: Modifier = Modifier) {
             onDismissRequest = { mensaje = null },
             text = { Text(texto, fontFamily = JakartaSansFont, color = CsGris, modifier = Modifier.verticalScroll(rememberScrollState())) },
             confirmButton = { TextButton(onClick = { mensaje = null }) { Text("Entendido", fontWeight = FontWeight.Bold, color = CsVino) } },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 }

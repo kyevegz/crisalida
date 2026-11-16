@@ -34,9 +34,10 @@ import com.example.crisalida.data.RetosRepositorio
 import com.example.crisalida.ui.theme.*
 import kotlinx.coroutines.launch
 import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
-private val RetoVerde = Color(0xFF1E681E)
-private val RetoGris = Color(0xFF545454)
-private val RetoCaja = Color(0xFFF2F0EF)
+import com.example.crisalida.ui.theme.Paleta
+private val RetoVerde: Color get() = Paleta.verdeBoton
+private val RetoGris: Color get() = Paleta.textoGris
+private val RetoCaja: Color get() = Paleta.tarjetaGris
 
 //detalle del microrreto
 @Composable
@@ -101,13 +102,13 @@ fun RetoDetalleScreen(
     aviso?.let { texto ->
         AlertDialog(
             onDismissRequest = { aviso = null },
-            text = { Text(text = texto, fontFamily = OutfitFont, color = Color.Black, modifier = Modifier.verticalScroll(rememberScrollState())) },
+            text = { Text(text = texto, fontFamily = OutfitFont, color = Paleta.textoNegro, modifier = Modifier.verticalScroll(rememberScrollState())) },
             confirmButton = {
                 TextButton(onClick = { aviso = null }) {
                     Text("Entendido", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = RetoVerde)
                 }
             },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 }
@@ -134,7 +135,7 @@ private fun ColumnScope.Contenido(
         }
     )
     Spacer(Modifier.height(14.dp))
-    Text(reto.titulo, fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 26.sp, lineHeight = 31.sp, color = Color.Black)
+    Text(reto.titulo, fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 26.sp, lineHeight = 31.sp, color = Paleta.textoNegro)
     Spacer(Modifier.height(6.dp))
     Text("${formatoPrecio(reto.compensacion)} MXN", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = RetoVerde)
     Text("Pago al completar el reto y que sea validado", fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = RetoGris)
@@ -150,9 +151,9 @@ private fun ColumnScope.Contenido(
     }
 
     Spacer(Modifier.height(18.dp))
-    Text("Lo que se pide", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black)
+    Text("Lo que se pide", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Paleta.textoNegro)
     Spacer(Modifier.height(6.dp))
-    Text(reto.descripcion, fontFamily = JakartaSansFont, fontSize = 15.sp, lineHeight = 22.sp, color = Color(0xFF333333))
+    Text(reto.descripcion, fontFamily = JakartaSansFont, fontSize = 15.sp, lineHeight = 22.sp, color = Paleta.textoNeutro)
 
     Spacer(Modifier.height(18.dp))
     Column(
@@ -205,13 +206,13 @@ private fun Boton(texto: String, habilitado: Boolean, onClick: () -> Unit) {
         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(containerColor = RetoVerde)
-    ) { Text(texto, fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFFFFFAFA)) }
+    ) { Text(texto, fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Paleta.blancoSuave) }
 }
 
 @Composable
 private fun Etiqueta(texto: String) {
-    Box(modifier = Modifier.clip(CircleShape).background(Color(0xFFE8D7DD)).padding(horizontal = 12.dp, vertical = 4.dp)) {
-        Text(texto, fontFamily = OutfitFont, fontSize = 13.sp, lineHeight = 18.sp, color = Color(0xFF5A1136))
+    Box(modifier = Modifier.clip(CircleShape).background(Paleta.barraFondo).padding(horizontal = 12.dp, vertical = 4.dp)) {
+        Text(texto, fontFamily = OutfitFont, fontSize = 13.sp, lineHeight = 18.sp, color = Paleta.textoVinoOscuro)
     }
 }
 
@@ -222,7 +223,7 @@ private fun Dato(icono: ImageVector, titulo: String, valor: String) {
         Spacer(Modifier.width(10.dp))
         Column {
             Text(titulo, fontFamily = JakartaSansFont, fontSize = 12.sp, color = RetoGris)
-            Text(valor, fontFamily = OutfitFont, fontWeight = FontWeight.Medium, fontSize = 15.sp, color = Color.Black)
+            Text(valor, fontFamily = OutfitFont, fontWeight = FontWeight.Medium, fontSize = 15.sp, color = Paleta.textoNegro)
         }
     }
 }

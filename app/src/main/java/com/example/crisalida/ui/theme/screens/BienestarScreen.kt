@@ -24,6 +24,7 @@ import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.ResultadoApi
 import kotlinx.coroutines.launch
 import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.Paleta
 data class EmocionItem(val emoji: String, val nombre: String)
 
 @Composable
@@ -187,8 +188,8 @@ fun BienestarScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
+                            focusedContainerColor = Paleta.superficie,
+                            unfocusedContainerColor = Paleta.superficie,
                             focusedBorderColor = ColorBotonEntrar,
                             unfocusedBorderColor = ColorCamposFondo
                         ),
@@ -207,7 +208,7 @@ fun BienestarScreen(
                                     Surface(
                                         onClick = { emocionSeleccionada = item.nombre },
                                         shape = RoundedCornerShape(20.dp),
-                                        color = if (isSelected) ColorBotonEntrar else Color.White,
+                                        color = if (isSelected) ColorBotonEntrar else Paleta.superficie,
                                         shadowElevation = 1.dp,
                                         modifier = Modifier
                                             .weight(1f)
@@ -224,7 +225,7 @@ fun BienestarScreen(
                                                 fontFamily = JakartaSansFont,
                                                 fontSize = 14.sp,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                color = if (isSelected) Color.White else ColorTextoPrincipal
+                                                color = if (isSelected) Paleta.blanco else ColorTextoPrincipal
                                             )
                                         }
                                     }
@@ -244,7 +245,7 @@ fun BienestarScreen(
                             text = if (floresEmocionGuardadas) "🌸 Hoy ya ganaste las flores de este bloque" else "Gana ${fl("bienestar_emocion", 5)} flores para tu mascota",
                             fontFamily = JakartaSansFont,
                             fontSize = 13.sp,
-                            color = if (floresEmocionGuardadas) Color(0xFF2E7D32) else ColorPlaceholder,
+                            color = if (floresEmocionGuardadas) Paleta.exito else ColorPlaceholder,
                             fontWeight = FontWeight.Bold
                         )
                         Button(
@@ -267,7 +268,7 @@ fun BienestarScreen(
                 item {
                     Card(
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = Paleta.superficie),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -341,7 +342,7 @@ fun BienestarScreen(
                                     text = if (floresMonitoreoGuardadas) "🌸 Hoy ya ganaste las flores de este bloque" else "Gana ${fl("bienestar_monitoreo", 3)} flores (responde las 3)",
                                     fontFamily = JakartaSansFont,
                                     fontSize = 12.sp,
-                                    color = if (floresMonitoreoGuardadas) Color(0xFF2E7D32) else ColorPlaceholder,
+                                    color = if (floresMonitoreoGuardadas) Paleta.exito else ColorPlaceholder,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Button(
@@ -385,7 +386,7 @@ fun BienestarScreen(
                         preguntasReflexion.forEachIndexed { index, pregunta ->
                             Card(
                                 shape = RoundedCornerShape(10.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                colors = CardDefaults.cardColors(containerColor = Paleta.superficie),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
@@ -405,8 +406,8 @@ fun BienestarScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                         shape = RoundedCornerShape(8.dp),
                                         colors = OutlinedTextFieldDefaults.colors(
-                                            focusedContainerColor = Color(0xFFFAF8F8),
-                                            unfocusedContainerColor = Color(0xFFFAF8F8),
+                                            focusedContainerColor = Paleta.tarjeta,
+                                            unfocusedContainerColor = Paleta.tarjeta,
                                             focusedBorderColor = ColorBotonEntrar,
                                             unfocusedBorderColor = ColorCamposFondo
                                         ),
@@ -425,7 +426,7 @@ fun BienestarScreen(
                             text = if (floresPreguntasGuardadas) "🌸 Hoy ya ganaste las flores de este bloque" else "Gana ${fl("bienestar_reflexion", 8)} flores (responde al menos 1)",
                             fontFamily = JakartaSansFont,
                             fontSize = 12.sp,
-                            color = if (floresPreguntasGuardadas) Color(0xFF2E7D32) else ColorPlaceholder,
+                            color = if (floresPreguntasGuardadas) Paleta.exito else ColorPlaceholder,
                             fontWeight = FontWeight.Bold
                         )
                         Button(
@@ -450,7 +451,7 @@ fun BienestarScreen(
                 item {
                     Card(
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = Paleta.superficie),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -480,8 +481,8 @@ fun BienestarScreen(
                                     .heightIn(min = 140.dp),
                                 shape = RoundedCornerShape(10.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedContainerColor = Color(0xFFFAF8F8),
-                                    unfocusedContainerColor = Color(0xFFFAF8F8),
+                                    focusedContainerColor = Paleta.tarjeta,
+                                    unfocusedContainerColor = Paleta.tarjeta,
                                     focusedBorderColor = ColorBotonEntrar,
                                     unfocusedBorderColor = ColorCamposFondo
                                 ),
@@ -496,7 +497,7 @@ fun BienestarScreen(
                                     text = if (floresBitacoraGuardadas) "🌸 Hoy ya ganaste las flores de este bloque" else "Gana ${fl("bienestar_bitacora", 12)} flores",
                                     fontFamily = JakartaSansFont,
                                     fontSize = 13.sp,
-                                    color = if (floresBitacoraGuardadas) Color(0xFF2E7D32) else ColorPlaceholder,
+                                    color = if (floresBitacoraGuardadas) Paleta.exito else ColorPlaceholder,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Button(
@@ -518,7 +519,7 @@ fun BienestarScreen(
                                         fontFamily = OutfitFont,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 15.sp,
-                                        color = Color.White
+                                        color = Paleta.blanco
                                     )
                                 }
                             }
@@ -564,7 +565,7 @@ fun BienestarScreen(
                     Text("Entendido", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = ColorBotonEntrar)
                 }
             },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 }
@@ -622,7 +623,7 @@ fun EscalaConCaritas(
                     fontFamily = OutfitFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp,
-                    color = if (selected) Color.White else ColorTextoPrincipal
+                    color = if (selected) Paleta.blanco else ColorTextoPrincipal
                 )
             }
         }
@@ -635,7 +636,7 @@ fun EscalaConCaritas(
 private fun PreviewBienestarControles() {
     Column(
         modifier = Modifier
-            .background(Color.White)
+            .background(Paleta.superficie)
             .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
         EscalaConCaritas(seleccionActual = 3, onSelect = {})

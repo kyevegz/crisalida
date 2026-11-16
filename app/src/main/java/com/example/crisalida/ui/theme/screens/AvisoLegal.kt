@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
+import com.example.crisalida.ui.theme.Paleta
 
 /* ================================================================
  * Aviso de privacidad y Términos de uso (issue 3.7).
@@ -120,7 +121,7 @@ fun DialogoAviso(tipo: String, onCerrar: () -> Unit) {
                     fontFamily = JakartaSansFont,
                     fontSize = 14.sp,
                     lineHeight = 20.sp,
-                    color = Color.Black
+                    color = Paleta.textoNegro
                 )
             }
         },
@@ -129,7 +130,7 @@ fun DialogoAviso(tipo: String, onCerrar: () -> Unit) {
                 Text("Cerrar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = ColorTextoPrincipal)
             }
         },
-        containerColor = Color.White,
+        containerColor = Paleta.superficie,
         shape = RoundedCornerShape(12.dp)
     )
 }
@@ -258,9 +259,9 @@ fun AvisoPendienteScreen(
             )
         ) {
             if (cargando) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.5.dp)
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Paleta.blanco, strokeWidth = 2.5.dp)
             } else {
-                Text("Aceptar y continuar", fontFamily = OutfitFont, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+                Text("Aceptar y continuar", fontFamily = OutfitFont, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Paleta.blanco)
             }
         }
         TextButton(onClick = onRechazar, enabled = !cargando, modifier = Modifier.heightIn(min = 48.dp)) {

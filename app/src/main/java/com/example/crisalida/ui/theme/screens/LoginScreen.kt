@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.theme.*
+import com.example.crisalida.ui.theme.Paleta
 
 @Composable
 fun LoginScreen(
@@ -207,7 +208,7 @@ fun LoginScreen(
             if (cargando) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(26.dp),
-                    color = Color.White,
+                    color = Paleta.blanco,
                     strokeWidth = 2.5.dp
                 )
             } else {
@@ -216,7 +217,7 @@ fun LoginScreen(
                     fontFamily = OutfitFont,
                     fontSize = 25.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = Paleta.blanco
                 )
             }
         }

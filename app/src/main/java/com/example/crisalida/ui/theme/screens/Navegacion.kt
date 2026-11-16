@@ -48,6 +48,7 @@ import com.example.crisalida.ui.theme.ColorTextoPrincipal
 import com.example.crisalida.ui.theme.ConEscalaDeTexto
 import com.example.crisalida.ui.theme.OutfitFont
 import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.Paleta
 // navegación de la barra de abajo, sin acumular historial
 fun NavController.navigateToTab(route: String) {
     navigate(route) {
@@ -132,7 +133,7 @@ fun PantallaNoDisponible(onNavigate: (String) -> Unit) {
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = ColorBotonEntrar)
             ) {
-                Text(text = "Ir a Inicio", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
+                Text(text = "Ir a Inicio", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Paleta.blanco)
             }
         }
     }
