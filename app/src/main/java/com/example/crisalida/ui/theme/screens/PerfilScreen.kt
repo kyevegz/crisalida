@@ -410,6 +410,10 @@ fun PerfilScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    // accesos: Portafolio y Mis borradores
+                    AccesosPortafolioYBorradores(onNavigate)
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     //portafolio personal
                     Row(
                         modifier = Modifier.fillMaxWidth(),
