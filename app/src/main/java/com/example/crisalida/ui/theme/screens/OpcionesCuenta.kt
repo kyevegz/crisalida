@@ -12,12 +12,15 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,13 +33,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.crisalida.data.CuentaRepositorio
 import com.example.crisalida.data.DatosPersonalesRepositorio
+import com.example.crisalida.data.EstadoCuenta
 import com.example.crisalida.data.DatosPersonalesResponse
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
@@ -52,11 +59,28 @@ private val CuentaExito = Color(0xFF2E7D32)
 /**
  * Configuración → Cuenta.
  *  - Mis datos: correo (se confirma con un código), municipio y localidad. Funciona.
- *  - Cambiar de rol, Suspender mi cuenta y Borrar mi cuenta: ya tienen su texto, pero el servidor todavía no tiene
- *    esas funciones; se conectan en sus propios issues (piden confirmar el PIN).
+ *  - Suspender mi cuenta (6.3): oculta lo que publica; se reactiva con un botón. No borra nada.
+ *  - Borrar mi cuenta (6.3): doble confirmación y PIN. Con pedidos o retos en curso el servidor responde 409 y se ofrece suspender.
+ *  - Cambiar de rol: todavía sin conectar.
  */
 @Composable
-fun OpcionesCuenta() {
+fun OpcionesCuenta(onCuentaBorrada: () -> Unit = {}) {
+    val scope = rememberCoroutineScope()
+    var mensajeSuspension by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    var suspendiendo by remember { mutableStateOf(false) }
+    // suspender: lo usan el botón de «Suspender» y la oferta que sale cuando borrar da 409
+    fun suspender() {
+        if (suspendiendo) return
+        scope.launch {
+            suspendiendo = true
+            mensajeSuspension = when (val r = CuentaRepositorio.suspender()) {
+                is ResultadoApi.Exito -> { EstadoCuenta.aplicar(r.datos); (r.datos.mensaje ?: "Tu cuenta está en reposo.") to true }
+                is ResultadoApi.Error -> r.mensaje to false
+            }
+            suspendiendo = false
+        }
+    }
+
     val carga = rememberCarga { DatosPersonalesRepositorio.mios() }
 
     TituloCuenta("Mis datos")
@@ -83,14 +107,176 @@ fun OpcionesCuenta() {
     Proximamente()
 
     Spacer(modifier = Modifier.height(24.dp))
-    TituloCuenta("Suspender mi cuenta")
-    TextoCuenta("¿Quieres tomar un descanso? Tu cuenta quedará pausada y nadie podrá ver tu perfil. No perderás nada. Para volver, inicia sesión con tu PIN.")
-    Proximamente()
+    SeccionSuspender(mensajeSuspension, suspendiendo, ::suspender)
 
     Spacer(modifier = Modifier.height(24.dp))
+    SeccionBorrar(onSuspender = ::suspender, onCuentaBorrada = onCuentaBorrada)
+}
+
+// ---------------------------------------------------------------- Suspender mi cuenta
+
+@Composable
+private fun SeccionSuspender(mensaje: Pair<String, Boolean>?, ocupado: Boolean, onSuspender: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var confirmando by remember { mutableStateOf(false) }
+    var reactivando by remember { mutableStateOf(false) }
+    var mensajeReactivar by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    LaunchedEffect(Unit) { EstadoCuenta.refrescar() }
+
+    if (EstadoCuenta.suspendida) {
+        TituloCuenta("Tu cuenta está suspendida")
+        TextoCuenta(
+            "Está en reposo" + (EstadoCuenta.desde?.let { " desde el ${fechaLegible(it)}" } ?: "") + ". " +
+                    "Tus productos, servicios y retos no se muestran, pero puedes seguir usando tu mascota y tu bienestar. " +
+                    "Al reactivarla todo vuelve a verse como estaba."
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        BotonCuenta(if (reactivando) "Reactivando…" else "Reactivar mi cuenta", habilitado = !reactivando) {
+            scope.launch {
+                reactivando = true
+                mensajeReactivar = when (val r = CuentaRepositorio.reactivar()) {
+                    is ResultadoApi.Exito -> { EstadoCuenta.aplicar(r.datos); (r.datos.mensaje ?: "¡Bienvenida de vuelta!") to true }
+                    is ResultadoApi.Error -> r.mensaje to false
+                }
+                reactivando = false
+            }
+        }
+        mensajeReactivar?.let { MensajeCuenta(it) }
+    } else {
+        TituloCuenta("Suspender mi cuenta")
+        TextoCuenta(
+            "¿Quieres tomar un descanso? Al suspenderla, tus productos, servicios y retos dejan de mostrarse en el marketplace y en el tablero. " +
+                    "No se borra nada y puedes seguir entrando: tu mascota, tu bienestar y tus datos siguen contigo."
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        TextoCuenta(
+            "Para reactivarla, entra a Configuración → Cuenta y toca «Reactivar mi cuenta». " +
+                    "También verás un aviso con el botón «Reactivar» en Inicio y en Perfil."
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        BotonCuenta(if (ocupado) "Suspendiendo…" else "Suspender mi cuenta", habilitado = !ocupado) { mensajeReactivar = null; confirmando = true }
+        mensaje?.let { MensajeCuenta(it) }
+    }
+
+    if (confirmando) {
+        AlertDialog(
+            onDismissRequest = { confirmando = false },
+            title = { Text("¿Suspender tu cuenta?", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = CuentaTitulo) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    TextoCuenta("Qué pasa: tus productos, servicios y retos dejan de verse hasta que la reactives. No se borra nada.")
+                    Spacer(modifier = Modifier.height(6.dp))
+                    TextoCuenta("Qué sigue igual: puedes entrar, usar tu mascota y tu bienestar, y ver tus datos.")
+                    Spacer(modifier = Modifier.height(6.dp))
+                    TextoCuenta("Cómo reactivarla: con el botón «Reactivar» en Inicio y en Perfil, o en Configuración → Cuenta.")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { confirmando = false; onSuspender() }) {
+                    Text("Sí, suspender", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = CuentaTitulo)
+                }
+            },
+            dismissButton = { TextButton(onClick = { confirmando = false }) { Text("Cancelar", color = CuentaTitulo) } },
+            containerColor = Color.White
+        )
+    }
+}
+
+// ---------------------------------------------------------------- Borrar mi cuenta (doble confirmación + PIN)
+
+@Composable
+private fun SeccionBorrar(onSuspender: () -> Unit, onCuentaBorrada: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var paso by remember { mutableStateOf(0) }            // 0 nada · 1 primera confirmación · 2 PIN
+    var pin by remember { mutableStateOf("") }            // solo en memoria
+    var borrando by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var enCurso by remember { mutableStateOf<String?>(null) }   // mensaje del servidor cuando responde 409
+
     TituloCuenta("Borrar mi cuenta")
     TextoCuenta("¿Borrar tu cuenta para siempre? Se eliminarán tu perfil, tu bitácora, tus publicaciones y tu progreso. No podremos recuperarlos.")
-    Proximamente()
+    Spacer(modifier = Modifier.height(8.dp))
+    BotonCuenta("Borrar mi cuenta") { error = null; pin = ""; paso = 1 }
+
+    if (paso == 1) {
+        AlertDialog(
+            onDismissRequest = { paso = 0 },
+            title = { Text("¿Borrar tu cuenta para siempre?", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = CuentaTitulo) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    TextoCuenta("Se eliminarán tu perfil, tu bitácora, tus publicaciones con sus fotos, tu mascota y tu progreso. No podremos recuperarlos.")
+                    Spacer(modifier = Modifier.height(6.dp))
+                    TextoCuenta("Si solo quieres descansar, mejor suspende tu cuenta: no pierdes nada y la reactivas cuando quieras.")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { paso = 2 }) { Text("Continuar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = CuentaTitulo) }
+            },
+            dismissButton = { TextButton(onClick = { paso = 0 }) { Text("Cancelar", color = CuentaTitulo) } },
+            containerColor = Color.White
+        )
+    }
+
+    if (paso == 2) {
+        AlertDialog(
+            onDismissRequest = { if (!borrando) { paso = 0; pin = "" } },
+            title = { Text("Confirma con tu PIN", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = CuentaTitulo) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    TextoCuenta("Última confirmación. Escribe tu PIN para borrar tu cuenta para siempre.")
+                    Spacer(modifier = Modifier.height(10.dp))
+                    CasillasPin(pin = pin, visible = false, onCambio = { pin = it })
+                    error?.let {
+                        Text(it, fontFamily = JakartaSansFont, fontSize = 13.sp, color = Color(0xFFB3261E), modifier = Modifier.padding(top = 8.dp))
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            borrando = true
+                            error = null
+                            when (val r = CuentaRepositorio.borrar(pin)) {
+                                is ResultadoApi.Exito -> { pin = ""; paso = 0; onCuentaBorrada() }
+                                is ResultadoApi.Error -> {
+                                    pin = ""
+                                    if (r.codigoHttp == 409) { paso = 0; enCurso = r.mensaje }   // pedidos o retos en curso: se ofrece suspender
+                                    else error = r.mensaje                                      // PIN incorrecto, bloqueo, sin conexión...
+                                }
+                            }
+                            borrando = false
+                        }
+                    },
+                    enabled = pin.length == 6 && !borrando,
+                    colors = ButtonDefaults.buttonColors(containerColor = CuentaTitulo)
+                ) { Text(if (borrando) "Borrando…" else "Borrar para siempre", color = Color.White) }
+            },
+            dismissButton = { TextButton(onClick = { paso = 0; pin = "" }, enabled = !borrando) { Text("Cancelar", color = CuentaTitulo) } },
+            containerColor = Color.White
+        )
+    }
+
+    enCurso?.let { mensaje ->
+        AlertDialog(
+            onDismissRequest = { enCurso = null },
+            title = { Text("Todavía no podemos borrar tu cuenta", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = CuentaTitulo) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    TextoCuenta(mensaje)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    TextoCuenta("Suspender tu cuenta no borra nada: tus publicaciones dejan de verse y la reactivas cuando quieras.")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { enCurso = null; onSuspender() }) {
+                    Text("Suspender mi cuenta", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = CuentaTitulo)
+                }
+            },
+            dismissButton = { TextButton(onClick = { enCurso = null }) { Text("Entendido", color = CuentaTitulo) } },
+            containerColor = Color.White
+        )
+    }
 }
 
 @Composable

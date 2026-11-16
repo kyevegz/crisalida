@@ -91,7 +91,8 @@ private const val CORREO_AYUDA = "ayuda@crisalida.example"
 @Composable
 fun ConfiguracionScreen(
     onNavigate: (String) -> Unit,
-    onVolver: () -> Unit
+    onVolver: () -> Unit,
+    onCuentaBorrada: () -> Unit = {}
 ) {
     val contexto = LocalContext.current
     CrisalidaScaffold(
@@ -103,7 +104,8 @@ fun ConfiguracionScreen(
             ContenidoConfiguracion(
                 contexto = contexto,
                 onVolver = onVolver,
-                onAbrirAyuda = { onNavigate("respirar_lilu") }
+                onAbrirAyuda = { onNavigate("respirar_lilu") },
+                onCuentaBorrada = onCuentaBorrada
             )
         }
     }
@@ -113,7 +115,8 @@ fun ConfiguracionScreen(
 private fun ContenidoConfiguracion(
     contexto: Context,
     onVolver: () -> Unit,
-    onAbrirAyuda: () -> Unit
+    onAbrirAyuda: () -> Unit,
+    onCuentaBorrada: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -160,7 +163,7 @@ private fun ContenidoConfiguracion(
             }
 
             SeccionConfiguracion("Cuenta") {
-                OpcionesCuenta()
+                OpcionesCuenta(onCuentaBorrada)
             }
 
             SeccionConfiguracion("Apariencia") {
@@ -664,7 +667,8 @@ private fun PreviewConfiguracion() {
         ContenidoConfiguracion(
             contexto = LocalContext.current,
             onVolver = {},
-            onAbrirAyuda = {}
+            onAbrirAyuda = {},
+            onCuentaBorrada = {}
         )
     }
 }

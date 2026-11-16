@@ -253,6 +253,7 @@ fun PerfilScreen(
                     TarjetaCompletarDatos(onAbrirConfiguracion)
                     Spacer(modifier = Modifier.height(16.dp))
                 }
+                AvisoCuentaSuspendida()   // si la cuenta está en reposo, con «Reactivar»
                 TarjetaEnviosPendientes()   // lo que se guardó sin conexión y espera internet (si no hay nada, no se ve)
                 // La compradora solo ve lo suyo: sus datos (arriba), mis compras y ajustes.
                 // Nivel, portafolio y habilidades son de la vendedora.

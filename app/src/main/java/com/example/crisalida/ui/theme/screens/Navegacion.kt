@@ -175,7 +175,19 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
 
     // pantalla para publicar retos: se hará en su propio issue
     composable("publicar_reto") { ConEscalaDeTexto { PantallaPendiente("Publicar reto", 0, ir) } }
-    composable("configuracion") { ConEscalaDeTexto { ConfiguracionScreen(onNavigate = ir, onVolver = volver) } }
+    composable("configuracion") {
+        val contexto = LocalContext.current
+        ConEscalaDeTexto {
+            ConfiguracionScreen(
+                onNavigate = ir, onVolver = volver,
+                onCuentaBorrada = {
+                    BorradoLocal.todo(contexto)   // la cuenta ya no existe: no queda nada suyo en el teléfono
+                    SesionActual.cerrar()
+                    navController.navigate("login") { popUpTo(0) { inclusive = true } }
+                }
+            )
+        }
+    }
     composable("respirar_lilu") { SoloVendedora(navController) { ConEscalaDeTexto { RespirarLiluScreen(onNavigate = ir) } } }
     composable("portafolio_completo") { SoloVendedora(navController) { ConEscalaDeTexto { PortafolioScreen(onNavigate = ir, onEditar = editar) } } }
     composable("mis_borradores") { SoloVendedora(navController) { ConEscalaDeTexto { MisBorradoresScreen(onNavigate = ir) } } }
