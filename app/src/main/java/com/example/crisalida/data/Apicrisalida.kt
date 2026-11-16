@@ -101,6 +101,16 @@ interface ApiService {
     @POST("auth/login")
     suspend fun login(@Body datos: LoginRequest): Response<SesionResponse>
 
+    // ----- Olvidé mi PIN (4.7)
+    @POST("auth/recuperar/codigo")
+    suspend fun recuperarConCodigo(@Body datos: RecuperarConCodigoRequest): Response<MensajeRecuperacionResponse>
+
+    @POST("auth/recuperar/correo/solicitar")
+    suspend fun solicitarCodigoCorreo(@Body datos: SolicitarCodigoCorreoRequest): Response<MensajeRecuperacionResponse>
+
+    @POST("auth/recuperar/correo/confirmar")
+    suspend fun recuperarConCorreo(@Body datos: RecuperarConCorreoRequest): Response<MensajeRecuperacionResponse>
+
     @GET("reportes/motivos")
     suspend fun motivosReporte(): Response<MotivosResponse>
 
