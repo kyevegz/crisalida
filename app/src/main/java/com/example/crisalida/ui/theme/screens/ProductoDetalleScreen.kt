@@ -56,7 +56,7 @@ fun ProductoDetalleScreen(
                     is Carga.Lista -> Column(
                         modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
                     ) {
-                        Contenido(e.datos, onComprar = { dialogoCompra = true }, onEditar = { onEditar(e.datos.id) })
+                        Contenido(e.datos, onComprar = { dialogoCompra = true }, onEditar = { onEditar(e.datos.id) }, onVolver = onVolver)
                     }
                 }
             }
@@ -82,7 +82,7 @@ fun ProductoDetalleScreen(
 }
 
 @Composable
-private fun Contenido(p: PublicacionDto, onComprar: () -> Unit, onEditar: () -> Unit) {
+private fun Contenido(p: PublicacionDto, onComprar: () -> Unit, onEditar: () -> Unit, onVolver: () -> Unit) {
     var seleccionada by remember(p.id) { mutableIntStateOf(0) }
 
     Box(
@@ -191,6 +191,12 @@ private fun Contenido(p: PublicacionDto, onComprar: () -> Unit, onEditar: () -> 
                     fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFFFFFAFA)
                 )
             }
+            // reportar o bloquear a quien publicó (privado: ella no se entera)
+            Spacer(Modifier.height(12.dp))
+            BotonesReportarBloquear(
+                objetivo = ObjetivoSeguridad.PUBLICACION, objetivoId = p.id, nombre = p.vendedora,
+                puedeBloquear = true, onBloqueada = onVolver
+            )
         }
         Spacer(Modifier.height(28.dp))
     }
@@ -223,7 +229,7 @@ private fun ProductoDetallePreview() {
                 vendedoraAvatar = "🦋", esMia = false, vendidos = 132, calificacion = 4.8, porEncargo = true,
                 imagenes = emptyList(), estado = null, pedidosPendientes = null, puntoEntrega = null
             ),
-            onComprar = {}, onEditar = {}
+            onComprar = {}, onEditar = {}, onVolver = {}
         )
     }
 }

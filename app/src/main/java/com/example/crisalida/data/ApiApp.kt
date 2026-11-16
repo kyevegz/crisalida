@@ -173,7 +173,11 @@ data class RetoDto(
     val estado: String?,                               // aceptado | entregado | validado | abandonado
     // Foto del reto (ruta tipo "/retos/<id>/imagen", ver FotoRemota) y, en el detalle, mi estado en el reto:
     @SerializedName("imagen_ruta") val imagenRuta: String? = null,
-    @SerializedName("mi_estado") val miEstado: String? = null
+    @SerializedName("mi_estado") val miEstado: String? = null,
+    // Solo en el detalle: si el reto lo publicó la propia usuaria, y si hay una cuenta detrás que se pueda bloquear
+    // (los retos de demo no la tienen). Si el servidor no los manda, valen false: sin «Bloquear».
+    @SerializedName("es_mio") val esMio: Boolean = false,
+    val bloqueable: Boolean = false
 )
 
 data class RetosResponse(val retos: List<RetoDto>)

@@ -65,7 +65,10 @@ private data class RetoUi(
     val categoria: String,
     val habilidad: String,
     val duracion: String,
-    val imagenRuta: String?         // ruta de la foto en el servidor
+    val imagenRuta: String?,        // ruta de la foto en el servidor
+    val contratista: String = "",   // quién lo publica (para «Bloquear a …»)
+    val esMio: Boolean = false,     // lo publicó la propia usuaria: no se reporta ni se bloquea
+    val bloqueable: Boolean = false // hay una cuenta detrás (los retos de demo no la tienen)
 )
 
 private val PaletaEtiquetas = listOf(
@@ -90,7 +93,10 @@ private fun RetoDto.aUi(): RetoUi {
         categoria = categoria,
         habilidad = habilidadRequerida ?: "Sin requisito especial",
         duracion = "$duracionMin min. aprox",
-        imagenRuta = imagenRuta
+        imagenRuta = imagenRuta,
+        contratista = contratista,
+        esMio = esMio,
+        bloqueable = bloqueable
     )
 }
 
@@ -267,6 +273,8 @@ fun RetosScreen(
                         onAbrir = { onAbrirDetalle(reto.retoId) },
                         habilitado = !ocupado,
                         mostrarBoton = !SesionActual.esCompradora,   // la compradora solo mira los retos
+                        mostrarSeguridad = true,                     // «Reportar» y «Bloquear» solo en el tablero de disponibles
+                        onBloqueada = activo.recargar,               // al bloquear, el tablero se vuelve a pedir sin esos retos
                         onAceptar = {
                             ejecutar({ RetosRepositorio.aceptar(reto.retoId) },
                                 "¡Reto aceptado! Lo encuentras en «Mis retos». Cuando termines, márcalo como entregado.")
@@ -318,7 +326,9 @@ private fun RetoCard(
     mostrarBoton: Boolean = true,
     onAceptar: () -> Unit = {},
     textoSecundario: String? = null,
-    onSecundario: () -> Unit = {}
+    onSecundario: () -> Unit = {},
+    mostrarSeguridad: Boolean = false,
+    onBloqueada: () -> Unit = {}
 ) {
     Card(
         shape = RoundedCornerShape(6.dp),
@@ -450,15 +460,24 @@ private fun RetoCard(
                 }
             }
 
-            if (mostrarBoton) {
+            val verSeguridad = mostrarSeguridad && !reto.esMio
+            if (mostrarBoton || verSeguridad) {
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    Button(
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    // bloquear y reportar: círculos a la izquierda, como en el diseño
+                    if (verSeguridad) {
+                        IconosReportarBloquear(
+                            objetivo = ObjetivoSeguridad.RETO, objetivoId = reto.retoId, nombre = reto.contratista,
+                            puedeBloquear = reto.bloqueable, onBloqueada = onBloqueada
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    if (mostrarBoton) Button(
                         onClick = onAceptar,
                         enabled = habilitado,
                         modifier = Modifier
-                            .widthIn(min = 191.dp)
+                            .widthIn(min = if (verSeguridad) 150.dp else 191.dp)
                             .heightIn(min = 38.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MkVerde),

@@ -388,7 +388,7 @@ private fun OpcionesPrivacidad(contexto: Context) {
     var mensajePermisos by remember { mutableStateOf<String?>(null) }
 
     TituloOpcion("Usuarias bloqueadas")
-    TextoProximamente("Aquí verás a las personas que bloquees y podrás desbloquearlas. Quien bloqueas no puede verte ni escribirte.")
+    ListaBloqueadas()   // las personas que bloqueaste, con «Desbloquear» (issue 4.9)
 
     Spacer(modifier = Modifier.height(20.dp))
     TituloOpcion("Permisos de la app")
