@@ -35,6 +35,7 @@ import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.FotoRemota
 import com.example.crisalida.data.Borradores
+import com.example.crisalida.data.EstadoCuenta
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.RetosRepositorio
@@ -89,6 +90,7 @@ fun HomeScreen(
     // tras una sesión cerrada por inactividad con un formulario abierto: se ofrece seguir con ese borrador
     val contextoBorrador = androidx.compose.ui.platform.LocalContext.current
     var borradorInterrumpido by remember { mutableStateOf<Borradores.Borrador?>(null) }
+    LaunchedEffect(SesionActual.usuariaId) { EstadoCuenta.refrescar() }   // ¿la cuenta está en reposo? (aviso con «Reactivar»)
     LaunchedEffect(SesionActual.usuariaId) {
         if (SesionActual.token != null && !SesionActual.esCompradora && !SesionActual.esCamuflaje) {
             borradorInterrumpido = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -108,6 +110,7 @@ fun HomeScreen(
                     .fillMaxSize()
                     .verticalScroll(scrollState)
             ) {
+                AvisoCuentaSuspendida(Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp))
                 Spacer(modifier = Modifier.height(24.dp))
 
                 //saludo

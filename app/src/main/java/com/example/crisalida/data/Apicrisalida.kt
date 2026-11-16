@@ -113,6 +113,18 @@ interface ApiService {
     @DELETE("bloqueos/{id}")
     suspend fun desbloquear(@Path("id") id: Int): Response<DesbloqueoResponse>
 
+    @GET("cuenta/estado")
+    suspend fun estadoCuenta(): Response<EstadoCuentaResponse>
+
+    @POST("cuenta/suspender")
+    suspend fun suspenderCuenta(): Response<EstadoCuentaResponse>
+
+    @POST("cuenta/reactivar")
+    suspend fun reactivarCuenta(): Response<EstadoCuentaResponse>
+
+    @POST("cuenta/borrar")
+    suspend fun borrarCuenta(@Body datos: BorrarCuentaRequest): Response<BorrarCuentaResponse>
+
     @GET("perfil/datos")
     suspend fun misDatos(): Response<DatosPersonalesResponse>
 
@@ -275,6 +287,7 @@ object SesionActual {
 
     fun cerrar() {
         ColaEnvios.alCerrarSesion()
+        EstadoCuenta.limpiar()   // el aviso de «cuenta en reposo» es de la sesión que se cierra
         token = null
         tokenRegistro = null
         AuthRepositorio.cancelarRegistro()   // borra de la memoria el seudónimo y PIN pendientes
@@ -321,7 +334,8 @@ object RetrofitCliente {
 
 sealed class ResultadoApi<out T> {
     data class Exito<T>(val datos: T) : ResultadoApi<T>()
-    data class Error(val mensaje: String, val sinConexion: Boolean = false) : ResultadoApi<Nothing>()
+    // codigoHttp: el código que respondió el servidor (409, 401...); 0 si no hubo respuesta
+    data class Error(val mensaje: String, val sinConexion: Boolean = false, val codigoHttp: Int = 0) : ResultadoApi<Nothing>()
 }
 
 /** Envuelve cualquier llamada: devuelve Exito(datos) o Error("mensaje listo para mostrar"). */
@@ -332,7 +346,7 @@ suspend fun <T> llamarApi(llamada: suspend () -> Response<T>): ResultadoApi<T> {
         if (respuesta.isSuccessful && cuerpo != null) {
             ResultadoApi.Exito(cuerpo)
         } else {
-            ResultadoApi.Error(extraerMensaje(respuesta.errorBody()?.string()))
+            ResultadoApi.Error(extraerMensaje(respuesta.errorBody()?.string()), codigoHttp = respuesta.code())
         }
     } catch (e: CancellationException) {
         throw e   // si Android cancela la tarea, no es un error que mostrar
