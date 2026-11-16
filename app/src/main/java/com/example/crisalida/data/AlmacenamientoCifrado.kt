@@ -34,8 +34,10 @@ object AlmacenamientoCifrado {
     private const val BITS_ETIQUETA = 128
 
     // Cada dato se guarda como «<usuaria>:<nombre>»; sin sesión iniciada no se guarda ni se lee nada
-    private fun nombreCompleto(nombre: String): String? =
-        SesionActual.usuariaId.takeIf { it.isNotBlank() }?.let { "$it:$nombre" }
+    // [dueno]: de quién es el dato. Normalmente la usuaria con sesión; el avance del radar durante el registro (aún sin sesión)
+    // lo liga al seudónimo que se está registrando (8.5).
+    private fun nombreCompleto(nombre: String, dueno: String? = null): String? =
+        (dueno ?: SesionActual.usuariaId).takeIf { it.isNotBlank() }?.let { "$it:$nombre" }
 
     @Synchronized
     private fun clave(): SecretKey {
@@ -56,8 +58,8 @@ object AlmacenamientoCifrado {
         contexto.applicationContext.getSharedPreferences(ARCHIVO, Context.MODE_PRIVATE)
 
     /** Guarda [texto] cifrado con el nombre [nombre]. Devuelve false si no se pudo (sin sesión o falla del Keystore). */
-    fun guardar(contexto: Context, nombre: String, texto: String): Boolean {
-        val completo = nombreCompleto(nombre) ?: return false
+    fun guardar(contexto: Context, nombre: String, texto: String, dueno: String? = null): Boolean {
+        val completo = nombreCompleto(nombre, dueno) ?: return false
         return try {
             val cifrador = Cipher.getInstance(TRANSFORMACION)
             cifrador.init(Cipher.ENCRYPT_MODE, clave())   // el Keystore genera un IV nuevo cada vez
@@ -71,8 +73,8 @@ object AlmacenamientoCifrado {
     }
 
     /** Lee y descifra lo guardado con [nombre]. Devuelve null si no hay nada o si no se puede leer (en ese caso lo descarta). */
-    fun leer(contexto: Context, nombre: String): String? {
-        val completo = nombreCompleto(nombre) ?: return null
+    fun leer(contexto: Context, nombre: String, dueno: String? = null): String? {
+        val completo = nombreCompleto(nombre, dueno) ?: return null
         val guardado = prefs(contexto).getString(completo, null) ?: return null
         return try {
             val paquete = Base64.decode(guardado, Base64.NO_WRAP)
@@ -128,8 +130,8 @@ object AlmacenamientoCifrado {
     }
 
     /** Borra un dato de la usuaria actual. */
-    fun borrar(contexto: Context, nombre: String) {
-        val completo = nombreCompleto(nombre) ?: return
+    fun borrar(contexto: Context, nombre: String, dueno: String? = null) {
+        val completo = nombreCompleto(nombre, dueno) ?: return
         prefs(contexto).edit().remove(completo).apply()
     }
 

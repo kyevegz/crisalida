@@ -292,6 +292,7 @@ class MainActivity : ComponentActivity() {
                         composable("radar") {
                             ConEscalaDeTexto(tope = 2f) {
                                 RadarScreen(
+                                    onAbandonar = { navController.popBackStack() },   // salió del radar: ya se borró su avance local
                                     onTerminar = {
                                         // ya se creó la cuenta y la sesión: lo primero es mostrar el código de recuperación
                                         navController.navigate("codigo_recuperacion") {

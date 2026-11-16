@@ -1,5 +1,6 @@
 package com.example.crisalida.ui.theme.screens
 
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.AnnotatedString
@@ -32,9 +34,14 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.example.crisalida.data.*
 import com.example.crisalida.ui.theme.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private val MkTitulo = Color(0xFF9D4067)
 private val MkGris = Color(0xFF545454)
@@ -58,12 +65,17 @@ private val PreguntasAbiertasFijas = setOf("gusta", "sabe")
 @Composable
 fun RadarScreen(
     onTerminar: () -> Unit,
+    // salió del radar a propósito: su avance local ya se borró; quien llama solo regresa a la pantalla anterior
+    onAbandonar: () -> Unit = {},
     // true: ya tiene cuenta (una compradora que vuelve a vender, 6.5). Al aceptar su resultado se guarda en el servidor
     // y solo se cierra la pantalla en lugar de crear la cuenta.
     yaTieneCuenta: Boolean = false
 ) {
     val scope = rememberCoroutineScope()
     val scroll = rememberScrollState()
+    val contexto = LocalContext.current
+    // De quién es el avance local (8.5): la usuaria con sesión o, si se está registrando, su seudónimo
+    val duenoAvance = remember { AvanceRadar.dueno() }
 
     //bloque I (viene del servidor)
     var bloque1 by remember { mutableStateOf<List<PreguntaDto>?>(null) }
@@ -91,12 +103,26 @@ fun RadarScreen(
     //en qué pregunta va (0 = la primera)
     var paso by remember { mutableIntStateOf(0) }
 
+    // Avance local (8.5)
+    var avanceHallado by remember { mutableStateOf<AvanceRadar.Avance?>(null) }   // lo que se encontró guardado y falta decidir
+    var avanceRevisado by remember { mutableStateOf(false) }                      // hasta decidirlo no se guarda nada (no se pisa el anterior)
+    var terminado by remember { mutableStateOf(false) }                           // ya terminó o abandonó: nada más se guarda
+    var confirmarSalida by remember { mutableStateOf(false) }
+
     // Pide las preguntas fijas del Bloque I al abrir la pantalla
     LaunchedEffect(intentoCarga) {
         errorCarga = null
         when (val r = RadarRepositorio.bloque1()) {
             is ResultadoApi.Exito -> bloque1 = r.datos.preguntas.conAbiertasFijas()
             is ResultadoApi.Error -> errorCarga = r.mensaje
+        }
+    }
+
+    // Busca un avance guardado (cifrado, solo en este teléfono) una vez que ya cargó el Bloque I
+    LaunchedEffect(bloque1 != null) {
+        if (bloque1 != null && !avanceRevisado && avanceHallado == null) {
+            val guardado = withContext(Dispatchers.IO) { AvanceRadar.leer(contexto, duenoAvance) }
+            if (guardado != null) avanceHallado = guardado else avanceRevisado = true
         }
     }
 
@@ -214,12 +240,20 @@ fun RadarScreen(
             creandoCuenta = true
             if (yaTieneCuenta) {
                 when (val r = RadarRepositorio.aceptar(actividadesElegidas, tiempo, gusta, sabe, construirRespuestas(), aceptado)) {
-                    is ResultadoApi.Exito -> onTerminar()
+                    is ResultadoApi.Exito -> {
+                        terminado = true
+                        AvanceRadar.borrar(contexto, duenoAvance)   // ya está guardado en el servidor: el avance local sobra
+                        onTerminar()
+                    }
                     is ResultadoApi.Error -> errorFinal = r.mensaje
                 }
             } else {
                 when (val r = AuthRepositorio.completarRegistro(actividadesElegidas, tiempo, gusta, sabe, construirRespuestas(), aceptado)) {
-                    is ResultadoApi.Exito -> onTerminar()
+                    is ResultadoApi.Exito -> {
+                        terminado = true
+                        AvanceRadar.borrar(contexto, duenoAvance)   // la cuenta ya se creó: el avance local sobra
+                        onTerminar()
+                    }
                     is ResultadoApi.Error -> errorFinal = r.mensaje
                 }
             }
@@ -250,6 +284,59 @@ fun RadarScreen(
         siguiente()
     }
 
+    // ---- Avance local (8.5)
+    fun hayAlgo(): Boolean =
+        paso > 0 || respuestas.values.any { it.isNotEmpty() } || textos.values.any { it.isNotBlank() }
+
+    fun construirAvance() = AvanceRadar.Avance(
+        paso = paso,
+        respuestas = respuestas.toMap(),
+        textos = textos.toMap(),
+        analisis = analisis,
+        huellaAnalizada = huellaAnalizada,
+        perfil = perfil,
+        huellaPerfil = huellaPerfil,
+        habilidades = habilidades.toList()
+    )
+
+    // Guarda ya (al pasar la app a segundo plano o cerrarse la sesión por inactividad)
+    fun guardarAvanceAhora() {
+        if (terminado || !avanceRevisado) return
+        if (hayAlgo()) AvanceRadar.guardar(contexto, duenoAvance, construirAvance())
+        else AvanceRadar.borrar(contexto, duenoAvance)
+    }
+
+    fun retomar(av: AvanceRadar.Avance) {
+        respuestas.clear()
+        av.respuestas.orEmpty().forEach { (id, opciones) -> respuestas[id] = opciones }
+        textos.clear()
+        av.textos.orEmpty().forEach { (id, texto) -> textos[id] = texto }
+        analisis = av.analisis
+        huellaAnalizada = av.huellaAnalizada
+        perfil = if (av.analisis != null) av.perfil else null
+        huellaPerfil = if (perfil != null) av.huellaPerfil else null
+        habilidades.clear()
+        if (perfil != null) habilidades.addAll(av.habilidades.orEmpty())
+        // el paso se ajusta a lo que realmente hay (por si cambió el número de preguntas)
+        val din = av.analisis?.preguntas?.size ?: 0
+        val ultimo = when {
+            av.analisis == null -> nB1 - 1
+            perfil != null -> nB1 + din
+            else -> nB1 + din - 1
+        }
+        paso = av.paso.coerceIn(0, maxOf(0, ultimo))
+    }
+
+    fun empezarDeNuevo() {
+        AvanceRadar.borrar(contexto, duenoAvance)
+    }
+
+    fun abandonar() {
+        terminado = true
+        AvanceRadar.borrar(contexto, duenoAvance)
+        onAbandonar()
+    }
+
     fun atras() {
         if (paso > 0 && !ocupado) {
             errorAnalisis = null
@@ -260,6 +347,85 @@ fun RadarScreen(
 
     // El botón «atrás» del teléfono regresa a la pregunta anterior (en la primera hace lo de siempre)
     BackHandler(enabled = paso > 0 && !ocupado) { atras() }
+    // En la primera pregunta, salir con lo ya escrito pregunta primero: salir abandona el radar y borra el avance
+    BackHandler(enabled = paso == 0 && hayAlgo() && !ocupado && avanceHallado == null) { confirmarSalida = true }
+
+    // Se guarda solo mientras contesta (un momento después del último cambio, para no escribir letra por letra)
+    LaunchedEffect(paso, analisis, perfil, respuestas.toMap(), textos.toMap(), habilidades.toList(), avanceRevisado, terminado) {
+        if (terminado || !avanceRevisado) return@LaunchedEffect
+        delay(500)
+        val hay = hayAlgo()
+        val avance = construirAvance()
+        withContext(Dispatchers.IO) {
+            if (hay) AvanceRadar.guardar(contexto, duenoAvance, avance) else AvanceRadar.borrar(contexto, duenoAvance)
+        }
+    }
+
+    // También al pasar la app a segundo plano y antes de que la sesión se cierre por inactividad
+    DisposableEffect(Unit) {
+        val guardar: () -> Unit = { guardarAvanceAhora() }
+        FormulariosAbiertos.registrar(guardar)
+        val ciclo = (contexto as? ComponentActivity)?.lifecycle
+        val observador = LifecycleEventObserver { _, evento -> if (evento == Lifecycle.Event.ON_STOP) guardar() }
+        ciclo?.addObserver(observador)
+        onDispose {
+            FormulariosAbiertos.quitar(guardar)
+            ciclo?.removeObserver(observador)
+        }
+    }
+
+    // ¿Retomar lo que dejó a medias?
+    avanceHallado?.let { av ->
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Retomamos tu avance", fontFamily = OutfitFont, fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    "Dejaste tu radar a medias. Lo guardamos cifrado solo en este teléfono. ¿Quieres continuar donde te quedaste o empezar de nuevo?",
+                    fontFamily = OutfitFont
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    retomar(av)
+                    avanceHallado = null
+                    avanceRevisado = true
+                }) { Text("Continuar", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    empezarDeNuevo()
+                    avanceHallado = null
+                    avanceRevisado = true
+                }) { Text("Empezar de nuevo", fontFamily = OutfitFont, color = MkTitulo) }
+            }
+        )
+    }
+
+    // ¿Salir del radar?
+    if (confirmarSalida) {
+        AlertDialog(
+            onDismissRequest = { confirmarSalida = false },
+            title = { Text("¿Salir del radar?", fontFamily = OutfitFont, fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    "Si sales ahora, se borra lo que llevas contestado. Si prefieres seguir después, solo cierra la app: tu avance queda guardado.",
+                    fontFamily = OutfitFont
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmarSalida = false
+                    abandonar()
+                }) { Text("Salir y borrar", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkVino) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmarSalida = false }) {
+                    Text("Seguir aquí", fontFamily = OutfitFont, color = MkTitulo)
+                }
+            }
+        )
+    }
 
     //es parte del registro, sin barras
     Box(
