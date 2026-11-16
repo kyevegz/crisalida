@@ -138,6 +138,9 @@ interface ApiService {
     @POST("retos")
     suspend fun publicarReto(@Body datos: RetoPublicarRequest, @Header("Idempotency-Key") clave: String?): Response<RetoPublicadoResponse>
 
+    @POST("retos/{id}/imagen")
+    suspend fun subirImagenReto(@Path("id") id: String, @Body imagen: RequestBody): Response<FotoRetoResponse>
+
     @GET("perfil/datos")
     suspend fun misDatos(): Response<DatosPersonalesResponse>
 

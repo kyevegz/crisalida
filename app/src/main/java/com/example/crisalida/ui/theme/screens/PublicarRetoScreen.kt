@@ -1,5 +1,8 @@
 package com.example.crisalida.ui.theme.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.AddPhotoAlternate
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Schedule
@@ -23,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -36,12 +41,16 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.data.MarketplaceRepositorio
+import com.example.crisalida.data.MiniaturaLocal
+import com.example.crisalida.data.prepararFoto
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.RetoPublicadoResponse
 import com.example.crisalida.data.RetoPublicarRequest
 import com.example.crisalida.data.RetosPublicadosRepositorio
 import com.example.crisalida.ui.theme.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -67,8 +76,9 @@ private const val SESENTA_DIAS = 60L * 86_400_000L
 /**
  * Publicar un microrreto (issue 7.5). Formulario sencillo: título, categoría, descripción, recompensa y fecha/hora límite.
  * Antes de llegar aquí se pasa por la puerta del correo (PuertaCorreo): el servidor exige correo verificado.
- * Tras enviarlo, el reto queda "en revisión" y se explica claramente. Las fotos de referencia del diseño todavía no
- * existen en el servidor, por eso no se piden.
+ * Tras enviarlo, el reto queda "en revisión" y se explica claramente.
+ * Foto de referencia: opcional y UNA sola (el servidor guarda una por reto). Se sube después de crear el reto; si falla,
+ * el reto ya quedó enviado y se ofrece reintentar solo la foto.
  */
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -78,6 +88,7 @@ fun PublicarRetoScreen(
 ) {
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
+    val contexto = LocalContext.current
     val categoriasCarga = rememberCarga { MarketplaceRepositorio.categorias("reto") }
 
     var titulo by rememberSaveable { mutableStateOf("") }
@@ -88,8 +99,17 @@ fun PublicarRetoScreen(
     var hora by rememberSaveable { mutableStateOf<Int?>(null) }
     var minuto by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    var errores by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var errorEnvio by remember { mutableStateOf<String?>(null) }
+    var fotoUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    var fotoBytes by remember { mutableStateOf<ByteArray?>(null) }      // la foto ya comprimida, lista para subir
+    var avisoFoto by remember { mutableStateOf<String?>(null) }         // la foto no se pudo subir (el reto sí se envió)
+    var subiendoFoto by remember { mutableStateOf(false) }
+    var retoIdEnviado by remember { mutableStateOf<String?>(null) }
+    val launcherGaleria = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) { fotoUri = uri; fotoBytes = null; errorEnvio = null }
+    }
+
+    var errores by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var enviando by remember { mutableStateOf(false) }
     var resultado by remember { mutableStateOf<RetoPublicadoResponse?>(null) }
     var pideCorreo by remember { mutableStateOf<String?>(null) }
@@ -121,6 +141,16 @@ fun PublicarRetoScreen(
         return e
     }
 
+    suspend fun subirFoto(retoId: String, bytes: ByteArray) {
+        subiendoFoto = true
+        avisoFoto = null
+        when (val f = RetosPublicadosRepositorio.subirFoto(retoId, bytes)) {
+            is ResultadoApi.Exito -> Unit
+            is ResultadoApi.Error -> avisoFoto = f.mensaje
+        }
+        subiendoFoto = false
+    }
+
     fun publicar() {
         if (enviando) return
         errorEnvio = null
@@ -137,8 +167,23 @@ fun PublicarRetoScreen(
         )
         scope.launch {
             enviando = true
+            // la foto se prepara ANTES de publicar: si no se puede leer, no se crea nada y se avisa
+            val uri = fotoUri
+            if (uri != null && fotoBytes == null) {
+                fotoBytes = withContext(Dispatchers.IO) { prepararFoto(contexto, uri) }
+                if (fotoBytes == null) {
+                    errorEnvio = "No pudimos leer esa foto. Elige otra o quítala para publicar sin foto."
+                    enviando = false
+                    return@launch
+                }
+            }
             when (val r = RetosPublicadosRepositorio.publicar(datos, claveEnvio)) {
-                is ResultadoApi.Exito -> resultado = r.datos
+                is ResultadoApi.Exito -> {
+                    resultado = r.datos
+                    retoIdEnviado = r.datos.retoId
+                    val bytes = fotoBytes
+                    if (bytes != null) subirFoto(r.datos.retoId, bytes)
+                }
                 is ResultadoApi.Error ->
                     if (r.codigoHttp == 403 && r.mensaje.contains("correo", ignoreCase = true)) pideCorreo = r.mensaje
                     else errorEnvio = r.mensaje   // filtros de seguridad (422), límites, sin conexión...
@@ -150,6 +195,7 @@ fun PublicarRetoScreen(
     fun empezarOtro() {
         titulo = ""; categoriaId = null; descripcion = ""; recompensa = ""
         fechaMillis = null; hora = null; minuto = null
+        fotoUri = null; fotoBytes = null; avisoFoto = null; retoIdEnviado = null
         errores = emptyMap(); errorEnvio = null; resultado = null
         claveEnvio = UUID.randomUUID().toString()
     }
@@ -211,7 +257,18 @@ fun PublicarRetoScreen(
 
                 val enviado = resultado
                 if (enviado != null) {
-                    RetoEnRevision(enviado.mensaje, onPerfil = { onNavigate("perfil") }, onOtro = { empezarOtro() })
+                    RetoEnRevision(
+                        mensaje = enviado.mensaje,
+                        avisoFoto = avisoFoto,
+                        subiendoFoto = subiendoFoto,
+                        onReintentarFoto = {
+                            val id = retoIdEnviado
+                            val bytes = fotoBytes
+                            if (id != null && bytes != null) scope.launch { subirFoto(id, bytes) }
+                        },
+                        onPerfil = { onNavigate("perfil") },
+                        onOtro = { empezarOtro() }
+                    )
                 } else {
                     Card(
                         shape = RoundedCornerShape(14.dp),
@@ -250,6 +307,42 @@ fun PublicarRetoScreen(
                                 }
                             }
                             errores["categoria"]?.let { TextoError(it) }
+
+                            // ---- foto de referencia (opcional, una sola)
+                            Etiqueta("Imagen de referencia (opcional)")
+                            Text("Puedes agregar una foto que ayude a entender lo que necesitas.", fontFamily = JakartaSansFont, fontSize = 13.sp, color = PrGris)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            val foto = fotoUri
+                            if (foto != null) {
+                                Box(modifier = Modifier.size(120.dp).clip(RoundedCornerShape(8.dp)).background(Color.LightGray)) {
+                                    MiniaturaLocal(uri = foto, modifier = Modifier.fillMaxSize())
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(4.dp)
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xAA000000))
+                                            .clickable(onClickLabel = "Quitar la foto") { fotoUri = null; fotoBytes = null },
+                                        contentAlignment = Alignment.Center
+                                    ) { Text("✕", fontSize = 14.sp, color = Color.White) }
+                                }
+                            } else {
+                                Column(
+                                    modifier = Modifier
+                                        .size(120.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .border(1.dp, PrVino.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                                        .background(PrCampo)
+                                        .clickable(onClickLabel = "Agregar una foto", role = Role.Button) { launcherGaleria.launch("image/*") },
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(Icons.Outlined.AddPhotoAlternate, contentDescription = null, tint = PrVino, modifier = Modifier.size(36.dp))
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text("+ Agregar foto", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = PrVino)
+                                }
+                            }
 
                             // ---- descripción
                             Etiqueta("Descripción")
@@ -404,7 +497,14 @@ fun PublicarRetoScreen(
 // ---------------------------------------------------------------- Después de enviar
 
 @Composable
-private fun RetoEnRevision(mensaje: String, onPerfil: () -> Unit, onOtro: () -> Unit) {
+private fun RetoEnRevision(
+    mensaje: String,
+    avisoFoto: String?,
+    subiendoFoto: Boolean,
+    onReintentarFoto: () -> Unit,
+    onPerfil: () -> Unit,
+    onOtro: () -> Unit
+) {
     Card(
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = PrFondoExito),
@@ -424,6 +524,29 @@ private fun RetoEnRevision(mensaje: String, onPerfil: () -> Unit, onOtro: () -> 
                 "Mientras lo revisamos no aparece en el tablero de retos. Cuando lo aprueben, otras mujeres podrán verlo y aceptarlo.",
                 fontFamily = JakartaSansFont, fontSize = 14.sp, lineHeight = 20.sp, color = PrGris
             )
+        }
+    }
+    if (subiendoFoto) {
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = PrVino, strokeWidth = 2.dp)
+            Spacer(modifier = Modifier.width(10.dp))
+            Text("Subiendo tu foto…", fontFamily = JakartaSansFont, fontSize = 14.sp, color = PrGris)
+        }
+    }
+    if (avisoFoto != null && !subiendoFoto) {
+        Spacer(modifier = Modifier.height(12.dp))
+        Card(
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = PrFondoError),
+            modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite }
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Text("Tu reto se envió, pero la foto no se pudo subir", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = PrError)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(avisoFoto, fontFamily = JakartaSansFont, fontSize = 14.sp, color = PrTexto)
+                TextButton(onClick = onReintentarFoto) { Text("Reintentar subir la foto", fontWeight = FontWeight.Bold, color = PrVino) }
+            }
         }
     }
     Spacer(modifier = Modifier.height(16.dp))
