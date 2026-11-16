@@ -482,13 +482,21 @@ fun RadarScreen(
                     bloque1 == null -> EstadoCarga(errorCarga) { intentoCarga++ }
 
                     enResultado -> {
-                        TarjetaRosa(titulo = "¡Tus habilidades han sido detectadas!", colorTitulo = MkVino) {
+                        TarjetaRosa(titulo = "Esto es lo que vemos en ti", colorTitulo = MkVino) {
                             Text(
-                                text = "Esto es una propuesta: cámbiala como quieras. No se guarda hasta que pulses «Aceptar». Si sales ahora, no queda nada guardado.",
+                                text = "Son sugerencias para orientarte, no un diagnóstico ni una evaluación. Tú decides qué te representa: cámbialas, quita las que no y agrega otras.",
                                 fontFamily = OutfitFont,
                                 fontSize = 16.sp,
                                 lineHeight = 22.sp,
                                 color = Color.Black
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "No se guarda nada hasta que pulses «Aceptar». Si sales ahora, no queda nada guardado.",
+                                fontFamily = OutfitFont,
+                                fontSize = 14.sp,
+                                lineHeight = 20.sp,
+                                color = MkGris
                             )
                             habilidades.forEachIndexed { i, h ->
                                 Spacer(modifier = Modifier.height(16.dp))
@@ -511,14 +519,19 @@ fun RadarScreen(
                                     error = false,
                                     onCambio = { habilidades[i] = h.copy(descripcion = it) }
                                 )
-                                if (habilidades.size > 1) {
-                                    TextButton(
-                                        onClick = { habilidades.removeAt(i) },
-                                        enabled = !ocupado,
-                                        modifier = Modifier.align(Alignment.End)
-                                    ) {
-                                        Text("Quitar", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkVino)
-                                    }
+                                // Siempre se ve «Quitar», pero debe quedar al menos UNA habilidad escrita (nombre de 3 letras o más)
+                                val quedaEscrita = habilidades.filterIndexed { j, otra -> j != i }.any { otra -> otra.titulo.trim().length >= 3 }
+                                TextButton(
+                                    onClick = { habilidades.removeAt(i) },
+                                    enabled = !ocupado && quedaEscrita,
+                                    modifier = Modifier.align(Alignment.End)
+                                ) {
+                                    Text(
+                                        "Quitar esta habilidad",
+                                        fontFamily = OutfitFont,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (quedaEscrita) MkVino else MkPlaceholder
+                                    )
                                 }
                             }
                             if (habilidades.size < MAX_HABILIDADES_PERFIL) {
@@ -529,9 +542,17 @@ fun RadarScreen(
                                     Text("+ Agregar una habilidad", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkVino)
                                 }
                             }
+                            if (habilidades.count { it.titulo.trim().length >= 3 } <= 1) {
+                                Text(
+                                    text = "Debe quedar al menos una habilidad escrita.",
+                                    fontFamily = OutfitFont,
+                                    fontSize = 13.sp,
+                                    color = MkGris
+                                )
+                            }
                             if (!habilidadesValidas) {
                                 Text(
-                                    text = "Cada habilidad necesita un nombre de al menos 3 letras.",
+                                    text = "Cada habilidad necesita un nombre de al menos 3 letras. Escríbelo o quítala.",
                                     fontFamily = OutfitFont,
                                     fontSize = 13.sp,
                                     color = MkVino
