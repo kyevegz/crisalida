@@ -43,6 +43,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.data.CuentaRepositorio
 import com.example.crisalida.data.DatosPersonalesRepositorio
+import com.example.crisalida.data.ROL_COMPRADORA
+import com.example.crisalida.data.ROL_VENDEDORA
+import com.example.crisalida.data.RolActualResponse
 import com.example.crisalida.data.EstadoCuenta
 import com.example.crisalida.data.DatosPersonalesResponse
 import com.example.crisalida.data.ResultadoApi
@@ -61,10 +64,10 @@ private val CuentaExito = Color(0xFF2E7D32)
  *  - Mis datos: correo (se confirma con un código), municipio y localidad. Funciona.
  *  - Suspender mi cuenta (6.3): oculta lo que publica; se reactiva con un botón. No borra nada.
  *  - Borrar mi cuenta (6.3): doble confirmación y PIN. Con pedidos o retos en curso el servidor responde 409 y se ofrece suspender.
- *  - Cambiar de rol: todavía sin conectar.
+ *  - Cambiar de rol (6.5): oculta lo de vendedora (no se borra) y lo devuelve al volver a vender. Sin pedir el PIN.
  */
 @Composable
-fun OpcionesCuenta(onCuentaBorrada: () -> Unit = {}) {
+fun OpcionesCuenta(onCuentaBorrada: () -> Unit = {}, onAbrirRadar: () -> Unit = {}) {
     val scope = rememberCoroutineScope()
     var mensajeSuspension by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var suspendiendo by remember { mutableStateOf(false) }
@@ -97,20 +100,144 @@ fun OpcionesCuenta(onCuentaBorrada: () -> Unit = {}) {
     }
 
     Spacer(modifier = Modifier.height(24.dp))
-    TituloCuenta("Cambiar de rol")
-    val esCompradora = SesionActual.esCompradora
-    TextoCuenta("Tu rol actual: ${if (esCompradora) "Compradora" else "Vendedora"}.")
-    TextoCuenta(
-        if (esCompradora) "Si cambias a vendedora podrás ofrecer productos y servicios, y tendrás bienestar emocional y mascota."
-        else "Si cambias a compradora dejarás de ver tu portafolio y tus publicaciones. No se borran, y puedes volver a vender cuando quieras."
-    )
-    Proximamente()
+    SeccionCambiarRol(onAbrirRadar)
 
     Spacer(modifier = Modifier.height(24.dp))
     SeccionSuspender(mensajeSuspension, suspendiendo, ::suspender)
 
     Spacer(modifier = Modifier.height(24.dp))
     SeccionBorrar(onSuspender = ::suspender, onCuentaBorrada = onCuentaBorrada)
+}
+
+// ---------------------------------------------------------------- Cambiar de rol
+
+@Composable
+private fun SeccionCambiarRol(onAbrirRadar: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    val esCompradora = SesionActual.esCompradora
+    var estadoRol by remember { mutableStateOf<RolActualResponse?>(null) }
+    var radarPendiente by remember { mutableStateOf(false) }
+    var confirmando by remember { mutableStateOf(false) }
+    var cambiando by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var exito by remember { mutableStateOf<String?>(null) }          // mensaje del servidor tras cambiar
+    var ofrecerRadar by remember { mutableStateOf(false) }           // volvió a vender y nunca hizo el radar
+    var enCursoMensaje by remember { mutableStateOf<String?>(null) } // el servidor respondió 409
+
+    // al abrir (y cada vez que cambia el rol): ¿tiene pedidos o retos en curso? ¿le falta el radar?
+    LaunchedEffect(esCompradora) {
+        (CuentaRepositorio.rolActual() as? ResultadoApi.Exito)?.let { estadoRol = it.datos }
+        radarPendiente = !esCompradora && CuentaRepositorio.radarCompletado() == false
+    }
+    val bloqueada = estadoRol?.puedeCambiar == false
+
+    TituloCuenta("Cambiar de rol")
+    TextoCuenta("Tu rol actual: ${if (esCompradora) "Compradora" else "Vendedora"}.")
+    TextoCuenta(
+        if (esCompradora) "Como compradora puedes comprar y publicar retos. Tu portafolio, tu mascota, tu bienestar y tus publicaciones siguen guardados y ocultos. Si vuelves a vender, todo reaparece tal como estaba."
+        else "Si cambias a compradora dejarás de ver tu portafolio, tu mascota, tu bienestar y tus publicaciones. Se guardan ocultos: no se borran y puedes recuperarlos cuando quieras volviendo a vender."
+    )
+    if (bloqueada) {
+        Spacer(modifier = Modifier.height(4.dp))
+        val e = estadoRol?.enCurso
+        TextoCuenta(
+            "Ahora tienes ${e?.pedidos ?: 0} pedido(s) y ${e?.retos ?: 0} reto(s) en curso. " +
+                    "Termínalos antes de cambiar de rol, así no se queda nada a medias."
+        )
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+    BotonCuenta(
+        texto = if (cambiando) "Cambiando…" else if (esCompradora) "Volver a vender" else "Cambiar a compradora",
+        habilitado = !cambiando && !bloqueada
+    ) { error = null; confirmando = true }
+    error?.let { MensajeCuenta(it to false) }
+
+    if (!esCompradora && radarPendiente) {
+        Spacer(modifier = Modifier.height(16.dp))
+        TextoCuenta("Aún no has hecho tu radar de talentos. Toma unos minutos y nos ayuda a conocer tus habilidades.")
+        Spacer(modifier = Modifier.height(8.dp))
+        BotonCuenta("Hacer mi radar de talentos") { onAbrirRadar() }
+    }
+
+    if (confirmando) {
+        val aVender = esCompradora
+        AlertDialog(
+            onDismissRequest = { confirmando = false },
+            title = { Text(if (aVender) "¿Volver a vender?" else "¿Cambiar a compradora?", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = CuentaTitulo) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    if (aVender) {
+                        TextoCuenta("Tu portafolio, tus publicaciones, tu mascota y tu bienestar reaparecen tal como los dejaste. No se perdió nada.")
+                        Spacer(modifier = Modifier.height(6.dp))
+                        TextoCuenta("Si todavía no has hecho el radar de talentos, te lo pediremos ahora.")
+                    } else {
+                        TextoCuenta("Qué se oculta: tu portafolio, tus publicaciones, tu mascota y tu bienestar. Nadie los verá.")
+                        Spacer(modifier = Modifier.height(6.dp))
+                        TextoCuenta("Qué no se pierde: nada se borra. Todo queda guardado.")
+                        Spacer(modifier = Modifier.height(6.dp))
+                        TextoCuenta("Cómo recuperarlo: en Configuración → Cuenta toca «Volver a vender». No necesitas tu PIN.")
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmando = false
+                    val nuevo = if (aVender) ROL_VENDEDORA else ROL_COMPRADORA
+                    scope.launch {
+                        cambiando = true
+                        when (val r = CuentaRepositorio.cambiarRol(nuevo)) {
+                            is ResultadoApi.Exito -> {
+                                SesionActual.aplicarCambioDeRol(r.datos.token, r.datos.rol)   // la barra y el Perfil se actualizan solos
+                                exito = r.datos.mensaje
+                                ofrecerRadar = r.datos.rol == ROL_VENDEDORA && CuentaRepositorio.radarCompletado() == false
+                            }
+                            is ResultadoApi.Error ->
+                                if (r.codigoHttp == 409) enCursoMensaje = r.mensaje else error = r.mensaje
+                        }
+                        cambiando = false
+                    }
+                }) { Text("Sí, cambiar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = CuentaTitulo) }
+            },
+            dismissButton = { TextButton(onClick = { confirmando = false }) { Text("Cancelar", color = CuentaTitulo) } },
+            containerColor = Color.White
+        )
+    }
+
+    exito?.let { mensaje ->
+        AlertDialog(
+            onDismissRequest = { exito = null; ofrecerRadar = false },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    TextoCuenta(mensaje)
+                    if (ofrecerRadar) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TextoCuenta("Un último paso: para empezar a vender necesitamos conocer tus habilidades con el radar de talentos.")
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val irAlRadar = ofrecerRadar
+                    exito = null; ofrecerRadar = false
+                    if (irAlRadar) onAbrirRadar()
+                }) { Text(if (ofrecerRadar) "Hacer mi radar" else "Entendido", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = CuentaTitulo) }
+            },
+            dismissButton = {
+                if (ofrecerRadar) TextButton(onClick = { exito = null; ofrecerRadar = false }) { Text("Más tarde", color = CuentaTitulo) }
+            },
+            containerColor = Color.White
+        )
+    }
+
+    enCursoMensaje?.let { mensaje ->
+        AlertDialog(
+            onDismissRequest = { enCursoMensaje = null },
+            title = { Text("Todavía no puedes cambiar de rol", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = CuentaTitulo) },
+            text = { TextoCuenta(mensaje) },
+            confirmButton = { TextButton(onClick = { enCursoMensaje = null }) { Text("Entendido", fontWeight = FontWeight.Bold, color = CuentaTitulo) } },
+            containerColor = Color.White
+        )
+    }
 }
 
 // ---------------------------------------------------------------- Suspender mi cuenta
@@ -294,18 +421,6 @@ private fun TituloCuenta(texto: String) {
 @Composable
 private fun TextoCuenta(texto: String) {
     Text(text = texto, fontFamily = JakartaSansFont, fontSize = 14.sp, lineHeight = 19.sp, color = CuentaTexto)
-}
-
-@Composable
-private fun Proximamente() {
-    Text(
-        text = "Disponible pronto.",
-        fontFamily = JakartaSansFont,
-        fontWeight = FontWeight.Bold,
-        fontSize = 14.sp,
-        color = CuentaTitulo,
-        modifier = Modifier.padding(top = 4.dp)
-    )
 }
 
 @Composable

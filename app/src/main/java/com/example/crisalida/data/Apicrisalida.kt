@@ -1,5 +1,8 @@
 package com.example.crisalida.data
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.CancellationException
@@ -124,6 +127,12 @@ interface ApiService {
 
     @POST("cuenta/borrar")
     suspend fun borrarCuenta(@Body datos: BorrarCuentaRequest): Response<BorrarCuentaResponse>
+
+    @GET("cuenta/rol")
+    suspend fun rolActual(): Response<RolActualResponse>
+
+    @POST("cuenta/rol")
+    suspend fun cambiarRol(@Body datos: CambioRolRequest): Response<CambioRolResponse>
 
     @GET("perfil/datos")
     suspend fun misDatos(): Response<DatosPersonalesResponse>
@@ -270,7 +279,9 @@ object SesionActual {
     var seudonimo: String = ""
     var avatar: String = "🐱"
     var modo: String = "normal"
-    var rol: String = ROL_VENDEDORA
+    // Es estado de Compose: al cambiar de rol, la barra de navegación y el Perfil se redibujan solos (sin reiniciar la app)
+    var rol by mutableStateOf(ROL_VENDEDORA)
+        private set
 
     val esCamuflaje: Boolean get() = modo == "camuflaje"
     val esCompradora: Boolean get() = rol == ROL_COMPRADORA
@@ -283,6 +294,13 @@ object SesionActual {
         modo = s.modo
         rol = s.rol ?: ROL_VENDEDORA
         ColaEnvios.alIniciarSesion()   // retoma los envíos que quedaron pendientes (cifrados) de esta usuaria
+    }
+
+    /** Cambio de rol (6.5): el servidor devuelve un token nuevo con el rol nuevo; no se pide el PIN otra vez. */
+    fun aplicarCambioDeRol(nuevoToken: String, nuevoRol: String) {
+        token = nuevoToken
+        rol = nuevoRol
+        ProgresoRepositorio.avisarCambio()   // que ninguna pantalla conserve datos del rol anterior
     }
 
     fun cerrar() {

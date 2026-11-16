@@ -3,6 +3,7 @@ package com.example.crisalida.ui.theme.screens
 import androidx.compose.ui.platform.LocalContext
 import com.example.crisalida.data.AlmacenamientoCifrado
 import com.example.crisalida.data.BorradoLocal
+import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.SesionActual
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -180,10 +181,23 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
         ConEscalaDeTexto {
             ConfiguracionScreen(
                 onNavigate = ir, onVolver = volver,
+                onAbrirRadar = { navController.navigate("radar_vendedora") },
                 onCuentaBorrada = {
                     BorradoLocal.todo(contexto)   // la cuenta ya no existe: no queda nada suyo en el teléfono
                     SesionActual.cerrar()
                     navController.navigate("login") { popUpTo(0) { inclusive = true } }
+                }
+            )
+        }
+    }
+    // Radar de talentos para una cuenta que ya existe (una compradora que vuelve a vender, 6.5). Al terminar regresa a Configuración.
+    composable("radar_vendedora") {
+        ConEscalaDeTexto(tope = 2f) {
+            RadarScreen(
+                yaTieneCuenta = true,
+                onTerminar = {
+                    ProgresoRepositorio.avisarCambio()
+                    navController.popBackStack()
                 }
             )
         }

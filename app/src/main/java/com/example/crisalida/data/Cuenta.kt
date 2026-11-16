@@ -21,11 +21,39 @@ data class EstadoCuentaResponse(
 data class BorrarCuentaRequest(val pin: String)
 data class BorrarCuentaResponse(val borrada: Boolean = false, val mensaje: String = "")
 
+// ---- Cambiar de rol (6.5): vendedora <-> compradora. El servidor no borra nada: oculta y devuelve un token nuevo.
+data class EnCursoDto(val pedidos: Int = 0, val retos: Int = 0)
+
+data class RolActualResponse(
+    val rol: String = ROL_VENDEDORA,
+    @SerializedName("en_curso") val enCurso: EnCursoDto = EnCursoDto(),
+    @SerializedName("puede_cambiar") val puedeCambiar: Boolean = true
+)
+
+data class CambioRolRequest(val rol: String)
+
+data class CambioRolResponse(
+    val token: String,
+    val rol: String,
+    val cambio: Boolean = true,
+    val mensaje: String = ""
+)
+
 object CuentaRepositorio {
     suspend fun estado(): ResultadoApi<EstadoCuentaResponse> = llamarApi { RetrofitCliente.api.estadoCuenta() }
     suspend fun suspender(): ResultadoApi<EstadoCuentaResponse> = llamarApi { RetrofitCliente.api.suspenderCuenta() }
     suspend fun reactivar(): ResultadoApi<EstadoCuentaResponse> = llamarApi { RetrofitCliente.api.reactivarCuenta() }
     suspend fun borrar(pin: String): ResultadoApi<BorrarCuentaResponse> = llamarApi { RetrofitCliente.api.borrarCuenta(BorrarCuentaRequest(pin)) }
+
+    suspend fun rolActual(): ResultadoApi<RolActualResponse> = llamarApi { RetrofitCliente.api.rolActual() }
+    suspend fun cambiarRol(rol: String): ResultadoApi<CambioRolResponse> = llamarApi { RetrofitCliente.api.cambiarRol(CambioRolRequest(rol)) }
+
+    /** ¿Ya hizo el radar de talentos? true: sí · false: nunca (el servidor responde 404) · null: no se pudo saber (sin conexión). */
+    suspend fun radarCompletado(): Boolean? =
+        when (val r = llamarApi { RetrofitCliente.api.radarResultado() }) {
+            is ResultadoApi.Exito -> true
+            is ResultadoApi.Error -> if (r.codigoHttp == 404) false else null
+        }
 }
 
 /** Si la cuenta está suspendida (lo leen el aviso de Inicio y de Perfil y la sección Cuenta de Configuración). */
