@@ -48,13 +48,17 @@ fun PublicacionDto.entregaPublicaTexto(): String {
     }
 }
 
-fun PublicacionDto.aPortafolioUi() = PublicacionPortafolio(
+/**
+ * [sinActualizar] = true cuando se muestran datos guardados (sin conexión): las ventas y los pedidos son cosas que
+ * cambian solas, así que NO se muestran como actuales (sin número de ventas y «Pedidos» sin cantidad).
+ */
+fun PublicacionDto.aPortafolioUi(sinActualizar: Boolean = false) = PublicacionPortafolio(
     id = id,
     titulo = titulo,
     precio = precioTexto(),
     estado = estadoTexto(),
-    detalleVentas = ventasTexto(),
+    detalleVentas = if (sinActualizar) "" else ventasTexto(),
     ubicacionDetalle = detalleEntregaTexto(),
-    pedidosCount = pedidosPendientes ?: 0,
+    pedidosCount = if (sinActualizar) -1 else (pedidosPendientes ?: 0),   // -1 = no mostrar la cantidad
     imagenRuta = imagenes.firstOrNull()
 )

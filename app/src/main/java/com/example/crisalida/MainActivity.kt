@@ -19,6 +19,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.crisalida.data.AuthRepositorio
+import com.example.crisalida.data.CacheLocal
 import com.example.crisalida.data.ColaEnvios
 import com.example.crisalida.data.EstadoConexion
 import com.example.crisalida.data.ROL_COMPRADORA
@@ -73,6 +74,7 @@ class MainActivity : ComponentActivity() {
         AjustesTexto.cargar(applicationContext)   // tamaño de letra elegido, guardado en el teléfono
         InactividadSesion.cargar(applicationContext)   // minutos de inactividad elegidos, guardados en el teléfono
         ProteccionPantalla.cargar(applicationContext)   // si se bloquean las capturas, guardado en el teléfono
+        CacheLocal.iniciar(applicationContext)          // última versión de mascota, portafolio y bitácora (para verlos sin conexión)
         ColaEnvios.iniciar(applicationContext)          // cola de envíos pendientes (se envían al volver el internet)
         EstadoConexion.iniciar(applicationContext)      // si hay internet (también al abrir la app ya sin conexión)
         setContent {

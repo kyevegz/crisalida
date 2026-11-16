@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.data.BienestarRepositorio
+import com.example.crisalida.data.Caches
 import com.example.crisalida.data.EntradaBienestar
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.ui.theme.*
@@ -37,7 +38,8 @@ fun BienestarRegistrosScreen(
     var porBorrar by remember { mutableStateOf<String?>(null) }
     var aviso by remember { mutableStateOf<String?>(null) }
     val subtipo = Pestanas[pestana].first
-    val carga = rememberCarga(subtipo, version) { BienestarRepositorio.entradas(subtipo) }
+    // solo la bitácora reciente se guarda en el teléfono para verla sin conexión (los demás registros necesitan internet)
+    val carga = rememberCarga(subtipo, version, cache = if (subtipo == "bitacora") Caches.bitacora else null) { BienestarRepositorio.entradas(subtipo) }
 
     CrisalidaScaffold(currentTitle = "Mis registros", selectedTab = 3, onNavigate = onNavigate) { innerPadding ->
         ContenidoCentrado(innerPadding) {
@@ -65,6 +67,8 @@ fun BienestarRegistrosScreen(
                         )
                     }
                 }
+                NotaUltimaActualizacion(carga.actualizadoEn, carga.recargar)   // sin conexión: lo último guardado, con su fecha
+
                 when (val e = carga.estado) {
                     is Carga.Cargando -> IndicadorCargando()
                     is Carga.Falla -> ErrorDeCarga(e, carga.recargar, "No podemos mostrar tus registros sin conexión.")
