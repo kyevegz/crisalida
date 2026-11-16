@@ -9,6 +9,7 @@ import android.net.Uri
 import org.json.JSONObject
 import androidx.core.content.ContextCompat
 import com.example.crisalida.data.AlmacenamientoCifrado
+import com.example.crisalida.data.Borradores
 import com.example.crisalida.data.ColaEnvios
 import com.example.crisalida.data.FotoRemota
 import com.example.crisalida.data.FotosCamara
@@ -181,6 +182,9 @@ fun PublicarProductoScreen(
 
     // el borrador se guarda solo en este teléfono, CIFRADO (Keystore), sin fotos y sin la dirección privada
     var borradorRecuperado by remember { mutableStateOf(false) }
+    var borradorId by remember { mutableStateOf<String?>(null) }
+    var borradoresGuardados by remember { mutableStateOf<List<Borradores.Borrador>>(emptyList()) }
+    var mostrarBorradores by remember { mutableStateOf(false) }
     var mensajeBorrador by remember { mutableStateOf<String?>(null) }
 
     fun limpiarFormulario() {
@@ -199,33 +203,46 @@ fun PublicarProductoScreen(
             .put("insumos", costoInsumos).put("horas", horasDedicacion).put("precio", precioFinal)
             .put("modalidad", modalidadServicio).put("cobro", tipoCobroServicio).put("entrega", opcionEntrega)
             .put("zona", zonaPublica)
-        if (!AlmacenamientoCifrado.guardar(contexto, BORRADOR_PUBLICACION, j.toString())) {
+        if (borradorId == null && Borradores.lleno(contexto)) {
+            mensajeBorrador = "Ya tienes ${Borradores.MAXIMO} borradores. Elimina alguno para guardar uno nuevo."
+            return
+        }
+        val id = Borradores.guardar(contexto, borradorId, j.toString())
+        if (id == null) {
             mensajeBorrador = "No pudimos guardar el borrador en este teléfono. Intenta de nuevo."
             return
         }
-        mensajeBorrador = "Borrador guardado en este teléfono. La próxima vez que abras «Subir producto» lo recuperas. " +
+        borradorId = id
+        borradoresGuardados = Borradores.listar(contexto)
+        mensajeBorrador = "Borrador guardado, cifrado, en este teléfono. Puedes tener varios y abrirlos desde «Mis borradores». " +
                 "No guarda las fotos ni tu dirección privada: esas hay que volver a agregarlas."
+    }
+
+    fun abrirBorrador(b: Borradores.Borrador) {
+        try {
+            val j = JSONObject(b.datos)
+            tipoPublicacion = j.optInt("tipo", 0)
+            categoriaSeleccionada = j.optString("categoria").ifBlank { null }
+            tituloDescriptivo = j.optString("titulo"); descripcion = j.optString("descripcion")
+            costoInsumos = j.optString("insumos"); horasDedicacion = j.optString("horas"); precioFinal = j.optString("precio")
+            modalidadServicio = j.optInt("modalidad", 1); tipoCobroServicio = j.optInt("cobro", 1); opcionEntrega = j.optInt("entrega", 1)
+            zonaPublica = j.optString("zona")
+            saltarSugerencia = costoInsumos.isNotBlank() || horasDedicacion.isNotBlank()
+            borradorId = b.id
+            borradorRecuperado = true
+        } catch (e: Exception) {
+            Borradores.eliminar(contexto, b.id)
+            borradoresGuardados = Borradores.listar(contexto)
+            mensajeBorrador = "Ese borrador estaba dañado y se eliminó."
+        }
     }
 
     LaunchedEffect(Unit) {
         if (!editando) {
-            val texto = withContext(Dispatchers.IO) {
-                // los borradores de versiones anteriores estaban sin cifrar: se pasan al almacenamiento cifrado
-                AlmacenamientoCifrado.migrarTextoPlano(contexto, "crisalida_borradores", "publicacion", BORRADOR_PUBLICACION)
-                AlmacenamientoCifrado.leer(contexto, BORRADOR_PUBLICACION)
-            } ?: return@LaunchedEffect
-            try {
-                val j = JSONObject(texto)
-                tipoPublicacion = j.optInt("tipo", 0)
-                categoriaSeleccionada = j.optString("categoria").ifBlank { null }
-                tituloDescriptivo = j.optString("titulo"); descripcion = j.optString("descripcion")
-                costoInsumos = j.optString("insumos"); horasDedicacion = j.optString("horas"); precioFinal = j.optString("precio")
-                modalidadServicio = j.optInt("modalidad", 1); tipoCobroServicio = j.optInt("cobro", 1); opcionEntrega = j.optInt("entrega", 1)
-                zonaPublica = j.optString("zona")
-                saltarSugerencia = costoInsumos.isNotBlank() || horasDedicacion.isNotBlank()
-                borradorRecuperado = true
-            } catch (e: Exception) {
-                AlmacenamientoCifrado.borrar(contexto, BORRADOR_PUBLICACION)
+            // pasa a la lista el borrador único de versiones anteriores sin perderlo, y lee todos
+            borradoresGuardados = withContext(Dispatchers.IO) {
+                Borradores.migrar(contexto)
+                Borradores.listar(contexto)
             }
         }
     }
@@ -317,7 +334,7 @@ fun PublicarProductoScreen(
                 is ResultadoApi.Exito -> if (r.datos.estado == ColaEnvios.ESTADO_EN_COLA) {
                     // sin conexión: NO está publicada todavía y no se muestran flores hasta que el servidor confirme
                     publicacionCreada = true
-                    AlmacenamientoCifrado.borrar(contexto, BORRADOR_PUBLICACION)
+                    borradorId?.let { Borradores.eliminar(contexto, it) }
                     mensajePublicar = "Sin conexión: tu publicación quedó guardada en tu teléfono y se enviará sola cuando vuelva el internet. " +
                             "Puedes cancelarla desde tu Perfil. Las flores se sumarán cuando el servidor la confirme."
                 } else {
@@ -328,7 +345,7 @@ fun PublicarProductoScreen(
                         if (subida !is ResultadoApi.Exito) fallidas++
                     }
                     publicacionCreada = true
-                    AlmacenamientoCifrado.borrar(contexto, BORRADOR_PUBLICACION)
+                    borradorId?.let { Borradores.eliminar(contexto, it) }
                     mensajePublicar = buildString {
                         append(if (r.datos.estado == "activo") "¡Tu publicación ya está visible en el marketplace!"
                         else "¡Listo! Tu publicación quedó en revisión; en cuanto la aprobemos se verá en el marketplace.")
@@ -387,10 +404,28 @@ fun PublicarProductoScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text("📝 Recuperamos tu borrador.", fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkVerdeSugeridoTexto, modifier = Modifier.weight(1f))
+                            Text("📝 Estás editando un borrador.", fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkVerdeSugeridoTexto, modifier = Modifier.weight(1f))
                             TextButton(onClick = {
-                                AlmacenamientoCifrado.borrar(contexto, BORRADOR_PUBLICACION); limpiarFormulario(); borradorRecuperado = false
+                                borradorId?.let { Borradores.eliminar(contexto, it) }
+                                borradoresGuardados = Borradores.listar(contexto)
+                                borradorId = null; limpiarFormulario(); borradorRecuperado = false
                             }) { Text("Descartar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkVerdeSugeridoTexto) }
+                        }
+                    }
+                }
+
+                if (!editando && borradoresGuardados.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MkVerdeSugeridoFondo),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text("📝 Mis borradores (${borradoresGuardados.size})", fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkVerdeSugeridoTexto, modifier = Modifier.weight(1f))
+                            TextButton(onClick = { mostrarBorradores = true }) {
+                                Text("Ver", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkVerdeSugeridoTexto)
+                            }
                         }
                     }
                 }
@@ -869,6 +904,37 @@ fun PublicarProductoScreen(
         )
     }
 
+    if (mostrarBorradores) {
+        AlertDialog(
+            onDismissRequest = { mostrarBorradores = false },
+            title = { Text("Mis borradores", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    if (borradoresGuardados.isEmpty()) Text("No tienes borradores guardados.", fontFamily = JakartaSansFont, color = MkSubtitulo)
+                    borradoresGuardados.forEach { b ->
+                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(b.titulo, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MkTitulo, maxLines = 2)
+                                Text(
+                                    java.text.SimpleDateFormat("d MMM, HH:mm", java.util.Locale("es", "MX")).format(java.util.Date(b.actualizadoEn)),
+                                    fontFamily = JakartaSansFont, fontSize = 12.sp, color = MkSubtitulo
+                                )
+                            }
+                            TextButton(onClick = { abrirBorrador(b); mostrarBorradores = false }) { Text("Abrir", color = MkTitulo) }
+                            TextButton(onClick = {
+                                Borradores.eliminar(contexto, b.id)
+                                if (borradorId == b.id) { borradorId = null; borradorRecuperado = false }
+                                borradoresGuardados = Borradores.listar(contexto)
+                            }) { Text("Eliminar", color = MkTitulo) }
+                        }
+                    }
+                }
+            },
+            confirmButton = { Button(onClick = { mostrarBorradores = false }, colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)) { Text("Cerrar", color = Color.White) } },
+            containerColor = Color.White, shape = RoundedCornerShape(12.dp)
+        )
+    }
+
     mensajeBorrador?.let { texto ->
         AlertDialog(
             onDismissRequest = { mensajeBorrador = null },
@@ -1101,5 +1167,3 @@ private fun PreviewOpcionesAgregarFoto() {
         OpcionesAgregarFoto(onGaleria = {}, onCamara = {})
     }
 }
-
-private const val BORRADOR_PUBLICACION = "borrador_publicacion"
