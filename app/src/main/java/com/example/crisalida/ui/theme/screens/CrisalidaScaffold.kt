@@ -36,15 +36,16 @@ import com.example.crisalida.data.AlmacenamientoCifrado
 import com.example.crisalida.data.BorradoLocal
 import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.theme.screens.PreviewResponsivo
+import com.example.crisalida.ui.theme.Paleta
 
 //Colores
-private val MkCrisalida = Color(0xFF9D4067)
-private val MkGrisInicio = Color(0xFF878686)
-private val MkMorado = Color(0xFFA47DAB)
-private val MkTextoEmergencia = Color(0xFFEFD6F3)
-private val MkRosaBarra = Color(0xFFD0A0B5)
-private val MkRosaIconos = Color(0xFFFFDEF7)
-private val MkSeleccionada = Color(0xFF62012A)
+private val MkCrisalida: Color get() = Paleta.tituloRosa
+private val MkGrisInicio: Color get() = Paleta.grisInicio
+private val MkMorado: Color get() = Paleta.moradoAcento
+private val MkTextoEmergencia: Color get() = Paleta.textoEmergencia
+private val MkRosaBarra: Color get() = Paleta.rosaBarra
+private val MkRosaIconos: Color get() = Paleta.iconosBarra
+private val MkSeleccionada: Color get() = Paleta.vino
 
 @Composable
 fun CrisalidaScaffold(

@@ -31,9 +31,10 @@ import com.example.crisalida.data.MarketplaceRepositorio
 import com.example.crisalida.data.PublicacionDto
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
-private val PdGris = Color(0xFF545454)
-private val PdVerde = Color(0xFF1E681E)
-private val PdVino = Color(0xFF6B3045)
+import com.example.crisalida.ui.theme.Paleta
+private val PdGris: Color get() = Paleta.textoGris
+private val PdVerde: Color get() = Paleta.verdeBoton
+private val PdVino: Color get() = Paleta.textoPrincipal
 
 //detalle de producto o servicio
 @Composable
@@ -76,7 +77,7 @@ fun ProductoDetalleScreen(
                 )
             },
             confirmButton = { TextButton(onClick = { dialogoCompra = false }) { Text("Entendido", color = ColorBotonEntrar) } },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 }
@@ -86,7 +87,7 @@ private fun Contenido(p: PublicacionDto, onComprar: () -> Unit, onEditar: () -> 
     var seleccionada by remember(p.id) { mutableIntStateOf(0) }
 
     Box(
-        modifier = Modifier.fillMaxWidth().height(260.dp).background(Color(0xFFD9D9D9)),
+        modifier = Modifier.fillMaxWidth().height(260.dp).background(Paleta.neutroClaro),
         contentAlignment = Alignment.Center
     ) {
         FotoRemota(
@@ -121,23 +122,23 @@ private fun Contenido(p: PublicacionDto, onComprar: () -> Unit, onEditar: () -> 
             fontFamily = JakartaSansFont, fontSize = 13.sp, color = PdGris
         )
         Spacer(Modifier.height(4.dp))
-        Text(p.titulo, fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 26.sp, lineHeight = 31.sp, color = Color.Black)
+        Text(p.titulo, fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 26.sp, lineHeight = 31.sp, color = Paleta.textoNegro)
         Spacer(Modifier.height(8.dp))
         Text(p.precioTexto() + " MXN", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 26.sp, color = PdVerde)
 
         Spacer(Modifier.height(10.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Outlined.StarBorder, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
+            Icon(Icons.Outlined.StarBorder, contentDescription = null, tint = Paleta.textoNegro, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(4.dp))
             Text(
                 (p.calificacion?.let { String.format(java.util.Locale.US, "%.1f", it) } ?: "Nueva") + " · " + p.ventasTexto(),
-                fontFamily = JakartaSansFont, fontSize = 13.sp, color = Color.Black
+                fontFamily = JakartaSansFont, fontSize = 13.sp, color = Paleta.textoNegro
             )
         }
 
         Spacer(Modifier.height(10.dp))
         Row(
-            modifier = Modifier.clip(CircleShape).background(Color(0xFFD3C5CD)).padding(horizontal = 12.dp, vertical = 5.dp),
+            modifier = Modifier.clip(CircleShape).background(Paleta.fondoEtiquetaVendedora).padding(horizontal = 12.dp, vertical = 5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(p.vendedoraAvatar ?: "🌸", fontSize = 14.sp)
@@ -146,16 +147,16 @@ private fun Contenido(p: PublicacionDto, onComprar: () -> Unit, onEditar: () -> 
         }
 
         Spacer(Modifier.height(18.dp))
-        Text("Descripción", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black)
+        Text("Descripción", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Paleta.textoNegro)
         Spacer(Modifier.height(6.dp))
         Text(
             p.descripcion?.takeIf { it.isNotBlank() } ?: "La vendedora no agregó descripción.",
-            fontFamily = JakartaSansFont, fontSize = 15.sp, lineHeight = 22.sp, color = Color(0xFF333333)
+            fontFamily = JakartaSansFont, fontSize = 15.sp, lineHeight = 22.sp, color = Paleta.textoNeutro
         )
 
         Spacer(Modifier.height(18.dp))
         Column(
-            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Color(0xFFF2F0EF)).padding(14.dp),
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Paleta.tarjetaGris).padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Fila(Icons.Outlined.LocalShipping, if (p.tipo == "servicio") "Modalidad" else "Entrega", p.entregaPublicaTexto())
@@ -188,7 +189,7 @@ private fun Contenido(p: PublicacionDto, onComprar: () -> Unit, onEditar: () -> 
             ) {
                 Text(
                     if (p.tipo == "servicio") "Contratar" else if (p.porEncargo) "Hacer encargo" else "Comprar",
-                    fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFFFFFAFA)
+                    fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Paleta.blancoSuave
                 )
             }
             // reportar o bloquear a quien publicó (privado: ella no se entera)
@@ -209,7 +210,7 @@ private fun Fila(icono: androidx.compose.ui.graphics.vector.ImageVector, titulo:
         Spacer(Modifier.width(10.dp))
         Column {
             Text(titulo, fontFamily = JakartaSansFont, fontSize = 12.sp, color = PdGris)
-            Text(valor, fontFamily = OutfitFont, fontWeight = FontWeight.Medium, fontSize = 15.sp, color = Color.Black)
+            Text(valor, fontFamily = OutfitFont, fontWeight = FontWeight.Medium, fontSize = 15.sp, color = Paleta.textoNegro)
         }
     }
 }

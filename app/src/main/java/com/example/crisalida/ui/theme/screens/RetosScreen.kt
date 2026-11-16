@@ -41,14 +41,15 @@ import com.example.crisalida.data.RetosRepositorio
 import kotlinx.coroutines.launch
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.Paleta
 // colores del mockup
-private val MkTitulo = Color(0xFF9D4067)
-private val MkGris = Color(0xFF545454)
-private val MkChipSeleccionado = Color(0xFF62012A)
-private val MkChipNormal = Color(0xFFE0DCDA)
-private val MkVerde = Color(0xFF1E681E)
-private val MkSkillFondo = Color(0xFFE8D7DD)
-private val MkFondoCard = Color(0xFFF2F0EF)
+private val MkTitulo: Color get() = Paleta.tituloRosa
+private val MkGris: Color get() = Paleta.textoGris
+private val MkChipSeleccionado: Color get() = Paleta.vinoFijo
+private val MkChipNormal: Color get() = Paleta.chipNormal
+private val MkVerde: Color get() = Paleta.verdeBoton
+private val MkSkillFondo: Color get() = Paleta.barraFondo
+private val MkFondoCard: Color get() = Paleta.tarjetaGris
 
 private val MargenIzq = 21.dp
 private val MargenDer = 12.dp
@@ -71,12 +72,12 @@ private data class RetoUi(
     val bloqueable: Boolean = false // hay una cuenta detrás (los retos de demo no la tienen)
 )
 
-private val PaletaEtiquetas = listOf(
-    Color(0xFFAFD0DD) to Color(0xFF11215A),
-    Color(0xFFC8AEDD) to Color(0xFF2B115A),
-    Color(0xFFDEBDAE) to Color(0xFF5A2511),
-    Color(0xFFBFDDB5) to Color(0xFF1B3F11),
-    Color(0xFFF0D9A6) to Color(0xFF5A4311)
+private val PaletaEtiquetas: List<Pair<Color, Color>> get() = listOf(
+    Paleta.etiquetaAzulFondo to Paleta.etiquetaAzulTexto,
+    Paleta.etiquetaMoradaFondo to Paleta.etiquetaMoradaTexto,
+    Paleta.etiquetaNaranjaFondo to Paleta.etiquetaNaranjaTexto,
+    Paleta.etiquetaVerdeFondo to Paleta.etiquetaVerdeTexto,
+    Paleta.etiquetaAmbarFondo to Paleta.etiquetaAmbarTexto
 )
 
 private fun RetoDto.aUi(): RetoUi {
@@ -209,7 +210,7 @@ fun RetosScreen(
                                 text = texto,
                                 fontFamily = OutfitFont,
                                 fontSize = 15.sp,
-                                color = if (sel) Color.White else Color.Black
+                                color = if (sel) Paleta.blanco else Paleta.textoNegro
                             )
                         }
                     }
@@ -239,7 +240,7 @@ fun RetosScreen(
                                 fontFamily = OutfitFont,
                                 fontWeight = FontWeight.Normal,
                                 fontSize = 15.sp,
-                                color = if (activoChip) Color.White else Color.Black
+                                color = if (activoChip) Paleta.blanco else Paleta.textoNegro
                             )
                         }
                     }
@@ -304,13 +305,13 @@ fun RetosScreen(
     aviso?.let { texto ->
         AlertDialog(
             onDismissRequest = { aviso = null },
-            text = { Text(text = texto, fontFamily = OutfitFont, color = Color.Black, modifier = Modifier.verticalScroll(rememberScrollState())) },
+            text = { Text(text = texto, fontFamily = OutfitFont, color = Paleta.textoNegro, modifier = Modifier.verticalScroll(rememberScrollState())) },
             confirmButton = {
                 TextButton(onClick = { aviso = null }) {
                     Text(text = "Entendido", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkVerde)
                 }
             },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 }
@@ -349,7 +350,7 @@ private fun RetoCard(
                     fontWeight = FontWeight.Medium,
                     fontSize = 25.sp,
                     lineHeight = 30.sp,
-                    color = Color.Black,
+                    color = Paleta.textoNegro,
                     modifier = Modifier.weight(1f)
                 )
                 Text(
@@ -488,13 +489,13 @@ private fun RetoCard(
                             fontFamily = OutfitFont,
                             fontWeight = FontWeight.Normal,
                             fontSize = 16.sp,
-                            color = Color(0xFFFFFAFA)
+                            color = Paleta.blancoSuave
                         )
                         Spacer(modifier = Modifier.width(5.dp))
                         Icon(
                             imageVector = Icons.Filled.ArrowForward,
                             contentDescription = null,
-                            tint = Color(0xFFFFFAFA),
+                            tint = Paleta.blancoSuave,
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -522,7 +523,7 @@ private fun RetoCardPreview() {
                 retoId = "1", aceptacionId = "a1", estado = "aceptado",
                 titulo = "Etiquetado de frascos para mermelada artesanal",
                 precio = "1,250.00 MXN", etiqueta = "Manualidades",
-                etiquetaFondo = Color(0xFFAFD0DD), etiquetaTexto = Color(0xFF11215A),
+                etiquetaFondo = Paleta.etiquetaAzulFondo, etiquetaTexto = Paleta.etiquetaAzulTexto,
                 categoria = "Manualidades", habilidad = "Trabajo manual y atención al detalle",
                 duracion = "45 min. aprox", imagenRuta = null
             ),

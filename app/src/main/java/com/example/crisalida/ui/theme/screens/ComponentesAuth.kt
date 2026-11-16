@@ -24,6 +24,7 @@ import com.example.crisalida.ui.theme.ColorCamposFondo
 import com.example.crisalida.ui.theme.ColorFondoApp
 import com.example.crisalida.ui.theme.ColorTextoPrincipal
 import com.example.crisalida.ui.theme.JakartaSansFont
+import com.example.crisalida.ui.theme.Paleta
 
 // ancho máximo del contenido de Login y Registro: en tablets o en horizontal no se estira de lado a lado
 private val AnchoMaximoAcceso = 440.dp
@@ -141,7 +142,7 @@ fun MensajeError(error: String?, modifier: Modifier = Modifier) {
             text = error,
             fontFamily = JakartaSansFont,
             fontSize = 13.sp,
-            color = Color(0xFFB3261E),
+            color = Paleta.error,
             textAlign = TextAlign.Center,
             modifier = modifier
                 .fillMaxWidth(0.9f)

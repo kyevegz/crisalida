@@ -22,11 +22,12 @@ import com.example.crisalida.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import com.example.crisalida.ui.theme.Paleta
 
-private val MkTitulo = Color(0xFF7F284F)
-private val MkSubtitulo = Color(0xFF545454)
-private val MkFondoBotonVolver = Color(0xFFE2D4DA)
-private val MkFondoTarjeta = Color(0xFFF7F0F3)
+private val MkTitulo: Color get() = Paleta.titulo
+private val MkSubtitulo: Color get() = Paleta.textoGris
+private val MkFondoBotonVolver: Color get() = Paleta.fondoBotonVolver
+private val MkFondoTarjeta: Color get() = Paleta.fondoBorrador
 
 /**
  * Perfil → Mis borradores (issue 5.9): lista los borradores cifrados de este teléfono, permite abrirlos
@@ -87,8 +88,8 @@ fun MisBorradoresScreen(onNavigate: (String) -> Unit) {
                             onClick = { onNavigate("publicar_producto") },
                             modifier = Modifier.heightIn(min = 48.dp),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)
-                        ) { Text("Crear una publicación", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = Color.White) }
+                            colors = ButtonDefaults.buttonColors(containerColor = Paleta.tituloFijo)
+                        ) { Text("Crear una publicación", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = Paleta.blanco) }
                     }
                     else -> lista.forEach { b ->
                         TarjetaBorrador(
@@ -117,7 +118,7 @@ fun MisBorradoresScreen(onNavigate: (String) -> Unit) {
                 }) { Text("Eliminar", fontWeight = FontWeight.Bold, color = MkTitulo) }
             },
             dismissButton = { TextButton(onClick = { porEliminar = null }) { Text("Cancelar", color = MkTitulo) } },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 }
@@ -137,8 +138,8 @@ private fun TarjetaBorrador(b: Borradores.Borrador, onAbrir: () -> Unit, onElimi
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
                     onClick = onAbrir, modifier = Modifier.heightIn(min = 44.dp), shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)
-                ) { Text("Abrir y editar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White) }
+                    colors = ButtonDefaults.buttonColors(containerColor = Paleta.tituloFijo)
+                ) { Text("Abrir y editar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Paleta.blanco) }
                 OutlinedButton(onClick = onEliminar, modifier = Modifier.heightIn(min = 44.dp), shape = RoundedCornerShape(10.dp)) {
                     Text("Eliminar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MkTitulo)
                 }

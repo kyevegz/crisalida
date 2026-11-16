@@ -32,8 +32,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.data.ProteccionPantalla
 import com.example.crisalida.ui.theme.*
+import com.example.crisalida.ui.theme.Paleta
 
-private val ColorTituloCodigo = Color(0xFF9D4067)
+private val ColorTituloCodigo: Color get() = Paleta.tituloRosa
 
 private const val CODIGO_PARRAFO_1 = "Este código te servirá para recuperar tu PIN si más adelante lo pierdes. " +
     "En caso de que no quieras añadir un correo electrónico, este código es de gran importancia."
@@ -136,7 +137,7 @@ fun CodigoRecuperacionScreen(
                 fontFamily = JakartaSansFont,
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp,
-                color = Color(0xFF2E7D32),
+                color = Paleta.exito,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .padding(top = 4.dp)
@@ -202,7 +203,7 @@ fun CodigoRecuperacionScreen(
                 disabledContainerColor = ColorBotonEntrar.copy(alpha = 0.5f)
             )
         ) {
-            Text("Finalizar", fontFamily = OutfitFont, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+            Text("Finalizar", fontFamily = OutfitFont, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = Paleta.blanco)
         }
     }
 }

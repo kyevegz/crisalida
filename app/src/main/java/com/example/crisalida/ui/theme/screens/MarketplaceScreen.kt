@@ -35,16 +35,17 @@ import com.example.crisalida.data.MarketplaceRepositorio
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.PublicacionDto
 import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
-private val MkTitulo = Color(0xFF9D4067)
-private val MkGrisContador = Color(0xFF545454)
-private val MkChipSeleccionado = Color(0xFF62012A)
-private val MkChipNormal = Color(0xFFE0DCDA)
-private val MkFondoCard = Color(0xFFF2F0EF)
-private val MkTagVendedoraFondo = Color(0xFFD3C5CD)
-private val MkTagVendedoraPunto = Color(0xFF6B3045)
-private val MkVerdePuntoMedio = Color(0xFFA5E3A1)
-private val MkVerdeTextoPunto = Color(0xFF1B5E20)
-private val MkVerdeBotonComprar = Color(0xFF1E681E)
+import com.example.crisalida.ui.theme.Paleta
+private val MkTitulo: Color get() = Paleta.tituloRosa
+private val MkGrisContador: Color get() = Paleta.textoGris
+private val MkChipSeleccionado: Color get() = Paleta.vinoFijo
+private val MkChipNormal: Color get() = Paleta.chipNormal
+private val MkFondoCard: Color get() = Paleta.tarjetaGris
+private val MkTagVendedoraFondo: Color get() = Paleta.fondoEtiquetaVendedora
+private val MkTagVendedoraPunto: Color get() = Paleta.textoPrincipal
+private val MkVerdePuntoMedio: Color get() = Paleta.verdePunto
+private val MkVerdeTextoPunto: Color get() = Paleta.verdeTextoPunto
+private val MkVerdeBotonComprar: Color get() = Paleta.verdeBoton
 
 private val MargenIzq = 19.dp
 private val MargenDer = 11.dp
@@ -186,7 +187,7 @@ private fun ChipFiltro(texto: String, activo: Boolean, onClick: () -> Unit) {
             fontFamily = OutfitFont,
             fontWeight = FontWeight.Medium,
             fontSize = 14.sp,
-            color = if (activo) Color.White else Color.Black
+            color = if (activo) Paleta.blanco else Paleta.textoNegro
         )
     }
 }
@@ -214,7 +215,7 @@ private fun ProductoCard(
                     .fillMaxWidth()
                     .height(180.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFFD9D9D9)),
+                    .background(Paleta.neutroClaro),
                 contentAlignment = Alignment.Center
             ) {
                 if (producto.imagenRuta != null) {
@@ -293,7 +294,7 @@ private fun ProductoCard(
                     Icon(
                         imageVector = Icons.Outlined.StarBorder,
                         contentDescription = "Rating",
-                        tint = Color.Black,
+                        tint = Paleta.textoNegro,
                         modifier = Modifier.size(13.dp)
                     )
                     Spacer(modifier = Modifier.width(2.dp))
@@ -302,7 +303,7 @@ private fun ProductoCard(
                         fontFamily = JakartaSansFont,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Normal,
-                        color = Color.Black
+                        color = Paleta.textoNegro
                     )
                 }
             }
@@ -314,7 +315,7 @@ private fun ProductoCard(
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
                 lineHeight = 26.sp,
-                color = Color.Black
+                color = Paleta.textoNegro
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -361,7 +362,7 @@ private fun ProductoCard(
                         fontWeight = FontWeight.Bold,
                         fontSize = 26.sp,
                         lineHeight = 32.sp,
-                        color = Color.Black
+                        color = Paleta.textoNegro
                     )
                     if (producto.notaPrecio != null) {
                         Text(
@@ -407,7 +408,7 @@ private fun ProductoCard(
                             fontFamily = OutfitFont,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 19.sp,
-                            color = Color.White
+                            color = Paleta.blanco
                         )
                     }
                 }

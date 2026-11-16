@@ -60,14 +60,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
-private val MkTitulo = Color(0xFF7F284F)
-private val MkSubtitulo = Color(0xFF545454)
-private val MkFondoBotonVolver = Color(0xFFE2D4DA)
-private val MkFondoAlertaRosa = Color(0xFFF4E4EC)
-private val MkVerdeSugeridoFondo = Color(0xFFD4EDDA)
-private val MkVerdeSugeridoTexto = Color(0xFF155724)
-private val MkBotonPublicar = Color(0xFF7A2E50)
-private val MkFondoCard = Color(0xFFFFFFFF)
+import com.example.crisalida.ui.theme.Paleta
+private val MkTitulo: Color get() = Paleta.titulo
+private val MkSubtitulo: Color get() = Paleta.textoGris
+private val MkFondoBotonVolver: Color get() = Paleta.fondoBotonVolver
+private val MkFondoAlertaRosa: Color get() = Paleta.fondoAlertaRosa
+private val MkVerdeSugeridoFondo: Color get() = Paleta.verdeSuaveFondo
+private val MkVerdeSugeridoTexto: Color get() = Paleta.verdeSuaveTexto
+private val MkBotonPublicar: Color get() = Paleta.botonVino
+private val MkFondoCard: Color get() = Paleta.superficie
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -528,7 +529,7 @@ fun PublicarProductoScreen(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(8.dp),
                             singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8), focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
+                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Paleta.tarjeta, unfocusedContainerColor = Paleta.tarjeta, focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
                             textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
                         )
 
@@ -551,7 +552,7 @@ fun PublicarProductoScreen(
                                         Surface(
                                             onClick = { categoriaSeleccionada = cat },
                                             shape = RoundedCornerShape(16.dp),
-                                            color = if (isSelected) MkTitulo else ColorCamposFondo.copy(alpha = 0.5f),
+                                            color = if (isSelected) Paleta.tituloFijo else ColorCamposFondo.copy(alpha = 0.5f),
                                             modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 36.dp)
                                         ) {
                                             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)) {
@@ -560,7 +561,7 @@ fun PublicarProductoScreen(
                                                     fontFamily = JakartaSansFont,
                                                     fontSize = 11.sp,
                                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                    color = if (isSelected) Color.White else ColorTextoPrincipal,
+                                                    color = if (isSelected) Paleta.blanco else ColorTextoPrincipal,
                                                     maxLines = 2,
                                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
@@ -586,7 +587,7 @@ fun PublicarProductoScreen(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             fotosExistentes.toList().forEach { ruta ->
-                                Box(modifier = Modifier.size(90.dp).clip(RoundedCornerShape(8.dp)).background(Color.LightGray)) {
+                                Box(modifier = Modifier.size(90.dp).clip(RoundedCornerShape(8.dp)).background(Paleta.fondoNeutro)) {
                                     FotoRemota(ruta = ruta, modifier = Modifier.fillMaxSize())
                                     Box(
                                         modifier = Modifier
@@ -594,7 +595,7 @@ fun PublicarProductoScreen(
                                             .padding(3.dp)
                                             .size(22.dp)
                                             .clip(RoundedCornerShape(11.dp))
-                                            .background(Color(0xAA000000))
+                                            .background(Paleta.velo)
                                             .clickable {
                                                 scope.launch {
                                                     when (val r = PublicacionesRepositorio.borrarFoto(publicacionId.orEmpty(), ruta)) {
@@ -605,12 +606,12 @@ fun PublicarProductoScreen(
                                             },
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Text(text = "✕", fontSize = 12.sp, color = Color.White)
+                                        Text(text = "✕", fontSize = 12.sp, color = Paleta.blanco)
                                     }
                                 }
                             }
                             imagenesSeleccionadas.toList().forEach { uri ->
-                                Box(modifier = Modifier.size(90.dp).clip(RoundedCornerShape(8.dp)).background(Color.LightGray)) {
+                                Box(modifier = Modifier.size(90.dp).clip(RoundedCornerShape(8.dp)).background(Paleta.fondoNeutro)) {
                                     MiniaturaLocal(uri = uri, modifier = Modifier.fillMaxSize())
                                     Box(
                                         modifier = Modifier
@@ -618,11 +619,11 @@ fun PublicarProductoScreen(
                                             .padding(3.dp)
                                             .size(22.dp)
                                             .clip(RoundedCornerShape(11.dp))
-                                            .background(Color(0xAA000000))
+                                            .background(Paleta.velo)
                                             .clickable { imagenesSeleccionadas.remove(uri); FotosCamara.borrar(contexto, uri) },
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Text(text = "✕", fontSize = 12.sp, color = Color.White)
+                                        Text(text = "✕", fontSize = 12.sp, color = Paleta.blanco)
                                     }
                                 }
                             }
@@ -632,7 +633,7 @@ fun PublicarProductoScreen(
                                         .size(90.dp)
                                         .clip(RoundedCornerShape(8.dp))
                                         .border(1.dp, MkTitulo.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                                        .background(Color(0xFFFAF8F8))
+                                        .background(Paleta.tarjeta)
                                         .clickable(onClickLabel = "Agregar foto") {
                                             // con cámara: elegir entre galería y cámara; sin cámara: directo a la galería
                                             if (FotosCamara.hayCamara(contexto)) mostrarOpcionesFoto = true
@@ -659,7 +660,7 @@ fun PublicarProductoScreen(
                             placeholder = { Text("Detalla los materiales, duración o lo que incluye tu servicio...", fontFamily = JakartaSansFont, fontSize = 13.sp) },
                             modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp),
                             shape = RoundedCornerShape(8.dp),
-                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8), focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
+                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Paleta.tarjeta, unfocusedContainerColor = Paleta.tarjeta, focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
                             textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
                         )
                     }
@@ -712,7 +713,7 @@ fun PublicarProductoScreen(
                                     placeholder = { Text("\$ 0.00", fontFamily = JakartaSansFont, fontSize = 13.sp) },
                                     singleLine = true,
                                     shape = RoundedCornerShape(8.dp),
-                                    colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8)),
+                                    colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Paleta.tarjeta, unfocusedContainerColor = Paleta.tarjeta),
                                     textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp)
                                 )
                             }
@@ -728,7 +729,7 @@ fun PublicarProductoScreen(
                                     placeholder = { Text("Ej. 1.5", fontFamily = JakartaSansFont, fontSize = 13.sp) },
                                     singleLine = true,
                                     shape = RoundedCornerShape(8.dp),
-                                    colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8)),
+                                    colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Paleta.tarjeta, unfocusedContainerColor = Paleta.tarjeta),
                                     textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp)
                                 )
                             }
@@ -760,7 +761,7 @@ fun PublicarProductoScreen(
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(8.dp),
-                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8)),
+                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Paleta.tarjeta, unfocusedContainerColor = Paleta.tarjeta),
                             textStyle = TextStyle(fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MkTitulo)
                         )
                     }
@@ -818,7 +819,7 @@ fun PublicarProductoScreen(
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(8.dp),
-                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8), focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
+                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Paleta.tarjeta, unfocusedContainerColor = Paleta.tarjeta, focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
                             textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
                         )
                         Spacer(modifier = Modifier.height(10.dp))
@@ -830,7 +831,7 @@ fun PublicarProductoScreen(
                             placeholder = { Text("Opcional. Se guarda cifrada y nunca se muestra al público", fontFamily = JakartaSansFont, fontSize = 13.sp) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(8.dp),
-                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color(0xFFFAF8F8), unfocusedContainerColor = Color(0xFFFAF8F8), focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
+                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Paleta.tarjeta, unfocusedContainerColor = Paleta.tarjeta, focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
                             textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
                         )
                     }
@@ -845,7 +846,7 @@ fun PublicarProductoScreen(
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MkBotonPublicar)
                 ) {
-                    Text(text = if (publicando) (if (editando) "Guardando…" else "Publicando…") else if (editando) "Guardar cambios" else if (tipoPublicacion == 0) "Publicar Producto" else "Publicar Servicio", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
+                    Text(text = if (publicando) (if (editando) "Guardando…" else "Publicando…") else if (editando) "Guardar cambios" else if (tipoPublicacion == 0) "Publicar Producto" else "Publicar Servicio", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Paleta.blanco)
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -888,7 +889,7 @@ fun PublicarProductoScreen(
                 )
             },
             confirmButton = { TextButton(onClick = { mostrarOpcionesFoto = false }) { Text("Cancelar", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo) } },
-            containerColor = Color.White, shape = RoundedCornerShape(12.dp)
+            containerColor = Paleta.superficie, shape = RoundedCornerShape(12.dp)
         )
     }
 
@@ -908,11 +909,11 @@ fun PublicarProductoScreen(
             confirmButton = {
                 Button(
                     onClick = { mostrarExplicacionCamara = false; launcherPermisoCamara.launch(Manifest.permission.CAMERA) },
-                    colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)
-                ) { Text("Continuar", color = Color.White) }
+                    colors = ButtonDefaults.buttonColors(containerColor = Paleta.tituloFijo)
+                ) { Text("Continuar", color = Paleta.blanco) }
             },
             dismissButton = { TextButton(onClick = { mostrarExplicacionCamara = false }) { Text("Ahora no", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkTitulo) } },
-            containerColor = Color.White, shape = RoundedCornerShape(12.dp)
+            containerColor = Paleta.superficie, shape = RoundedCornerShape(12.dp)
         )
     }
 
@@ -920,8 +921,8 @@ fun PublicarProductoScreen(
         AlertDialog(
             onDismissRequest = { mensajeCamara = null },
             text = { Text(texto, fontFamily = JakartaSansFont, color = MkSubtitulo, modifier = Modifier.verticalScroll(rememberScrollState())) },
-            confirmButton = { Button(onClick = { mensajeCamara = null }, colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)) { Text("Entendido", color = Color.White) } },
-            containerColor = Color.White, shape = RoundedCornerShape(12.dp)
+            confirmButton = { Button(onClick = { mensajeCamara = null }, colors = ButtonDefaults.buttonColors(containerColor = Paleta.tituloFijo)) { Text("Entendido", color = Paleta.superficie) } },
+            containerColor = Paleta.superficie, shape = RoundedCornerShape(12.dp)
         )
     }
 
@@ -951,8 +952,8 @@ fun PublicarProductoScreen(
                     }
                 }
             },
-            confirmButton = { Button(onClick = { mostrarBorradores = false }, colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)) { Text("Cerrar", color = Color.White) } },
-            containerColor = Color.White, shape = RoundedCornerShape(12.dp)
+            confirmButton = { Button(onClick = { mostrarBorradores = false }, colors = ButtonDefaults.buttonColors(containerColor = Paleta.tituloFijo)) { Text("Cerrar", color = Paleta.superficie) } },
+            containerColor = Paleta.superficie, shape = RoundedCornerShape(12.dp)
         )
     }
 
@@ -961,8 +962,8 @@ fun PublicarProductoScreen(
             onDismissRequest = { mensajeBorrador = null },
             title = { Text("Borrador", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, color = MkTitulo) },
             text = { Text(texto, fontFamily = JakartaSansFont, color = MkSubtitulo, modifier = Modifier.verticalScroll(rememberScrollState())) },
-            confirmButton = { Button(onClick = { mensajeBorrador = null }, colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)) { Text("Aceptar", color = Color.White) } },
-            containerColor = Color.White, shape = RoundedCornerShape(12.dp)
+            confirmButton = { Button(onClick = { mensajeBorrador = null }, colors = ButtonDefaults.buttonColors(containerColor = Paleta.tituloFijo)) { Text("Aceptar", color = Paleta.superficie) } },
+            containerColor = Paleta.superficie, shape = RoundedCornerShape(12.dp)
         )
     }
 
@@ -973,10 +974,10 @@ fun PublicarProductoScreen(
             confirmButton = {
                 Button(
                     onClick = { mensajePublicar = null; if (publicacionCreada) { if (editando && onEditado != null) onEditado() else onNavigate("portafolio_completo") } },
-                    colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)
-                ) { Text(if (publicacionCreada) "Ver mi catálogo" else "Entendido", color = Color.White) }
+                    colors = ButtonDefaults.buttonColors(containerColor = Paleta.tituloFijo)
+                ) { Text(if (publicacionCreada) "Ver mi catálogo" else "Entendido", color = Paleta.blanco) }
             },
-            containerColor = Color.White, shape = RoundedCornerShape(12.dp)
+            containerColor = Paleta.superficie, shape = RoundedCornerShape(12.dp)
         )
     }
 
@@ -1000,12 +1001,12 @@ fun PublicarProductoScreen(
                     Spacer(modifier = Modifier.height(10.dp))
                     Card(
                         shape = RoundedCornerShape(10.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F0EF)),
+                        colors = CardDefaults.cardColors(containerColor = Paleta.tarjetaGris),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(10.dp)) {
                             Box(
-                                modifier = Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFFD9D9D9)),
+                                modifier = Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(8.dp)).background(Paleta.neutroClaro),
                                 contentAlignment = Alignment.Center
                             ) {
                                 val nueva = imagenesSeleccionadas.firstOrNull()
@@ -1028,24 +1029,24 @@ fun PublicarProductoScreen(
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 tituloDescriptivo.ifBlank { "(escribe un título)" },
-                                fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black
+                                fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Paleta.textoNegro
                             )
                             Text(
                                 if (precioNum != null && precioNum > 0) formatoPrecio(precioNum) + " MXN" else "(escribe un precio)",
-                                fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF1E681E)
+                                fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Paleta.verdeBoton
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(entregaTxt, fontFamily = JakartaSansFont, fontSize = 13.sp, color = MkSubtitulo)
                             if (descripcion.isNotBlank()) {
                                 Spacer(modifier = Modifier.height(6.dp))
-                                Text(descripcion, fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = Color(0xFF333333))
+                                Text(descripcion, fontFamily = JakartaSansFont, fontSize = 13.sp, lineHeight = 18.sp, color = Paleta.textoNeutro)
                             }
                         }
                     }
                 }
             },
-            confirmButton = { Button(onClick = { mostrarDialogoVistaPrevia = false }, colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)) { Text("Cerrar", color = Color.White) } },
-            containerColor = Color.White, shape = RoundedCornerShape(12.dp)
+            confirmButton = { Button(onClick = { mostrarDialogoVistaPrevia = false }, colors = ButtonDefaults.buttonColors(containerColor = Paleta.tituloFijo)) { Text("Cerrar", color = Paleta.superficie) } },
+            containerColor = Paleta.superficie, shape = RoundedCornerShape(12.dp)
         )
     }
 }
@@ -1061,8 +1062,8 @@ private fun TabTipoPublicacion(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(10.dp),
-        color = if (seleccionado) Color.White else Color.Transparent,
-        border = if (!seleccionado) BorderStroke(1.dp, Color(0xFFD3C5CD)) else null,
+        color = if (seleccionado) Paleta.superficie else Color.Transparent,
+        border = if (!seleccionado) BorderStroke(1.dp, Paleta.fondoEtiquetaVendedoraLinea) else null,
         shadowElevation = if (seleccionado) 2.dp else 0.dp,
         modifier = modifier.heightIn(min = 44.dp)
     ) {
@@ -1083,12 +1084,12 @@ private fun BotonEsquemaCobro(titulo: String, seleccionado: Boolean, modifier: M
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(8.dp),
-        color = if (seleccionado) MkTitulo else Color(0xFFFAF8F8),
-        border = BorderStroke(1.dp, if (seleccionado) MkTitulo else Color(0xFFE2D4DA)),
+        color = if (seleccionado) Paleta.tituloFijo else Paleta.tarjeta,
+        border = BorderStroke(1.dp, if (seleccionado) MkTitulo else Paleta.fondoBotonVolverLinea),
         modifier = modifier.fillMaxHeight().heightIn(min = 38.dp)
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-            Text(text = titulo, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(horizontal = 4.dp), color = if (seleccionado) Color.White else MkTitulo)
+            Text(text = titulo, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 12.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(horizontal = 4.dp), color = if (seleccionado) Paleta.blanco else MkTitulo)
         }
     }
 }
@@ -1098,8 +1099,8 @@ private fun OpcionEntregaItem(titulo: String, subtitulo: String, badge: String, 
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(10.dp),
-        color = if (seleccionada) Color(0xFFFAF0F4) else Color(0xFFFAF8F8),
-        border = BorderStroke(1.dp, if (seleccionada) MkTitulo else Color(0xFFE2D4DA)),
+        color = if (seleccionada) Paleta.rosaMuyClaro else Paleta.tarjeta,
+        border = BorderStroke(1.dp, if (seleccionada) MkTitulo else Paleta.fondoBotonVolverLinea),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.Top) {
@@ -1184,7 +1185,7 @@ private fun OpcionesAgregarFoto(onGaleria: () -> Unit, onCamara: () -> Unit) {
 @PreviewResponsivo
 @Composable
 private fun PreviewOpcionesAgregarFoto() {
-    Column(modifier = Modifier.background(Color.White).padding(16.dp)) {
+    Column(modifier = Modifier.background(Paleta.superficie).padding(16.dp)) {
         OpcionesAgregarFoto(onGaleria = {}, onCamara = {})
     }
 }

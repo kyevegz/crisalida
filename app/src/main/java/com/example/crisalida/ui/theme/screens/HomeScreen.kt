@@ -47,20 +47,21 @@ import com.example.crisalida.data.MarketplaceRepositorio
 import com.example.crisalida.data.RetoDto
 import kotlinx.coroutines.launch
 import com.example.crisalida.ui.theme.screens.CrisalidaScaffold
+import com.example.crisalida.ui.theme.Paleta
 
 
-private val MkFondo = Color(0xFFF2F0EF)
-private val MkTitulo = Color(0xFF7F284F)
-private val MkSubtitulo = Color(0xFF545454)
-private val MkMorado = Color(0xFFA47DAB)
-private val MkVerde = Color(0xFF005524)
-private val MkVerdeChip = Color(0xFF007032)
-private val MkTextoOscuro = Color(0xFF1E1B1D)
-private val MkTextoSuave = Color(0xFF544247)
-private val MkSuperficieSuave = Color(0xFFF9F2F4)
-private val MkChipFondo = Color(0xFFFBD7FF)
-private val MkChipTexto = Color(0xFF5C3A64)
-private val MkTrack = Color(0xFFE8E1E3)
+private val MkFondo: Color get() = Paleta.tarjetaGris
+private val MkTitulo: Color get() = Paleta.titulo
+private val MkSubtitulo: Color get() = Paleta.textoGris
+private val MkMorado: Color get() = Paleta.moradoAcento
+private val MkVerde: Color get() = Paleta.verdeOscuro
+private val MkVerdeChip: Color get() = Paleta.verdeChip
+private val MkTextoOscuro: Color get() = Paleta.textoOscuro
+private val MkTextoSuave: Color get() = Paleta.textoSuave
+private val MkSuperficieSuave: Color get() = Paleta.superficieSuave
+private val MkChipFondo: Color get() = Paleta.chipRosa
+private val MkChipTexto: Color get() = Paleta.chipRosaTexto
+private val MkTrack: Color get() = Paleta.pistaBarra
 private val MargenIzqArriba = 19.dp
 private val MargenDerArriba = 12.dp
 private val MargenTarjetas = 15.dp
@@ -216,7 +217,7 @@ fun HomeScreen(
                             fontFamily = JakartaSansFont,
                             fontWeight = FontWeight.Normal,
                             fontSize = 15.sp,
-                            color = Color.White
+                            color = Paleta.blanco
                         )
                     }
 
@@ -238,7 +239,7 @@ fun HomeScreen(
                     }
                     Card(
                         shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = Paleta.superficie),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -273,7 +274,7 @@ fun HomeScreen(
                                             Icon(
                                                 imageVector = if (datos?.lilu?.reposo == true) Icons.Outlined.Bedtime else Icons.Outlined.WbSunny,
                                                 contentDescription = null,
-                                                tint = Color.White,
+                                                tint = Paleta.blanco,
                                                 modifier = Modifier.size(10.dp)
                                             )
                                             Spacer(modifier = Modifier.width(1.dp))
@@ -283,7 +284,7 @@ fun HomeScreen(
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 12.sp,
                                                 lineHeight = 17.sp,
-                                                color = Color.White
+                                                color = Paleta.blanco
                                             )
                                         }
                                     }
@@ -412,7 +413,7 @@ fun HomeScreen(
                             fontFamily = JakartaSansFont,
                             fontWeight = FontWeight.Normal,
                             fontSize = 15.sp,
-                            color = Color.White
+                            color = Paleta.blanco
                         )
                     }
 
@@ -551,7 +552,7 @@ fun HomeScreen(
                             Icon(
                                 imageVector = Icons.Outlined.Bolt,
                                 contentDescription = null,
-                                tint = Color.White,
+                                tint = Paleta.blanco,
                                 modifier = Modifier.size(19.dp)
                             )
                             Spacer(modifier = Modifier.width(2.dp))
@@ -560,7 +561,7 @@ fun HomeScreen(
                                 fontFamily = OutfitFont,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 18.sp,
-                                color = Color.White,
+                                color = Paleta.blanco,
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -596,7 +597,7 @@ fun HomeScreen(
                     Text("Ahora no", fontFamily = JakartaSansFont, color = MkMorado)
                 }
             },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 
@@ -609,7 +610,7 @@ fun HomeScreen(
                     Text(text = "Entendido", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = MkMorado)
                 }
             },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 }
@@ -706,7 +707,7 @@ private fun BotonInicio(texto: String, onClick: () -> Unit) {
         colors = ButtonDefaults.buttonColors(containerColor = MkMorado),
         shape = RoundedCornerShape(8.dp)
     ) {
-        Text(text = texto, fontFamily = JakartaSansFont, fontSize = 15.sp, color = Color.White)
+        Text(text = texto, fontFamily = JakartaSansFont, fontSize = 15.sp, color = Paleta.blanco)
     }
 }
 
@@ -728,7 +729,7 @@ private fun ProductoDestacado(p: PublicacionDto, onAbrir: (String) -> Unit) {
                     modifier = Modifier
                         .size(width = 96.dp, height = 78.dp)
                         .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0xFFD9D9D9))
+                        .background(Paleta.neutroClaro)
                 ) {
                     FotoRemota(ruta = p.imagenes.firstOrNull(), modifier = Modifier.fillMaxSize())
                 }
@@ -767,7 +768,7 @@ private fun ProductoDestacado(p: PublicacionDto, onAbrir: (String) -> Unit) {
                 colors = ButtonDefaults.buttonColors(containerColor = MkVerde),
                 shape = RoundedCornerShape(4.dp)
             ) {
-                Text(text = "Ver producto", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
+                Text(text = "Ver producto", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Paleta.blanco)
             }
         }
     }

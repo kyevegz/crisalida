@@ -56,17 +56,18 @@ import java.util.Calendar
 import java.util.Locale
 import java.util.TimeZone
 import java.util.UUID
+import com.example.crisalida.ui.theme.Paleta
 
-private val PrVino = Color(0xFF7F284F)
-private val PrGris = Color(0xFF545454)
-private val PrTexto = Color(0xFF2B2B2B)
-private val PrFondoVolver = Color(0xFFE2D4DA)
-private val PrFondoIntro = Color(0xFFE6D6DE)
-private val PrCampo = Color(0xFFFAF8F8)
-private val PrError = Color(0xFFB3261E)
-private val PrFondoError = Color(0xFFFBE9E7)
-private val PrFondoExito = Color(0xFFE3F1E6)
-private val PrVerde = Color(0xFF2E7D32)
+private val PrVino: Color get() = Paleta.titulo
+private val PrGris: Color get() = Paleta.textoGris
+private val PrTexto: Color get() = Paleta.textoCampo
+private val PrFondoVolver: Color get() = Paleta.fondoBotonVolver
+private val PrFondoIntro: Color get() = Paleta.fondoIntro
+private val PrCampo: Color get() = Paleta.tarjeta
+private val PrError: Color get() = Paleta.error
+private val PrFondoError: Color get() = Paleta.fondoError
+private val PrFondoExito: Color get() = Paleta.fondoExito
+private val PrVerde: Color get() = Paleta.exito
 
 private const val MAX_TITULO = 120
 private const val MAX_DESCRIPCION = 1500
@@ -237,9 +238,9 @@ fun PublicarRetoScreen(
                 ) {
                     Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.Top) {
                         Box(
-                            modifier = Modifier.size(40.dp).clip(CircleShape).background(PrVino.copy(alpha = 0.55f)),
+                            modifier = Modifier.size(40.dp).clip(CircleShape).background(Paleta.tituloFijo.copy(alpha = 0.55f)),
                             contentAlignment = Alignment.Center
-                        ) { Icon(Icons.Outlined.VolunteerActivism, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp)) }
+                        ) { Icon(Icons.Outlined.VolunteerActivism, contentDescription = null, tint = Paleta.blanco, modifier = Modifier.size(22.dp)) }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text("Recibe ayuda mientras ayudas", fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = PrVino)
@@ -272,7 +273,7 @@ fun PublicarRetoScreen(
                 } else {
                     Card(
                         shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = Paleta.superficie),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -314,7 +315,7 @@ fun PublicarRetoScreen(
                             Spacer(modifier = Modifier.height(8.dp))
                             val foto = fotoUri
                             if (foto != null) {
-                                Box(modifier = Modifier.size(120.dp).clip(RoundedCornerShape(8.dp)).background(Color.LightGray)) {
+                                Box(modifier = Modifier.size(120.dp).clip(RoundedCornerShape(8.dp)).background(Paleta.fondoNeutro)) {
                                     MiniaturaLocal(uri = foto, modifier = Modifier.fillMaxSize())
                                     Box(
                                         modifier = Modifier
@@ -322,10 +323,10 @@ fun PublicarRetoScreen(
                                             .padding(4.dp)
                                             .size(32.dp)
                                             .clip(CircleShape)
-                                            .background(Color(0xAA000000))
+                                            .background(Paleta.velo)
                                             .clickable(onClickLabel = "Quitar la foto") { fotoUri = null; fotoBytes = null },
                                         contentAlignment = Alignment.Center
-                                    ) { Text("✕", fontSize = 14.sp, color = Color.White) }
+                                    ) { Text("✕", fontSize = 14.sp, color = Paleta.blanco) }
                                 }
                             } else {
                                 Column(
@@ -436,10 +437,10 @@ fun PublicarRetoScreen(
                         enabled = !enviando,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
                         shape = RoundedCornerShape(6.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = PrVino)
+                        colors = ButtonDefaults.buttonColors(containerColor = Paleta.tituloFijo)
                     ) {
-                        if (enviando) CircularProgressIndicator(modifier = Modifier.size(22.dp), color = Color.White, strokeWidth = 2.dp)
-                        else Text("Publicar microrreto", fontFamily = OutfitFont, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, color = Color.White)
+                        if (enviando) CircularProgressIndicator(modifier = Modifier.size(22.dp), color = Paleta.blanco, strokeWidth = 2.dp)
+                        else Text("Publicar microrreto", fontFamily = OutfitFont, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, color = Paleta.blanco)
                     }
                 }
                 Spacer(modifier = Modifier.height(28.dp))
@@ -474,7 +475,7 @@ fun PublicarRetoScreen(
                 }) { Text("Aceptar", fontWeight = FontWeight.Bold, color = PrVino) }
             },
             dismissButton = { TextButton(onClick = { verHora = false }) { Text("Cancelar", color = PrVino) } },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 
@@ -489,7 +490,7 @@ fun PublicarRetoScreen(
                 TextButton(onClick = { pideCorreo = null; onVerificarCorreo() }) { Text("Verificar correo", fontWeight = FontWeight.Bold, color = PrVino) }
             },
             dismissButton = { TextButton(onClick = { pideCorreo = null }) { Text("Ahora no", color = PrVino) } },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 }
@@ -554,8 +555,8 @@ private fun RetoEnRevision(
         onClick = onPerfil,
         modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
         shape = RoundedCornerShape(6.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = PrVino)
-    ) { Text("Ir a mi perfil", fontFamily = OutfitFont, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, color = Color.White) }
+        colors = ButtonDefaults.buttonColors(containerColor = Paleta.tituloFijo)
+    ) { Text("Ir a mi perfil", fontFamily = OutfitFont, fontWeight = FontWeight.SemiBold, fontSize = 18.sp, color = Paleta.blanco) }
     Spacer(modifier = Modifier.height(8.dp))
     TextButton(onClick = onOtro, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
         Text("Publicar otro reto", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = PrVino)
@@ -619,14 +620,14 @@ private fun ChipCategoria(texto: String, seleccionada: Boolean, onClick: () -> U
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(50),
-        color = if (seleccionada) PrVino else Color(0xFFF1E9ED),
+        color = if (seleccionada) Paleta.tituloFijo else Paleta.rosaClaro,
         modifier = Modifier.heightIn(min = 44.dp).semantics { selected = seleccionada }
     ) {
         Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp), contentAlignment = Alignment.Center) {
             Text(
                 texto, fontFamily = JakartaSansFont, fontSize = 14.sp,
                 fontWeight = if (seleccionada) FontWeight.Bold else FontWeight.Medium,
-                color = if (seleccionada) Color.White else PrVino
+                color = if (seleccionada) Paleta.blanco else PrVino
             )
         }
     }

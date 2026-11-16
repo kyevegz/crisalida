@@ -77,10 +77,11 @@ import com.example.crisalida.ui.theme.JakartaSansFont
 import com.example.crisalida.ui.theme.OutfitFont
 import com.example.crisalida.data.InactividadSesion
 import com.example.crisalida.data.ProteccionPantalla
-private val MkTitulo = Color(0xFF7F284F)
-private val MkSubtitulo = Color(0xFF545454)
-private val MkFondoItem = Color(0xFFEFE8EC)
-private val MkExito = Color(0xFF2E7D32)
+import com.example.crisalida.ui.theme.Paleta
+private val MkTitulo: Color get() = Paleta.titulo
+private val MkSubtitulo: Color get() = Paleta.textoGris
+private val MkFondoItem: Color get() = Paleta.fondoItem
+private val MkExito: Color get() = Paleta.exito
 
 // ⚠️ Correo de contacto y ayuda: cámbialo por el correo real del equipo antes de publicar la app.
 private const val CORREO_AYUDA = "ayuda@crisalida.example"
@@ -171,6 +172,8 @@ private fun ContenidoConfiguracion(
 
             SeccionConfiguracion("Apariencia") {
                 OpcionesTamanoTexto(contexto)
+                Spacer(modifier = Modifier.height(20.dp))
+                OpcionModoOscuro(contexto)
             }
 
             SeccionConfiguracion("Ayuda") {
@@ -206,7 +209,7 @@ private fun SeccionConfiguracion(
         )
         Card(
             shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = Paleta.superficie),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -268,7 +271,7 @@ private fun OpcionesTamanoTexto(contexto: Context) {
         fontFamily = OutfitFont,
         fontWeight = FontWeight.Bold,
         fontSize = 17.sp,
-        color = Color.Black
+        color = Paleta.textoNegro
     )
     Text(
         text = "Elige el que se te haga más cómodo de leer.",
@@ -298,9 +301,33 @@ private fun OpcionesTamanoTexto(contexto: Context) {
             text = "Así se va a ver el texto de la app. Lilu te acompaña en cada paso.",
             fontFamily = JakartaSansFont,
             fontSize = 15.sp,
-            color = Color.Black
+            color = Paleta.textoNegro
         )
     }
+}
+
+// modo claro / oscuro: un solo botón que cambia según el modo en que está la app (se guarda en el teléfono)
+@Composable
+private fun OpcionModoOscuro(contexto: Context) {
+    val oscuro = Paleta.modoOscuro
+    Text(
+        text = "Modo de pantalla",
+        fontFamily = OutfitFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 17.sp,
+        color = Paleta.textoNegro
+    )
+    Text(
+        text = if (oscuro) "Ahora la app está en modo oscuro." else "Ahora la app está en modo claro.",
+        fontFamily = JakartaSansFont,
+        fontSize = 14.sp,
+        color = MkSubtitulo
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    BotonAccion(
+        texto = if (oscuro) "Cambiar a modo claro" else "Cambiar a modo oscuro",
+        onClick = { Paleta.cambiar(contexto, !oscuro) }
+    )
 }
 
 // cierre de sesión por inactividad: 5, 10, 15, 30 minutos o nunca
@@ -311,7 +338,7 @@ private fun OpcionesInactividad(contexto: Context) {
         fontFamily = OutfitFont,
         fontWeight = FontWeight.Bold,
         fontSize = 17.sp,
-        color = Color.Black
+        color = Paleta.textoNegro
     )
     Text(
         text = "Si pasa este tiempo sin que toques la pantalla, tu sesión se cierra y la app se cierra sola. " +
@@ -356,7 +383,7 @@ private fun FilaInterruptor(
                 fontFamily = OutfitFont,
                 fontWeight = FontWeight.Bold,
                 fontSize = 17.sp,
-                color = Color.Black
+                color = Paleta.textoNegro
             )
             Text(
                 text = descripcion,
@@ -382,7 +409,7 @@ private fun TituloOpcion(texto: String) {
         fontFamily = OutfitFont,
         fontWeight = FontWeight.Bold,
         fontSize = 17.sp,
-        color = Color.Black,
+        color = Paleta.textoNegro,
         modifier = Modifier.semantics { heading() }
     )
 }
@@ -508,7 +535,7 @@ private fun OpcionesDatosYAlmacenamiento(contexto: Context) {
             fontFamily = OutfitFont,
             fontWeight = FontWeight.Bold,
             fontSize = 17.sp,
-            color = Color.Black,
+            color = Paleta.textoNegro,
             modifier = Modifier.semantics { heading() }
         )
         TextoProximamente(
@@ -535,7 +562,7 @@ private fun OpcionesDatosYAlmacenamiento(contexto: Context) {
                     fontFamily = JakartaSansFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
-                    color = Color.Black,
+                    color = Paleta.textoNegro,
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
                 )
                 Text(
@@ -584,7 +611,7 @@ private fun OpcionesDatosYAlmacenamiento(contexto: Context) {
         fontFamily = OutfitFont,
         fontWeight = FontWeight.Bold,
         fontSize = 17.sp,
-        color = Color.Black,
+        color = Paleta.textoNegro,
         modifier = Modifier.semantics { heading() }
     )
     TextoProximamente("Libera espacio en el teléfono. No borra tu cuenta ni tu información, y tu sesión sigue abierta.")
@@ -614,7 +641,7 @@ private fun BotonAccion(texto: String, habilitado: Boolean = true, onClick: () -
         shape = RoundedCornerShape(8.dp),
         colors = ButtonDefaults.buttonColors(containerColor = ColorBotonEntrar)
     ) {
-        Text(texto, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
+        Text(texto, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Paleta.blanco)
     }
 }
 
@@ -657,7 +684,7 @@ private fun OpcionRadio(texto: String, elegida: Boolean, onClick: () -> Unit) {
             fontFamily = JakartaSansFont,
             fontWeight = if (elegida) FontWeight.Bold else FontWeight.Normal,
             fontSize = 16.sp,
-            color = Color.Black
+            color = Paleta.textoNegro
         )
     }
 }

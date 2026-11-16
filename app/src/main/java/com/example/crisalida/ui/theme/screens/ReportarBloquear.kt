@@ -27,10 +27,11 @@ import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SeguridadRepositorio
 import com.example.crisalida.ui.theme.*
 import kotlinx.coroutines.launch
+import com.example.crisalida.ui.theme.Paleta
 
-private val RbVino = Color(0xFF6B3045)
-private val RbGris = Color(0xFF545454)
-private val RbRojo = Color(0xFFB3261E)
+private val RbVino: Color get() = Paleta.textoPrincipal
+private val RbGris: Color get() = Paleta.textoGris
+private val RbRojo: Color get() = Paleta.error
 
 /** Qué se está reportando o bloqueando: la app identifica a la persona por su publicación o su reto. */
 enum class ObjetivoSeguridad(val tipoReporte: String) { PUBLICACION("publicacion"), RETO("reto") }
@@ -170,7 +171,7 @@ private fun ConDialogosSeguridad(
                     Text("Entendido", fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, color = RbVino)
                 }
             },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 }
@@ -245,14 +246,14 @@ private fun DialogoReporte(
                     }
                 },
                 enabled = motivo != null && !enviando,
-                colors = ButtonDefaults.buttonColors(containerColor = RbVino)
+                colors = ButtonDefaults.buttonColors(containerColor = Paleta.textoPrincipalFijo)
             ) {
-                if (enviando) CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
-                else Text("Enviar reporte", color = Color.White)
+                if (enviando) CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Paleta.blanco, strokeWidth = 2.dp)
+                else Text("Enviar reporte", color = Paleta.blanco)
             }
         },
         dismissButton = { TextButton(onClick = onCancelar, enabled = !enviando) { Text("Cancelar", color = RbVino) } },
-        containerColor = Color.White
+        containerColor = Paleta.superficie
     )
 }
 
@@ -265,7 +266,7 @@ private fun FilaMotivo(m: MotivoReporteDto, seleccionado: Boolean, onClick: () -
         RadioButton(selected = seleccionado, onClick = null, colors = RadioButtonDefaults.colors(selectedColor = RbVino))
         Spacer(Modifier.width(8.dp))
         Column {
-            Text(m.titulo, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.Black)
+            Text(m.titulo, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Paleta.textoNegro)
             if (m.descripcion.isNotBlank()) Text(m.descripcion, fontFamily = JakartaSansFont, fontSize = 12.sp, lineHeight = 16.sp, color = RbGris)
         }
     }
@@ -279,7 +280,7 @@ private fun FilaCasilla(texto: String, marcada: Boolean, onCambio: (Boolean) -> 
     ) {
         Checkbox(checked = marcada, onCheckedChange = null, colors = CheckboxDefaults.colors(checkedColor = RbVino))
         Spacer(Modifier.width(8.dp))
-        Text(texto, fontFamily = JakartaSansFont, fontSize = 14.sp, color = Color.Black)
+        Text(texto, fontFamily = JakartaSansFont, fontSize = 14.sp, color = Paleta.textoNegro)
     }
 }
 
@@ -323,14 +324,14 @@ private fun DialogoBloquear(
                     }
                 },
                 enabled = !enviando,
-                colors = ButtonDefaults.buttonColors(containerColor = RbVino)
+                colors = ButtonDefaults.buttonColors(containerColor = Paleta.textoPrincipalFijo)
             ) {
-                if (enviando) CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
-                else Text("Bloquear", color = Color.White)
+                if (enviando) CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Paleta.blanco, strokeWidth = 2.dp)
+                else Text("Bloquear", color = Paleta.blanco)
             }
         },
         dismissButton = { TextButton(onClick = onCancelar, enabled = !enviando) { Text("Cancelar", color = RbVino) } },
-        containerColor = Color.White
+        containerColor = Paleta.superficie
     )
 }
 
@@ -360,7 +361,7 @@ fun ListaBloqueadas() {
                 Text(b.avatar ?: "🦋", fontSize = 26.sp)
                 Spacer(Modifier.width(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(b.seudonimo, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.Black)
+                    Text(b.seudonimo, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Paleta.textoNegro)
                     if (b.creadoEn.isNotBlank()) Text("Bloqueada el ${fechaLegible(b.creadoEn)}", fontFamily = JakartaSansFont, fontSize = 12.sp, color = RbGris)
                 }
                 OutlinedButton(onClick = { mensaje = null; porDesbloquear = b }, shape = RoundedCornerShape(8.dp), modifier = Modifier.heightIn(min = 44.dp)) {
@@ -370,7 +371,7 @@ fun ListaBloqueadas() {
         }
     }
     mensaje?.let { (texto, exito) ->
-        Text(texto, fontFamily = JakartaSansFont, fontSize = 13.sp, color = if (exito) Color(0xFF1E681E) else RbRojo, modifier = Modifier.padding(top = 6.dp))
+        Text(texto, fontFamily = JakartaSansFont, fontSize = 13.sp, color = if (exito) Paleta.verdeBoton else RbRojo, modifier = Modifier.padding(top = 6.dp))
     }
 
     porDesbloquear?.let { b ->
@@ -392,11 +393,11 @@ fun ListaBloqueadas() {
                         }
                     },
                     enabled = !desbloqueando,
-                    colors = ButtonDefaults.buttonColors(containerColor = RbVino)
-                ) { Text("Desbloquear", color = Color.White) }
+                    colors = ButtonDefaults.buttonColors(containerColor = Paleta.textoPrincipalFijo)
+                ) { Text("Desbloquear", color = Paleta.blanco) }
             },
             dismissButton = { TextButton(onClick = { porDesbloquear = null }, enabled = !desbloqueando) { Text("Cancelar", color = RbVino) } },
-            containerColor = Color.White
+            containerColor = Paleta.superficie
         )
     }
 }
