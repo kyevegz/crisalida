@@ -178,6 +178,7 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
     composable("configuracion") { ConEscalaDeTexto { ConfiguracionScreen(onNavigate = ir, onVolver = volver) } }
     composable("respirar_lilu") { SoloVendedora(navController) { ConEscalaDeTexto { RespirarLiluScreen(onNavigate = ir) } } }
     composable("portafolio_completo") { SoloVendedora(navController) { ConEscalaDeTexto { PortafolioScreen(onNavigate = ir, onEditar = editar) } } }
+    composable("mis_borradores") { SoloVendedora(navController) { ConEscalaDeTexto { MisBorradoresScreen(onNavigate = ir) } } }
     composable("publicar_producto") { SoloVendedora(navController) { ConEscalaDeTexto { PublicarProductoScreen(onNavigate = ir) } } }
 
     composable("reto_detalle/{id}", arguments = argId) { entrada ->
