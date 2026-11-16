@@ -35,6 +35,11 @@ import com.example.crisalida.ui.theme.*
 
 private val ColorTituloCodigo = Color(0xFF9D4067)
 
+private const val CODIGO_PARRAFO_1 = "Este código te servirá para recuperar tu PIN si más adelante lo pierdes. " +
+    "En caso de que no quieras añadir un correo electrónico, este código es de gran importancia."
+private const val CODIGO_PARRAFO_2 = "No hay forma de consultarlo de nuevo. Guárdalo muy bien porque no se volverá a mostrar " +
+    "ni puedes tomar captura de pantalla."
+
 /**
  * Pantalla del código de recuperación (issue 4.5). Se muestra UNA vez, al terminar el registro: el servidor
  * solo lo entrega en esa respuesta y después guarda únicamente su hash.
@@ -69,6 +74,18 @@ fun CodigoRecuperacionScreen(
     val leido = codigo.toCharArray().joinToString(", ")   // TalkBack lo dice letra por letra
 
     ContenedorAcceso {
+        // Escuchar (8.7): lee las instrucciones, pero NO el código: por seguridad no se dice en voz alta
+        // (algunos teléfonos mandan el audio a un servicio en internet, y quien esté cerca lo oiría).
+        BotonEscuchar(
+            listOf(
+                "Código de recuperación.",
+                "Tu código está en la pantalla. Por tu seguridad, no se lee en voz alta.",
+                CODIGO_PARRAFO_1,
+                CODIGO_PARRAFO_2,
+                "Casilla: Confirmo que he guardado mi código de recuperación.",
+                "Botón: Finalizar."
+            )
+        )
         Text(
             text = "Código de recuperación",
             fontFamily = OutfitFont,
@@ -130,8 +147,7 @@ fun CodigoRecuperacionScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "Este código te servirá para recuperar tu PIN si más adelante lo pierdes. " +
-                "En caso de que no quieras añadir un correo electrónico, este código es de gran importancia.",
+            text = CODIGO_PARRAFO_1,
             fontFamily = JakartaSansFont,
             fontSize = 14.sp,
             lineHeight = 20.sp,
@@ -140,8 +156,7 @@ fun CodigoRecuperacionScreen(
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "No hay forma de consultarlo de nuevo. Guárdalo muy bien porque no se volverá a mostrar " +
-                "ni puedes tomar captura de pantalla.",
+            text = CODIGO_PARRAFO_2,
             fontFamily = JakartaSansFont,
             fontWeight = FontWeight.Bold,
             fontSize = 14.sp,

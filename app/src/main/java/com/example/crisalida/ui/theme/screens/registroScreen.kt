@@ -25,6 +25,14 @@ import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
 
+private const val REG_PRIVACIDAD = "Cero requisitos invasivos. Tu identidad real nunca será revelada a terceros, familiares ni contratistas."
+private const val REG_NOTA_SEUDONIMO = "Es preferible que no uses tu nombre real"
+private const val REG_NOTA_PIN = "Guarda y recuerda bien tu PIN de acceso"
+private const val REG_NOTA_CAMUFLAJE = "Si alguien te exige abrir la app, ingresa este PIN alternativo y cargará una galería de mariposas."
+private const val REG_CIFRADO = "Podrás ingresar datos personales más adelante si así lo deseas, con la garantía de que estos, junto con tus reflexiones íntimas y registros de ventas se protegen con cifrado de extremo a extremo en tu dispositivo."
+private const val REG_FIN_COMPRADORA = "Tu registro es corto: al terminar entrarás directo a la app."
+private const val REG_FIN_VENDEDORA = "Una vez hayas elegido un seudónimo y un PIN seguro, será momento de responder un formulario que te ayudará a conocer tus talentos y habilidades."
+
 @Composable
 fun RegisterScreen(
     onNextClick: (String, String, String) -> Unit,
@@ -48,6 +56,25 @@ fun RegisterScreen(
 
     // ContenedorAcceso: scroll, barras del sistema, teclado y ancho máximo (ver ComponentesAuth.kt)
     ContenedorAcceso {
+        // Escuchar (8.7): lee el texto visible. Nunca lee lo que escribes ni tu PIN.
+        BotonEscuchar(
+            listOfNotNull(
+                "Crisálida. Regístrate.",
+                "Comienza tu camino hacia la independencia.",
+                REG_PRIVACIDAD,
+                if (esCompradora) "Te registras para comprar y publicar retos" else "Te registras para vender",
+                "Elige un seudónimo. $REG_NOTA_SEUDONIMO.",
+                "Crea tu PIN principal. $REG_NOTA_PIN.",
+                "Crea tu PIN de camuflaje. $REG_NOTA_CAMUFLAJE",
+                REG_CIFRADO,
+                "Casilla: He leído y acepto el Aviso de Privacidad y los Términos de uso.",
+                "Casilla: Confirmo que soy mayor de 18 años.",
+                if (esCompradora) REG_FIN_COMPRADORA else REG_FIN_VENDEDORA,
+                error,
+                if (esCompradora) "Botón: Crear cuenta." else "Botón: Siguiente.",
+                "¿Ya tienes una cuenta activa? Inicia sesión aquí."
+            )
+        )
         // el título es muy grande: su tamaño crece poco para que "Crisálida" no se parta en 320 dp
         ConEscalaLimitada(tope = 1.2f) {
             Text(
@@ -109,7 +136,7 @@ fun RegisterScreen(
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "Cero requisitos invasivos. Tu identidad real nunca será revelada a terceros, familiares ni contratistas.",
+            text = REG_PRIVACIDAD,
             fontFamily = JakartaSansFont,
             fontWeight = FontWeight.Normal,
             fontSize = 13.sp,
@@ -138,7 +165,7 @@ fun RegisterScreen(
                 fontSize = 14.sp,
                 color = ColorTextoPrincipal
             )
-            NotaConCandado("Es preferible que no uses tu nombre real")
+            NotaConCandado(REG_NOTA_SEUDONIMO)
             Spacer(modifier = Modifier.height(6.dp))
 
             Box(
@@ -184,7 +211,7 @@ fun RegisterScreen(
                 visible = pinPrincipalVisible,
                 onAlternar = { pinPrincipalVisible = !pinPrincipalVisible }
             )
-            NotaConCandado("Guarda y recuerda bien tu PIN de acceso")
+            NotaConCandado(REG_NOTA_PIN)
             Spacer(modifier = Modifier.height(8.dp))
             CasillasPin(pin = pinPrincipal, visible = pinPrincipalVisible, onCambio = { pinPrincipal = it })
         }
@@ -198,7 +225,7 @@ fun RegisterScreen(
                 visible = pinCamuflajeVisible,
                 onAlternar = { pinCamuflajeVisible = !pinCamuflajeVisible }
             )
-            NotaConCandado("Si alguien te exige abrir la app, ingresa este PIN alternativo y cargará una galería de mariposas.")
+            NotaConCandado(REG_NOTA_CAMUFLAJE)
             Spacer(modifier = Modifier.height(8.dp))
             CasillasPin(pin = pinCamuflaje, visible = pinCamuflajeVisible, onCambio = { pinCamuflaje = it })
         }
@@ -221,7 +248,7 @@ fun RegisterScreen(
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = "Podrás ingresar datos personales más adelante si así lo deseas, con la garantía de que estos, junto con tus reflexiones íntimas y registros de ventas se protegen con cifrado de extremo a extremo en tu dispositivo.",
+                    text = REG_CIFRADO,
                     fontFamily = JakartaSansFont,
                     fontSize = 12.sp,
                     color = ColorTextoPrincipal,
@@ -245,9 +272,9 @@ fun RegisterScreen(
 
         Text(
             text = if (esCompradora)
-                "Tu registro es corto: al terminar entrarás directo a la app."
+                REG_FIN_COMPRADORA
             else
-                "Una vez hayas elegido un seudónimo y un PIN seguro, será momento de responder un formulario que te ayudará a conocer tus talentos y habilidades.",
+                REG_FIN_VENDEDORA,
             fontFamily = JakartaSansFont,
             fontSize = 12.sp,
             color = ColorTextoPrincipal,

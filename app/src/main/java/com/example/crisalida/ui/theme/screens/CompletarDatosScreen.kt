@@ -39,6 +39,10 @@ enum class ModoDatos {
 
 private enum class Paso { DATOS, CODIGO }
 
+private const val DATOS_EXP_CORREO = "Sirve para recuperar tu PIN de forma más cómoda si lo olvidas. Es privado: nadie más lo ve."
+private const val DATOS_EXP_MUNICIPIO = "Sirve para que otras usuarias sepan de dónde eres y para buscar productos cerca de ti. Escribe solo el municipio, nunca tu dirección."
+private const val DATOS_EXP_LOCALIDAD = "Es el pueblo, colonia o comunidad. Se usa igual que el municipio, para encontrar lo que está cerca de ti."
+
 /**
  * Invita a la usuaria a completar sus datos opcionales (issue 4.3). Cada dato explica, en lenguaje sencillo,
  * para qué se usa. El correo se confirma con un código que llega a su bandeja.
@@ -129,9 +133,30 @@ fun CompletarDatosScreen(
         }
     }
 
+    val tituloPantalla = if (soloCorreo) "Agrega tu correo" else "Completa tus datos"
+    val subtituloPantalla = when {
+        paso == Paso.CODIGO -> "Revisa tu correo y escribe el código de 6 dígitos que te enviamos."
+        soloCorreo -> "Para publicar retos necesitamos tu correo. Es privado: solo tú lo ves."
+        else -> "Son datos opcionales. Puedes omitirlos ahora y agregarlos después en Configuración."
+    }
+
     ContenedorAcceso {
+        // Escuchar (8.7): lee el texto visible. No lee lo que escribes (ni tu correo).
+        BotonEscuchar(
+            listOfNotNull(
+                tituloPantalla,
+                subtituloPantalla,
+                if (paso == Paso.DATOS) "Correo. $DATOS_EXP_CORREO" else "Código de 6 dígitos. Lo enviamos a tu correo. Vence en unos minutos.",
+                if (paso == Paso.DATOS && !soloCorreo) "Municipio. $DATOS_EXP_MUNICIPIO" else null,
+                if (paso == Paso.DATOS && !soloCorreo) "Localidad. $DATOS_EXP_LOCALIDAD" else null,
+                info,
+                error,
+                if (paso == Paso.CODIGO) "Botón: Confirmar código." else if (soloCorreo) "Botón: Guardar correo." else "Botón: Guardar y continuar.",
+                if (paso == Paso.CODIGO) "También puedes reenviar el código o confirmar después." else if (soloCorreo) "O elegir: Ahora no." else "O elegir: Omitir por ahora."
+            )
+        )
         Text(
-            text = if (soloCorreo) "Agrega tu correo" else "Completa tus datos",
+            text = tituloPantalla,
             fontFamily = OutfitFont,
             fontWeight = FontWeight.Bold,
             fontSize = 28.sp,
@@ -141,11 +166,7 @@ fun CompletarDatosScreen(
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = when {
-                paso == Paso.CODIGO -> "Revisa tu correo y escribe el código de 6 dígitos que te enviamos."
-                soloCorreo -> "Para publicar retos necesitamos tu correo. Es privado: solo tú lo ves."
-                else -> "Son datos opcionales. Puedes omitirlos ahora y agregarlos después en Configuración."
-            },
+            text = subtituloPantalla,
             fontFamily = JakartaSansFont,
             fontSize = 14.sp,
             lineHeight = 20.sp,
@@ -157,7 +178,7 @@ fun CompletarDatosScreen(
         if (paso == Paso.DATOS) {
             CampoDato(
                 etiqueta = "Correo",
-                explicacion = "Sirve para recuperar tu PIN de forma más cómoda si lo olvidas. Es privado: nadie más lo ve.",
+                explicacion = DATOS_EXP_CORREO,
                 valor = correo,
                 onCambio = { correo = it.take(254) },
                 placeholder = "tucorreo@ejemplo.com",
@@ -168,7 +189,7 @@ fun CompletarDatosScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 CampoDato(
                     etiqueta = "Municipio",
-                    explicacion = "Sirve para que otras usuarias sepan de dónde eres y para buscar productos cerca de ti. Escribe solo el municipio, nunca tu dirección.",
+                    explicacion = DATOS_EXP_MUNICIPIO,
                     valor = municipio,
                     onCambio = { municipio = it.take(80) },
                     placeholder = "Ej. Pénjamo",
@@ -177,7 +198,7 @@ fun CompletarDatosScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 CampoDato(
                     etiqueta = "Localidad",
-                    explicacion = "Es el pueblo, colonia o comunidad. Se usa igual que el municipio, para encontrar lo que está cerca de ti.",
+                    explicacion = DATOS_EXP_LOCALIDAD,
                     valor = localidad,
                     onCambio = { localidad = it.take(80) },
                     placeholder = "Ej. La Cruz",

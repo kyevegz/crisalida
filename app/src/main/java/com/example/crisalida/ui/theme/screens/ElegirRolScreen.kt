@@ -19,6 +19,10 @@ import com.example.crisalida.data.ROL_COMPRADORA
 import com.example.crisalida.data.ROL_VENDEDORA
 import com.example.crisalida.ui.theme.*
 
+private const val ELEGIR_PRIVACIDAD = "Cero requisitos invasivos. Tu identidad real nunca será revelada a terceros, familiares ni contratistas."
+private const val ELEGIR_DESC_VENDER = "Ideal si te encuentras en una situación de vulnerabilidad y buscas obtener ingresos económicos."
+private const val ELEGIR_DESC_COMPRAR = "Ideal si quieres ayudar a otras usuarias. No tienes acceso a los apartados de bienestar emocional, mascota ni opciones de ofrecer productos o servicios."
+
 /**
  * Primer paso del registro (issue 2.4): la usuaria elige cómo va a usar Crisálida.
  * El rol decide el resto: la vendedora hace el radar; la compradora tiene un registro corto
@@ -30,6 +34,17 @@ fun ElegirRolScreen(
     onNavigateToLogin: () -> Unit
 ) {
     ContenedorAcceso {
+        // Escuchar (8.7): lee el texto visible de esta pantalla
+        BotonEscuchar(
+            listOf(
+                "Crisálida. Regístrate.",
+                "Comienza tu camino hacia la independencia.",
+                ELEGIR_PRIVACIDAD,
+                "Quiero vender. $ELEGIR_DESC_VENDER",
+                "Quiero comprar y publicar retos. $ELEGIR_DESC_COMPRAR",
+                "¿Ya tienes una cuenta activa? Inicia sesión aquí."
+            )
+        )
         ConEscalaLimitada(tope = 1.2f) {
             Text(
                 text = "Crisálida",
@@ -82,7 +97,7 @@ fun ElegirRolScreen(
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "Cero requisitos invasivos. Tu identidad real nunca será revelada a terceros, familiares ni contratistas.",
+            text = ELEGIR_PRIVACIDAD,
             fontFamily = JakartaSansFont,
             fontSize = 13.sp,
             color = ColorTextoPrincipal,
@@ -94,7 +109,7 @@ fun ElegirRolScreen(
 
         OpcionRol(
             titulo = "Quiero vender",
-            descripcion = "Ideal si te encuentras en una situación de vulnerabilidad y buscas obtener ingresos económicos.",
+            descripcion = ELEGIR_DESC_VENDER,
             onClick = { onElegir(ROL_VENDEDORA) }
         )
 
@@ -102,7 +117,7 @@ fun ElegirRolScreen(
 
         OpcionRol(
             titulo = "Quiero comprar y publicar retos",
-            descripcion = "Ideal si quieres ayudar a otras usuarias. No tienes acceso a los apartados de bienestar emocional, mascota ni opciones de ofrecer productos o servicios.",
+            descripcion = ELEGIR_DESC_COMPRAR,
             onClick = { onElegir(ROL_COMPRADORA) }
         )
 
