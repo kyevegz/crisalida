@@ -52,7 +52,7 @@ fun MascotaScreen(
     val scrollState = rememberScrollState()
 
     //datos del servidor: etapa de Lilu, flores y cuánto vale cada acción
-    val progreso = rememberProgreso()
+    val progreso = rememberProgreso(conCopiaLocal = true)   // sin conexión se ve lo último guardado
     val lilu = (progreso.estado as? Carga.Lista)?.datos?.lilu
     val nivel = (progreso.estado as? Carga.Lista)?.datos?.nivel
     val reglasCarga = rememberCarga { ProgresoRepositorio.reglas() }
@@ -75,6 +75,8 @@ fun MascotaScreen(
                 horizontalAlignment = Alignment.Start
             ) {
                 Spacer(modifier = Modifier.height(18.dp))
+
+                NotaUltimaActualizacion(progreso.actualizadoEn, progreso.recargar)   // sin conexión: lo último guardado, con su fecha
 
                 if (progreso.estado is Carga.Falla) {
                     ErrorDeCarga(progreso.estado as Carga.Falla, progreso.recargar, "Lilu necesita internet para mostrar tus flores y tu avance.")

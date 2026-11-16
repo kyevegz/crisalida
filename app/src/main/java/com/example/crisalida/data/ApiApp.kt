@@ -363,12 +363,19 @@ object BienestarRepositorio {
     suspend fun entradas(subtipo: String): ResultadoApi<EntradasBienestarResponse> =
         llamarApi { RetrofitCliente.api.entradasBienestar(subtipo) }
 
-    suspend fun borrarEntrada(id: String): ResultadoApi<BorradoResponse> = llamarApi { RetrofitCliente.api.borrarEntradaBienestar(id) }
+    suspend fun borrarEntrada(id: String): ResultadoApi<BorradoResponse> =
+        llamarApi { RetrofitCliente.api.borrarEntradaBienestar(id) }
+            .also { if (it is ResultadoApi.Exito) CacheLocal.borrar(Caches.bitacora) }   // la copia local no conserva lo que se borró
 
     /** Borra TODO el historial de bienestar. No toca flores, nivel ni a Lilu (eso lo garantiza el servidor). */
     suspend fun borrarHistorial(): ResultadoApi<HistorialBorradoResponse> =
         llamarApi { RetrofitCliente.api.borrarHistorialBienestar() }
-            .also { if (it is ResultadoApi.Exito) ProgresoRepositorio.avisarCambio() }   // que las pantallas se recarguen vacías
+            .also {
+                if (it is ResultadoApi.Exito) {
+                    CacheLocal.borrar(Caches.bitacora)   // también se borra la copia guardada en el teléfono
+                    ProgresoRepositorio.avisarCambio()   // que las pantallas se recarguen vacías
+                }
+            }
 }
 
 object DatosPersonalesRepositorio {

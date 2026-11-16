@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
+import com.example.crisalida.data.Caches
 import com.example.crisalida.data.ColaEnvios
 import com.example.crisalida.data.FotoRemota
 import com.example.crisalida.data.ProgresoRepositorio
@@ -105,9 +106,9 @@ fun PerfilScreen(
     var confirmarCierre by remember { mutableStateOf(false) }   // avisa si hay envíos pendientes antes de cerrar sesión
 
     // Todo viene del servidor
-    val progreso = rememberProgreso()
+    val progreso = rememberProgreso(conCopiaLocal = true)   // sin conexión se ve lo último guardado
     val datosProgreso = (progreso.estado as? Carga.Lista)?.datos
-    val portafolio = rememberCarga(ProgresoRepositorio.version) { soloVendedora { PublicacionesRepositorio.mias() } }
+    val portafolio = rememberCarga(ProgresoRepositorio.version, cache = Caches.portafolio) { soloVendedora { PublicacionesRepositorio.mias() } }
     val habilidadesCarga = rememberCarga { soloVendedora { ProgresoRepositorio.habilidades() } }
     val nivelesCarga = rememberCarga { soloVendedora { ProgresoRepositorio.niveles() } }
     val reglasCarga = rememberCarga { soloVendedora { ProgresoRepositorio.reglas() } }
@@ -122,7 +123,7 @@ fun PerfilScreen(
     var tipoAccionPendiente by remember { mutableStateOf<String?>(null) } // "pausar" o "reactivar"
 
     val publicacionesPortafolio: List<PublicacionPortafolio> =
-        (portafolio.estado as? Carga.Lista)?.datos?.publicaciones?.map { it.aPortafolioUi() } ?: emptyList()
+        (portafolio.estado as? Carga.Lista)?.datos?.publicaciones?.map { it.aPortafolioUi(sinActualizar = portafolio.actualizadoEn != null) } ?: emptyList()
 
     val habilidadesInsignias: List<HabilidadInsignia> =
         (habilidadesCarga.estado as? Carga.Lista)?.datos?.habilidades
@@ -238,6 +239,11 @@ fun PerfilScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                if (!SesionActual.esCompradora) {
+                    // sin conexión se enseña lo último guardado, con su fecha
+                    NotaUltimaActualizacion(progreso.actualizadoEn ?: portafolio.actualizadoEn) { progreso.recargar(); portafolio.recargar() }
+                }
 
                 if (!SesionActual.esCompradora && progreso.estado is Carga.Falla) {
                     ErrorDeCarga(progreso.estado as Carga.Falla, progreso.recargar, "No podemos mostrar tu nivel y tus flores sin conexión.")
@@ -397,8 +403,8 @@ fun PerfilScreen(
 
                     //apartado de estadísticas
                     DisposicionEstadisticas { m ->
-                        CardEstadisticaColumna(numero = datosProgreso?.estadisticas?.retosCompletados?.toString() ?: "–", etiqueta = "Retos completados", icon = Icons.Outlined.WorkspacePremium, modifier = m)
-                        CardEstadisticaColumna(numero = datosProgreso?.estadisticas?.calificacionPromedio?.let { String.format(java.util.Locale.US, "%.1f", it) } ?: "–", etiqueta = "${datosProgreso?.estadisticas?.ventasCompletadas ?: 0} ventas", icon = Icons.Outlined.StarBorder, modifier = m)
+                        CardEstadisticaColumna(numero = if (progreso.actualizadoEn != null) "–" else datosProgreso?.estadisticas?.retosCompletados?.toString() ?: "–", etiqueta = "Retos completados", icon = Icons.Outlined.WorkspacePremium, modifier = m)
+                        CardEstadisticaColumna(numero = if (progreso.actualizadoEn != null) "–" else datosProgreso?.estadisticas?.calificacionPromedio?.let { String.format(java.util.Locale.US, "%.1f", it) } ?: "–", etiqueta = if (progreso.actualizadoEn != null) "ventas" else "${datosProgreso?.estadisticas?.ventasCompletadas ?: 0} ventas", icon = Icons.Outlined.StarBorder, modifier = m)
                         CardEstadisticaColumna(numero = datosProgreso?.lilu?.flores?.toString() ?: "–", etiqueta = "Flores", icon = Icons.Outlined.LocalFlorist, modifier = m)
                     }
 
@@ -915,7 +921,7 @@ fun ItemPortafolioCardFiel(
                     ) {
                         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                             Text(
-                                text = "Pedidos (${pub.pedidosCount})",
+                                text = if (pub.pedidosCount >= 0) "Pedidos (${pub.pedidosCount})" else "Pedidos",
                                 fontFamily = JakartaSansFont,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,

@@ -2,6 +2,7 @@ package com.example.crisalida.ui.theme.screens
 
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.background
+import com.example.crisalida.data.Caches
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.PublicacionesRepositorio
 import com.example.crisalida.data.ResultadoApi
@@ -50,9 +51,9 @@ fun PortafolioScreen(
     val avatarActual = progreso?.avatar ?: SesionActual.avatar
 
     // Lista completa de publicaciones de la usuaria, desde el servidor
-    val portafolio = rememberCarga(ProgresoRepositorio.version) { PublicacionesRepositorio.mias() }
+    val portafolio = rememberCarga(ProgresoRepositorio.version, cache = Caches.portafolio) { PublicacionesRepositorio.mias() }
     val publicacionesPortafolio: List<PublicacionPortafolio> =
-        (portafolio.estado as? Carga.Lista)?.datos?.publicaciones?.map { it.aPortafolioUi() } ?: emptyList()
+        (portafolio.estado as? Carga.Lista)?.datos?.publicaciones?.map { it.aPortafolioUi(sinActualizar = portafolio.actualizadoEn != null) } ?: emptyList()
 
     CrisalidaScaffold(
         currentTitle = "Perfil/portafolio",
@@ -193,6 +194,8 @@ fun PortafolioScreen(
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
+
+                NotaUltimaActualizacion(portafolio.actualizadoEn, portafolio.recargar)   // sin conexión: lo último guardado, con su fecha
 
                 when (val e = portafolio.estado) {
                     is Carga.Cargando -> IndicadorCargando()

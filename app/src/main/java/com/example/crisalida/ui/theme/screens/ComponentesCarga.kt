@@ -20,12 +20,19 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import com.example.crisalida.data.CacheLocal
+import com.example.crisalida.data.Caches
+import com.example.crisalida.data.GuardadoLocal
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.crisalida.data.CacheDe
 import com.example.crisalida.data.EstadoConexion
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.ProgresoResponse
@@ -40,35 +47,59 @@ import com.example.crisalida.ui.theme.JakartaSansFont
 // estado de una carga: cargando, con datos o con error
 sealed interface Carga<out T> {
     object Cargando : Carga<Nothing>
-    data class Lista<T>(val datos: T) : Carga<T>
+    /** [actualizadoEn] solo viene lleno cuando son datos guardados en el teléfono (sin conexión): se muestra «Última actualización». */
+    data class Lista<T>(val datos: T, val actualizadoEn: Long? = null) : Carga<T>
     data class Falla(val mensaje: String, val sinConexion: Boolean = false) : Carga<Nothing>
 }
 
 class CargaRemota<T>(val estado: Carga<T>, val recargar: () -> Unit)
 
-// pide los datos al entrar y cada que cambien las claves; la función recargar() lo repite
+/** Cuándo se bajaron del servidor los datos que se están mostrando, SI son los guardados en el teléfono; si no, null. */
+val CargaRemota<*>.actualizadoEn: Long? get() = (estado as? Carga.Lista<*>)?.actualizadoEn
+
+// pide los datos al entrar y cada que cambien las claves; la función recargar() lo repite.
+// Con [cache], lo último que bajó bien se guarda (cifrado) y, sin conexión, se muestra eso con su fecha de actualización.
 @Composable
-fun <T> rememberCarga(vararg claves: Any?, llamada: suspend () -> ResultadoApi<T>): CargaRemota<T> {
+fun <T> rememberCarga(vararg claves: Any?, cache: CacheDe<T>? = null, llamada: suspend () -> ResultadoApi<T>): CargaRemota<T> {
     var intento by remember { mutableIntStateOf(0) }
+    val contexto = LocalContext.current.applicationContext
     val estado by produceState<Carga<T>>(Carga.Cargando, intento, *claves) {
+        val copia = cache?.takeIf { !SesionActual.esCamuflaje }
+        suspend fun guardado(): GuardadoLocal<T>? =
+            if (copia == null) null else withContext(Dispatchers.IO) { CacheLocal.leer(contexto, copia) }
         value = Carga.Cargando
+        // si ya se sabe que no hay internet, se enseña de inmediato lo guardado mientras se intenta
+        var local: GuardadoLocal<T>? = null
+        if (copia != null && !EstadoConexion.enLinea) {
+            local = guardado()
+            local?.let { value = Carga.Lista(it.datos, it.actualizadoEn) }
+        }
         value = when (val r = llamada()) {
-            is ResultadoApi.Exito -> Carga.Lista(r.datos)
-            is ResultadoApi.Error -> Carga.Falla(r.mensaje, r.sinConexion)
+            is ResultadoApi.Exito -> {
+                if (copia != null) withContext(Dispatchers.IO) { CacheLocal.guardar(contexto, copia, r.datos) }
+                Carga.Lista(r.datos)
+            }
+            is ResultadoApi.Error -> {
+                if (r.sinConexion && local == null) local = guardado()
+                val viejo = local
+                if (r.sinConexion && viejo != null) Carga.Lista(viejo.datos, viejo.actualizadoEn)
+                else Carga.Falla(r.mensaje, r.sinConexion)
+            }
         }
     }
-    // si falló por falta de internet, se vuelve a pedir solo cuando regrese la conexión
+    // si se está mostrando una falla o datos guardados por falta de internet, se vuelve a pedir solo cuando regrese la conexión
     val enLinea = EstadoConexion.enLinea
     LaunchedEffect(enLinea) {
-        if (enLinea && (estado as? Carga.Falla)?.sinConexion == true) intento++
+        val e = estado
+        if (enLinea && ((e as? Carga.Falla)?.sinConexion == true || (e as? Carga.Lista<*>)?.actualizadoEn != null)) intento++
     }
     return CargaRemota(estado) { intento++ }
 }
 
 // progreso (nivel, flores, Lilu), se refresca cuando gana flores
 @Composable
-fun rememberProgreso(): CargaRemota<ProgresoResponse> =
-    rememberCarga(ProgresoRepositorio.version) { ProgresoRepositorio.yo() }
+fun rememberProgreso(conCopiaLocal: Boolean = false): CargaRemota<ProgresoResponse> =
+    rememberCarga(ProgresoRepositorio.version, cache = if (conCopiaLocal) Caches.progreso else null) { ProgresoRepositorio.yo() }
 
 /**
  * El servidor solo abre algunas rutas (progreso, mis retos, portafolio...) a la vendedora.
