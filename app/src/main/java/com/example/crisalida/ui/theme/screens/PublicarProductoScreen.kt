@@ -1125,7 +1125,7 @@ private fun PreviewControlesPublicar() {
         OpcionEntregaItem(
             "Bajo encargo previo (Tiempo artesanal)",
             "El cliente paga en custodia; dispones de hasta 48 hrs para preparar sin prisas.",
-            "24h - 48h", false
+            "24h — 48h", false
         ) {}
     }
 }
