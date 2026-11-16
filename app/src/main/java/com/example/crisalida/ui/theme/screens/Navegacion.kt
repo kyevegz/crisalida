@@ -2,6 +2,7 @@ package com.example.crisalida.ui.theme.screens
 
 import androidx.compose.ui.platform.LocalContext
 import com.example.crisalida.data.AlmacenamientoCifrado
+import com.example.crisalida.data.BorradoLocal
 import com.example.crisalida.data.SesionActual
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -164,7 +165,7 @@ fun NavGraphBuilder.pantallasPrincipales(navController: NavHostController) {
                 onAbrirConfiguracion = { navController.navigate("configuracion") },
                 onPublicarReto = publicarReto,
                 onCerrarSesion = {
-                    AlmacenamientoCifrado.borrarTodo(contexto)   // borradores, cola y último contenido guardados en el teléfono
+                    BorradoLocal.todo(contexto)   // borradores, cola y último contenido guardados en el teléfono
                     SesionActual.cerrar()
                     navController.navigate("login") { popUpTo(0) { inclusive = true } }
                 }

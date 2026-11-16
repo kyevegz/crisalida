@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import com.example.crisalida.data.AhorroDatos
 import com.example.crisalida.data.AlmacenamientoLocal
 import com.example.crisalida.data.BienestarRepositorio
+import com.example.crisalida.data.Borradores
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.theme.AjustesTexto
@@ -142,7 +143,7 @@ private fun ContenidoConfiguracion(
                 FilaInterruptor(
                     titulo = "Bloquear capturas de pantalla",
                     descripcion = "Impide capturar o grabar la pantalla en Bienestar, Perfil y Configuración. " +
-                        "En «apps recientes» el contenido de la app siempre se oculta.",
+                            "En «apps recientes» el contenido de la app siempre se oculta.",
                     activado = ProteccionPantalla.bloquearCapturas,
                     onCambio = { ProteccionPantalla.cambiar(contexto, it) }
                 )
@@ -488,7 +489,7 @@ private fun OpcionesDatosYAlmacenamiento(contexto: Context) {
     FilaInterruptor(
         titulo = "Ahorro de datos",
         descripcion = "Las fotos no se descargan solas: toca una foto para verla. Útil si tienes pocos datos móviles. " +
-            "Se conserva aunque cierres la app.",
+                "Se conserva aunque cierres la app.",
         activado = AhorroDatos.activo,
         onCambio = { AhorroDatos.cambiar(contexto, it) }
     )
@@ -505,8 +506,8 @@ private fun OpcionesDatosYAlmacenamiento(contexto: Context) {
             modifier = Modifier.semantics { heading() }
         )
         TextoProximamente(
-            "Elimina todos los registros de tu bitácora y de tu bienestar. " +
-                "Tus flores, tu nivel y tu mascota no cambian."
+            "Elimina todos los registros de tu bitácora y de tu bienestar, y también los borradores guardados en este teléfono. " +
+                    "Tus flores, tu nivel y tu mascota no cambian."
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -532,7 +533,7 @@ private fun OpcionesDatosYAlmacenamiento(contexto: Context) {
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
                 )
                 Text(
-                    text = "Se eliminarán todos los registros de tu bitácora. Esta acción no se puede deshacer.",
+                    text = "Se eliminarán todos los registros de tu bitácora y tus borradores guardados. Esta acción no se puede deshacer.",
                     fontFamily = JakartaSansFont,
                     fontSize = 14.sp,
                     lineHeight = 19.sp,
@@ -547,7 +548,10 @@ private fun OpcionesDatosYAlmacenamiento(contexto: Context) {
                         borrando = true
                         scope.launch {
                             mensajeHistorial = when (val r = BienestarRepositorio.borrarHistorial()) {
-                                is ResultadoApi.Exito -> "Listo, tu historial se borró." to true
+                                is ResultadoApi.Exito -> {
+                                    Borradores.borrarTodos(contexto)   // también los borradores de este teléfono
+                                    "Listo, tu historial y tus borradores se borraron." to true
+                                }
                                 is ResultadoApi.Error -> r.mensaje to false
                             }
                             borrando = false

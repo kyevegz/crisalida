@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.AlmacenamientoCifrado
+import com.example.crisalida.data.BorradoLocal
 import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.theme.screens.PreviewResponsivo
 
@@ -124,7 +125,7 @@ fun CrisalidaScaffold(
                                 .clip(RoundedCornerShape(7.dp))
                                 .background(MkMorado)
                                 .clickable { (context as? Activity)?.let { activity ->
-                                    AlmacenamientoCifrado.borrarTodo(context)   // sin dejar nada guardado en el teléfono
+                                    BorradoLocal.todo(context)   // borradores, cola y todo lo local, sin dejar nada en el teléfono
                                     SesionActual.cerrar()
                                     activity.finishAndRemoveTask()
                                 }}
