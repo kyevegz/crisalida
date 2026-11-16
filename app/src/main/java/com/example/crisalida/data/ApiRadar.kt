@@ -7,7 +7,8 @@ import com.google.gson.annotations.SerializedName
  * (Las 3 líneas de endpoints van en ApiService, dentro de ApiCrisalida.kt)
  * ================================================================ */
 
-// ---------- Preguntas (las fijas y las dinámicas usan EL MISMO formato)
+// ---------- Preguntas (las fijas y las dinámicas usan EL MISMO formato).
+// Las fijas del Bloque I son 4: actividades, tiempo y las 2 abiertas «¿Qué te gusta hacer?» (id "gusta") y «¿Qué sabes hacer?» (id "sabe").
 
 data class OpcionDto(
     val id: String,
@@ -29,7 +30,9 @@ data class Bloque1Response(val preguntas: List<PreguntaDto>)
 
 data class Bloque1Request(
     val actividades: List<String>,
-    val tiempo: String
+    val tiempo: String,
+    val gusta: String,                // ¿Qué te gusta hacer? (obligatoria, 3 a 300 caracteres)
+    val sabe: String                  // ¿Qué sabes hacer? (obligatoria, 3 a 300 caracteres)
 )
 
 data class RespuestaDinamicaDto(
@@ -42,6 +45,8 @@ data class RespuestaDinamicaDto(
 data class FinalizarRequest(
     val actividades: List<String>,
     val tiempo: String,
+    val gusta: String,
+    val sabe: String,
     val respuestas: List<RespuestaDinamicaDto>
 )
 
@@ -49,6 +54,8 @@ data class FinalizarRequest(
 data class RadarFinalRequest(
     val actividades: List<String>,
     val tiempo: String,
+    val gusta: String,
+    val sabe: String,
     val respuestas: List<RespuestaDinamicaDto>,
     val perfil: PerfilResponse
 )
@@ -82,13 +89,15 @@ object RadarRepositorio {
     suspend fun bloque1(): ResultadoApi<Bloque1Response> =
         llamarApi { RetrofitCliente.api.radarBloque1() }
 
-    suspend fun analizar(actividades: List<String>, tiempo: String): ResultadoApi<Bloque2Response> =
-        llamarApi { RetrofitCliente.api.radarAnalizar(Bloque1Request(actividades, tiempo)) }
+    suspend fun analizar(actividades: List<String>, tiempo: String, gusta: String, sabe: String): ResultadoApi<Bloque2Response> =
+        llamarApi { RetrofitCliente.api.radarAnalizar(Bloque1Request(actividades, tiempo, gusta, sabe)) }
 
     suspend fun finalizar(
         actividades: List<String>,
         tiempo: String,
+        gusta: String,
+        sabe: String,
         respuestas: List<RespuestaDinamicaDto>
     ): ResultadoApi<PerfilResponse> =
-        llamarApi { RetrofitCliente.api.radarFinalizar(FinalizarRequest(actividades, tiempo, respuestas)) }
+        llamarApi { RetrofitCliente.api.radarFinalizar(FinalizarRequest(actividades, tiempo, gusta, sabe, respuestas)) }
 }

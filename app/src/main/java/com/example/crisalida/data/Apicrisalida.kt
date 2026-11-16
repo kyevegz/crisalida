@@ -454,10 +454,12 @@ object AuthRepositorio {
     suspend fun completarRegistro(
         actividades: List<String>,
         tiempo: String,
+        gusta: String,
+        sabe: String,
         respuestas: List<RespuestaDinamicaDto>,
         perfil: PerfilResponse
     ): ResultadoApi<SesionResponse> =
-        enviarRegistro(ROL_VENDEDORA, RadarFinalRequest(actividades, tiempo, respuestas, perfil))
+        enviarRegistro(ROL_VENDEDORA, RadarFinalRequest(actividades, tiempo, gusta, sabe, respuestas, perfil))
 
     /** Compradora: su registro es corto, sin radar. Crea la cuenta e inicia la sesión. */
     suspend fun completarRegistroCompradora(): ResultadoApi<SesionResponse> =
