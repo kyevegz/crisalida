@@ -50,7 +50,12 @@ private val MkTextoPregunta = Color(0xFF262626)
 
 //el radar va dentro del registro, la cuenta se crea hasta el segundo dar clic en terminar
 @Composable
-fun RadarScreen(onTerminar: () -> Unit) {
+fun RadarScreen(
+    onTerminar: () -> Unit,
+    // true: ya tiene cuenta (una compradora que vuelve a vender, 6.5). El primer «Terminar» ya guarda su perfil en el servidor,
+    // así que el segundo solo cierra la pantalla en lugar de crear la cuenta.
+    yaTieneCuenta: Boolean = false
+) {
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
 
@@ -141,6 +146,8 @@ fun RadarScreen(onTerminar: () -> Unit) {
                     is ResultadoApi.Error -> errorFinal = r.mensaje
                 }
                 detectando = false
+            } else if (yaTieneCuenta) {
+                onTerminar()
             } else {
                 creandoCuenta = true
                 when (val r = AuthRepositorio.completarRegistro(actividadesElegidas, tiempo, construirRespuestas(), perfilActual)) {
