@@ -22,12 +22,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.R
+import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.theme.*
 
 @Composable
 fun LoginScreen(
     onLoginClick: (String, String) -> Unit,
     onNavigateToRegister: () -> Unit,
+    onOlvidePin: () -> Unit = {},   // abre «Cambiar mi PIN»
     cargando: Boolean = false,   // true mientras se espera al servidor
     error: String? = null        // mensaje a mostrar si algo falló
 ) {
@@ -164,16 +166,18 @@ fun LoginScreen(
                     )
                 }
 
-                // ocupa el resto de la fila y deja el botón a la derecha; si no cabe, el texto baja de línea
+                // enlace discreto a la derecha; en modo camuflaje NO aparece (la galería falsa no debe tener nada de la app real)
                 Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
-                    TextButton(onClick = {  }) {
-                        Text(
-                            text = "¿Olvidaste tu PIN?",
-                            fontFamily = JakartaSansFont,
-                            fontSize = 13.sp,
-                            color = ColorTextoPrincipal,
-                            textAlign = TextAlign.End
-                        )
+                    if (!SesionActual.esCamuflaje) {
+                        TextButton(onClick = onOlvidePin) {
+                            Text(
+                                text = "Olvidé mi PIN",
+                                fontFamily = JakartaSansFont,
+                                fontSize = 13.sp,
+                                color = ColorTextoPrincipal,
+                                textAlign = TextAlign.End
+                            )
+                        }
                     }
                 }
             }

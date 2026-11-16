@@ -98,6 +98,15 @@ interface ApiService {
     @POST("auth/login")
     suspend fun login(@Body datos: LoginRequest): Response<SesionResponse>
 
+    @POST("auth/recuperar/codigo")
+    suspend fun recuperarConCodigo(@Body datos: RecuperarConCodigoRequest): Response<MensajeRecuperacionResponse>
+
+    @POST("auth/recuperar/correo/solicitar")
+    suspend fun solicitarCodigoCorreo(@Body datos: SolicitarCodigoCorreoRequest): Response<MensajeRecuperacionResponse>
+
+    @POST("auth/recuperar/correo/confirmar")
+    suspend fun recuperarConCorreo(@Body datos: RecuperarConCorreoRequest): Response<MensajeRecuperacionResponse>
+
     @GET("perfil/datos")
     suspend fun misDatos(): Response<DatosPersonalesResponse>
 
@@ -137,9 +146,6 @@ interface ApiService {
 
     @GET("progreso/reglas")
     suspend fun reglasFlores(): Response<ReglasResponse>
-
-    @GET("frases-apoyo")
-    suspend fun frasesApoyo(): Response<FrasesApoyoResponse>
 
     @PUT("perfil/avatar")
     suspend fun cambiarAvatar(@Body datos: AvatarRequest): Response<AvatarResponse>

@@ -19,7 +19,7 @@ object ProteccionPantalla {
     private val rutasSensibles = setOf("bienestar", "bienestar_registros", "perfil", "configuracion")
 
     // pantallas que SIEMPRE bloquean las capturas, aunque la usuaria apague el interruptor de Configuración
-    private val rutasSiempreSeguras = setOf("codigo_recuperacion")
+    private val rutasSiempreSeguras = setOf("codigo_recuperacion", "recuperar_pin_codigo", "recuperar_pin_correo")
 
     var bloquearCapturas by mutableStateOf(true)
         private set

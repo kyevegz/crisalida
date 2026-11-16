@@ -35,6 +35,9 @@ import com.example.crisalida.ui.theme.screens.ElegirRolScreen
 import com.example.crisalida.ui.theme.screens.ModoDatos
 import com.example.crisalida.ui.theme.screens.PuertaCorreo
 import com.example.crisalida.ui.theme.screens.LoginScreen
+import com.example.crisalida.ui.theme.screens.RecuperarPinCodigoScreen
+import com.example.crisalida.ui.theme.screens.RecuperarPinCorreoScreen
+import com.example.crisalida.ui.theme.screens.RecuperarPinMetodoScreen
 import com.example.crisalida.ui.theme.screens.RadarScreen
 import com.example.crisalida.ui.theme.screens.VigilanteInactividad
 import com.example.crisalida.ui.theme.AjustesTexto
@@ -120,7 +123,35 @@ class MainActivity : ComponentActivity() {
                                             cargando = false
                                         }
                                     },
-                                    onNavigateToRegister = { navController.navigate("elegir_rol") }
+                                    onNavigateToRegister = { navController.navigate("elegir_rol") },
+                                    onOlvidePin = { navController.navigate("recuperar_pin") }
+                                )
+                            }
+                        }
+
+                        // olvidé mi PIN: elegir método → código de recuperación o correo (todo antes de iniciar sesión)
+                        composable("recuperar_pin") {
+                            ConEscalaDeTexto(tope = 2f) {
+                                RecuperarPinMetodoScreen(
+                                    onCodigo = { navController.navigate("recuperar_pin_codigo") },
+                                    onCorreo = { navController.navigate("recuperar_pin_correo") },
+                                    onVolver = { navController.popBackStack() }
+                                )
+                            }
+                        }
+                        composable("recuperar_pin_codigo") {
+                            ConEscalaDeTexto(tope = 2f) {
+                                RecuperarPinCodigoScreen(
+                                    onVolver = { navController.popBackStack() },
+                                    onListo = { navController.popBackStack("login", false) }
+                                )
+                            }
+                        }
+                        composable("recuperar_pin_correo") {
+                            ConEscalaDeTexto(tope = 2f) {
+                                RecuperarPinCorreoScreen(
+                                    onVolver = { navController.popBackStack() },
+                                    onListo = { navController.popBackStack("login", false) }
                                 )
                             }
                         }
