@@ -167,7 +167,8 @@ data class RetoDto(
     @SerializedName("fecha_limite") val fechaLimite: String,
     @SerializedName("categoria_id") val categoriaId: Int,
     val categoria: String,
-    val contratista: String,
+    val contratista: String,                           // seudónimo de quien publicó el reto (nunca correo ni nombre real)
+    @SerializedName("contratista_avatar") val contratistaAvatar: String? = null,   // su avatar (emoji); los retos de demo no lo tienen
     // Solo en "mis retos":
     @SerializedName("aceptacion_id") val aceptacionId: String?,
     val estado: String?,                               // aceptado | entregado | validado | abandonado

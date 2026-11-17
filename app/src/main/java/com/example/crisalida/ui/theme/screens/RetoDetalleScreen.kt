@@ -20,6 +20,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -163,7 +166,7 @@ private fun ColumnScope.Contenido(
         Dato(Icons.Outlined.Schedule, "Duración aproximada", "${reto.duracionMin} minutos")
         Dato(Icons.Outlined.AccountTree, "Habilidad que se usa", reto.habilidadRequerida ?: "Ninguna en especial")
         Dato(Icons.Outlined.Event, "Fecha límite", fechaLegible(reto.fechaLimite))
-        Dato(Icons.Outlined.Storefront, "Lo pide", reto.contratista)
+        Publicadora(reto)
     }
 
     // la compradora solo consulta el reto: sin texto de entrega ni botones para aceptarlo
@@ -216,6 +219,26 @@ private fun Etiqueta(texto: String) {
     }
 }
 
+// quién publicó el reto: solo su seudónimo y su avatar (el servidor no manda correo ni nombre real)
+@Composable
+private fun Publicadora(reto: RetoDto) {
+    val nombre = if (reto.esMio) "${reto.contratista} (tú)" else reto.contratista
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = "Publicado por $nombre" }
+    ) {
+        Box(
+            modifier = Modifier.size(40.dp).clip(CircleShape).background(Paleta.acentoPerfil).clearAndSetSemantics { },
+            contentAlignment = Alignment.Center
+        ) { Text(reto.contratistaAvatar ?: "🦋", fontSize = 22.sp) }
+        Spacer(Modifier.width(10.dp))
+        Column {
+            Text("Publicado por", fontFamily = JakartaSansFont, fontSize = 12.sp, color = RetoGris)
+            Text(nombre, fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Paleta.textoNegro)
+        }
+    }
+}
+
 @Composable
 private fun Dato(icono: ImageVector, titulo: String, valor: String) {
     Row(verticalAlignment = Alignment.Top) {
@@ -246,7 +269,7 @@ private fun RetoDetallePreview() {
                 compensacion = 350.0, duracionMin = 90, dificultad = "media",
                 habilidadRequerida = "Trabajo manual y atención al detalle", etiqueta = "Manualidades",
                 fechaLimite = "2026-12-05", categoriaId = 1, categoria = "Manualidades",
-                contratista = "Mermeladas La Abuela", aceptacionId = "a1", estado = "aceptado",
+                contratista = "Abuela_Mermeladas", contratistaAvatar = "🦋", aceptacionId = "a1", estado = "aceptado",
                 imagenRuta = null, miEstado = "aceptado"
             ),
             ocupado = false, onVolver = {}, onAceptar = {}, onEntregar = {}, onSoltar = {}
