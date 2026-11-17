@@ -1022,22 +1022,11 @@ private fun PreviewTarjetaPublicacion() {
         )
     }
 }
-// Un reto que la compradora publicó (para la lista «Mis retos»)
-data class RetoPublicadoUi(
-    val titulo: String,
-    val precio: String,
-    val categoria: String,
-    val estado: String,         // Activo, Validando, Completado
-    val fechaLimite: String,    // ya con formato: «15/11/2026 a las 23:59»
-    val imagenRuta: String? = null
-)
-
 // Perfil de la compradora: pestañas «Mis retos» y «Mis compras».
-// [retos] llegará del servidor cuando exista «mis retos publicados» (por ahora la lista va vacía).
+// «Mis retos» (lista, entregas, Validar y Rechazar) está en MisRetosPublicados.kt
 @Composable
 private fun ContenidoPerfilCompradora(
-    onPublicarReto: () -> Unit,
-    retos: List<RetoPublicadoUi> = emptyList()
+    onPublicarReto: () -> Unit
 ) {
     var pestana by remember { mutableIntStateOf(0) }
 
@@ -1072,34 +1061,7 @@ private fun ContenidoPerfilCompradora(
     Spacer(modifier = Modifier.height(20.dp))
 
     if (pestana == 0) {
-        Text(
-            text = "Mis retos",
-            fontFamily = OutfitFont,
-            fontWeight = FontWeight.Bold,
-            fontSize = 28.sp,
-            color = MkTitulo,
-            modifier = Modifier.semantics { heading() }
-        )
-        Text(
-            text = "${retos.size} microrretos publicados",
-            fontFamily = JakartaSansFont,
-            fontSize = 13.sp,
-            color = MkSubtitulo
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        if (retos.isEmpty()) {
-            Text(
-                text = "Aún no has publicado microrretos. Cuando publiques uno, lo verás aquí.",
-                fontFamily = JakartaSansFont,
-                fontSize = 14.sp,
-                lineHeight = 19.sp,
-                color = MkSubtitulo
-            )
-        }
-        retos.forEach { reto ->
-            TarjetaRetoPublicado(reto)
-            Spacer(modifier = Modifier.height(14.dp))
-        }
+        SeccionMisRetosPublicados()
         Spacer(modifier = Modifier.height(6.dp))
         Button(
             onClick = onPublicarReto,
@@ -1142,74 +1104,11 @@ private fun ContenidoPerfilCompradora(
     }
 }
 
-@Composable
-private fun TarjetaRetoPublicado(reto: RetoPublicadoUi) {
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Paleta.fondoTarjetaPerfil),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(modifier = Modifier.padding(10.dp)) {
-            Row {
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Paleta.neutroClaro)
-                ) {
-                    FotoRemota(ruta = reto.imagenRuta, modifier = Modifier.fillMaxSize())
-                }
-                Spacer(modifier = Modifier.width(10.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .background(Paleta.verdeBarraPerfil)
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(reto.categoria, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Paleta.etiquetaVerdeTexto)
-                        }
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(reto.estado, fontFamily = JakartaSansFont, fontSize = 11.sp, color = MkSubtitulo)
-                    }
-                    Text(
-                        text = reto.titulo,
-                        fontFamily = OutfitFont, fontWeight = FontWeight.Bold, fontSize = 16.sp,
-                        color = Paleta.textoNegro, maxLines = 2, overflow = TextOverflow.Ellipsis
-                    )
-                    Text(reto.precio, fontFamily = JakartaSansFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Paleta.textoNegro)
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(Paleta.lilaGris)
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Outlined.Event, contentDescription = "Fecha límite", tint = Paleta.textoNegro, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(reto.fechaLimite, fontFamily = JakartaSansFont, fontSize = 13.sp, color = Paleta.textoNegro)
-            }
-        }
-    }
-}
-
 @PreviewResponsivo
 @Composable
 private fun PreviewPerfilCompradora() {
     Column(modifier = Modifier.background(Paleta.tarjetaGris).padding(16.dp)) {
-        ContenidoPerfilCompradora(
-            onPublicarReto = {},
-            retos = listOf(
-                RetoPublicadoUi("Captura y orden de 35 contactos en Excel", "\$150.00", "Categoría", "Completado", "15/11/2026 a las 23:59"),
-                RetoPublicadoUi("Captura y orden de 35 contactos en Excel", "\$150.00", "Categoría", "Activo", "15/11/2026 a las 23:59")
-            )
-        )
+        ContenidoPerfilCompradora(onPublicarReto = {})
     }
 }
 
