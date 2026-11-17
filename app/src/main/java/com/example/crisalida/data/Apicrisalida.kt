@@ -148,6 +148,16 @@ interface ApiService {
     @POST("retos")
     suspend fun publicarReto(@Body datos: RetoPublicarRequest, @Header("Idempotency-Key") clave: String?): Response<RetoPublicadoResponse>
 
+    // mis retos y entregas (7.6)
+    @GET("retos/publicados")
+    suspend fun misRetosPublicados(): Response<MisRetosPublicadosResponse>
+
+    @POST("retos/aceptaciones/{id}/validar")
+    suspend fun validarEntrega(@Path("id") id: String): Response<ValidacionEntregaResponse>
+
+    @POST("retos/aceptaciones/{id}/rechazar")
+    suspend fun rechazarEntrega(@Path("id") id: String, @Body datos: RechazoEntregaRequest): Response<RechazoEntregaResponse>
+
     @POST("retos/{id}/imagen")
     suspend fun subirImagenReto(@Path("id") id: String, @Body imagen: RequestBody): Response<FotoRetoResponse>
 
