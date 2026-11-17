@@ -5,12 +5,14 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.toArgb
@@ -30,6 +32,10 @@ private fun Context.actividad(): Activity? {
 // en modo oscuro usa los colores de Paleta. El modo se cambia en Configuración > Apariencia
 @Composable
 fun CrisalidaTemaApp(content: @Composable () -> Unit) {
+    // si el teléfono cambia de modo con la app abierta y se eligió «Automático», se actualiza solo
+    val sistemaOscuro = isSystemInDarkTheme()
+    SideEffect { Paleta.actualizarSistema(sistemaOscuro) }
+
     val oscuro = Paleta.modoOscuro
     val esquema = if (oscuro) {
         darkColorScheme(
@@ -64,10 +70,11 @@ fun CrisalidaTemaApp(content: @Composable () -> Unit) {
     val iconosClarosOriginal = remember(ventana) {
         ventana?.let { WindowCompat.getInsetsController(it, vista).isAppearanceLightStatusBars }
     }
+    val barrasOscuras = oscuro && !Paleta.enCamuflaje
     SideEffect {
         if (ventana == null) return@SideEffect
         val controlador = WindowCompat.getInsetsController(ventana, vista)
-        if (oscuro) {
+        if (barrasOscuras) {
             ventana.setBackgroundDrawable(ColorDrawable(Paleta.fondoApp.toArgb()))
             controlador.isAppearanceLightStatusBars = false
             controlador.isAppearanceLightNavigationBars = false
@@ -89,6 +96,10 @@ fun CrisalidaTemaApp(content: @Composable () -> Unit) {
 // la galería de camuflaje se ve igual en los dos modos (así no delata nada): siempre con el esquema claro
 @Composable
 fun CrisalidaTemaClaroFijo(content: @Composable () -> Unit) {
+    DisposableEffect(Unit) {
+        Paleta.enCamuflaje = true
+        onDispose { Paleta.enCamuflaje = false }
+    }
     MaterialTheme(colorScheme = lightColorScheme()) {
         CompositionLocalProvider(LocalContentColor provides PaletaGaleria.cTextoNegro) {
             content()

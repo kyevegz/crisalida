@@ -1,6 +1,7 @@
 package com.example.crisalida.ui.theme
 
 import android.content.Context
+import android.content.res.Configuration
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -12,24 +13,53 @@ import androidx.compose.ui.graphics.Color
 // Reglas de los nombres:
 //   - «...Fijo»: no cambia con el modo (acentos, botones y textos que van sobre ellos, por ejemplo letras blancas sobre un botón).
 //   - el resto: cambia en modo oscuro conservando el contraste (fondos oscuros, textos claros).
+// Cómo se elige el aspecto de la app (Configuración > Apariencia)
+enum class ModoApariencia { CLARO, OSCURO, SISTEMA }
+
 object Paleta {
-    // false = modo claro (como siempre). Se guarda en el teléfono, no en la base de datos
-    var modoOscuro by mutableStateOf(false)
+    // lo que eligió la usuaria. Se guarda en el teléfono, no en la base de datos. Por defecto, claro (como siempre)
+    var modo by mutableStateOf(ModoApariencia.CLARO)
         private set
+
+    // si el teléfono está en modo oscuro (solo importa cuando se eligió «Automático»)
+    private var sistemaOscuro by mutableStateOf(false)
+
+    // la galería de camuflaje se ve igual siempre; mientras está abierta no se oscurecen las barras del sistema
+    var enCamuflaje by mutableStateOf(false)
+
+    // el modo que se aplica de verdad ahora mismo
+    val modoOscuro: Boolean
+        get() = when (modo) {
+            ModoApariencia.CLARO -> false
+            ModoApariencia.OSCURO -> true
+            ModoApariencia.SISTEMA -> sistemaOscuro
+        }
 
     private var cargado = false
     private const val ARCHIVO = "crisalida_ajustes"
-    private const val CLAVE = "modo_oscuro"
+    private const val CLAVE = "modo_apariencia"
+    private const val CLAVE_ANTERIOR = "modo_oscuro"   // la versión anterior guardaba solo sí/no
 
     fun cargar(context: Context) {
+        val app = context.applicationContext
+        // esto se actualiza cada vez que se abre la pantalla principal
+        sistemaOscuro = (app.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         if (cargado) return
         cargado = true
-        modoOscuro = context.applicationContext.getSharedPreferences(ARCHIVO, Context.MODE_PRIVATE).getBoolean(CLAVE, false)
+        val prefs = app.getSharedPreferences(ARCHIVO, Context.MODE_PRIVATE)
+        val guardado = prefs.getString(CLAVE, null)
+        modo = ModoApariencia.values().firstOrNull { it.name == guardado }
+            ?: if (prefs.getBoolean(CLAVE_ANTERIOR, false)) ModoApariencia.OSCURO else ModoApariencia.CLARO
     }
 
-    fun cambiar(context: Context, oscuro: Boolean) {
-        modoOscuro = oscuro
-        context.applicationContext.getSharedPreferences(ARCHIVO, Context.MODE_PRIVATE).edit().putBoolean(CLAVE, oscuro).apply()
+    fun cambiar(context: Context, nuevo: ModoApariencia) {
+        modo = nuevo
+        context.applicationContext.getSharedPreferences(ARCHIVO, Context.MODE_PRIVATE).edit().putString(CLAVE, nuevo.name).apply()
+    }
+
+    // lo llama el tema cuando el teléfono cambia de modo mientras la app está abierta
+    fun actualizarSistema(oscuro: Boolean) {
+        sistemaOscuro = oscuro
     }
 
     private fun c(claro: Long, oscuro: Long): Color = Color(if (modoOscuro) oscuro else claro)
