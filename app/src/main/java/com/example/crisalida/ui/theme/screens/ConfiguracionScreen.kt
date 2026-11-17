@@ -77,6 +77,7 @@ import com.example.crisalida.ui.theme.JakartaSansFont
 import com.example.crisalida.ui.theme.OutfitFont
 import com.example.crisalida.data.InactividadSesion
 import com.example.crisalida.data.ProteccionPantalla
+import com.example.crisalida.ui.theme.ModoApariencia
 import com.example.crisalida.ui.theme.Paleta
 private val MkTitulo: Color get() = Paleta.titulo
 private val MkSubtitulo: Color get() = Paleta.textoGris
@@ -173,7 +174,7 @@ private fun ContenidoConfiguracion(
             SeccionConfiguracion("Apariencia") {
                 OpcionesTamanoTexto(contexto)
                 Spacer(modifier = Modifier.height(20.dp))
-                OpcionModoOscuro(contexto)
+                OpcionesModoPantalla(contexto)
             }
 
             SeccionConfiguracion("Ayuda") {
@@ -306,10 +307,9 @@ private fun OpcionesTamanoTexto(contexto: Context) {
     }
 }
 
-// modo claro / oscuro: un solo botón que cambia según el modo en que está la app (se guarda en el teléfono)
+// modo de pantalla: claro, oscuro o automático (sigue al teléfono). Se guarda en el teléfono y se aplica al instante
 @Composable
-private fun OpcionModoOscuro(contexto: Context) {
-    val oscuro = Paleta.modoOscuro
+private fun OpcionesModoPantalla(contexto: Context) {
     Text(
         text = "Modo de pantalla",
         fontFamily = OutfitFont,
@@ -318,16 +318,25 @@ private fun OpcionModoOscuro(contexto: Context) {
         color = Paleta.textoNegro
     )
     Text(
-        text = if (oscuro) "Ahora la app está en modo oscuro." else "Ahora la app está en modo claro.",
+        text = "Elige cómo se ve la app. «Automático» sigue el modo de tu teléfono.",
         fontFamily = JakartaSansFont,
         fontSize = 14.sp,
         color = MkSubtitulo
     )
     Spacer(modifier = Modifier.height(8.dp))
-    BotonAccion(
-        texto = if (oscuro) "Cambiar a modo claro" else "Cambiar a modo oscuro",
-        onClick = { Paleta.cambiar(contexto, !oscuro) }
-    )
+    Column(modifier = Modifier.selectableGroup()) {
+        listOf(
+            ModoApariencia.CLARO to "Claro",
+            ModoApariencia.OSCURO to "Oscuro",
+            ModoApariencia.SISTEMA to "Automático (como el teléfono)"
+        ).forEach { (modo, nombre) ->
+            OpcionRadio(
+                texto = nombre,
+                elegida = Paleta.modo == modo,
+                onClick = { Paleta.cambiar(contexto, modo) }
+            )
+        }
+    }
 }
 
 // cierre de sesión por inactividad: 5, 10, 15, 30 minutos o nunca
