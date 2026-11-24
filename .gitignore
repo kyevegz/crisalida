@@ -15,3 +15,8 @@
 local.properties
 *.apk
 .idea/
+
+# Llaves de firma del APK: NUNCA se suben al repositorio
+*.jks
+*.keystore
+keystore.properties

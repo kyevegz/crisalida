@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Lo guardado cifrado en el teléfono NO se copia a la nube: la clave vive en el Keystore y no se puede restaurar -->
+<!--
+  La app declara allowBackup="false", así que Android no copia sus datos a la nube.
+  Estas reglas quedan como refuerzo por si algún día se activa la copia: lo que vive en el teléfono
+  (sesión, borradores, cola de envíos pendientes y ajustes) NO se copia, porque está cifrado con una
+  clave del Keystore que no se puede restaurar en otro teléfono.
+-->
 <full-backup-content>
     <exclude domain="sharedpref" path="crisalida_local_cifrado.xml"/>
     <exclude domain="sharedpref" path="crisalida_borradores.xml"/>
+    <exclude domain="sharedpref" path="crisalida_ajustes.xml"/>
+    <exclude domain="file" path="cola_envios"/>
 </full-backup-content>
