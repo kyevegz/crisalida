@@ -49,4 +49,19 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 En Render: *Build* `pip install -r requirements.txt` · *Start* `uvicorn main:app --host 0.0.0.0 --port $PORT`.
 
+## Mediciones de rendimiento |
+| Medición |	Resultado |
+|---|---|
+| Fecha y teléfono |	23/11/2026, motorola moto g(20) |
+| Versión	| 1.1.0 (código 2), release firmado |
+| Tamaño del APK	| 18.4 MB (descarga de 17.8 MB); el APK que revisó el profesor pesaba unos 26 MB |
+| Arranque en frío (5 pruebas)	| 1077, 626, 599, 673 y 603 ms; promedio 716 ms y mediana 626 ms |
+| Memoria (PSS total)	| 77.5 MB al inicio y 115.3 MB después de recorrer la app |
+| Respuesta del servidor (/docs, 5 pruebas)	| 0.51, 0.35, 0.31, 0.31 y 0.38 s; promedio 0.37 s |
+
+Interpretación:
+- Arranque: Android vitals considera excesivo un arranque en frío de 5 segundos o más.
+- Memoria: La primera lectura fue en Inicio y la última después de abrir las pantallas (Inicio, retos, marketplace, bienestar, perfil y configuración). Subió unos 38 MB al navegar, y ahí se estabilizó cerca de 118 MB.
+- Servidor: el servidor estaba despierto así que no tomó en cuenta el arranque en frío de Render.
+
 **App:** abre la carpeta en Android Studio, en `Apicrisalida.kt` pon `[BASE_URL](https://crisalidabackend.onrender.com/)` con la dirección del servidor (terminada en `/`) y ejecuta **Build → Build APK(s)**.
