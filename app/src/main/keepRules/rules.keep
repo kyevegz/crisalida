@@ -10,3 +10,25 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+# Reglas de R8 para Crisálida (issue 14)
+
+# Las clases de la app viajan como JSON con Gson (usa reflexión) y también se guardan cifradas en la cola
+# de envíos y en la caché. Si R8 les cambiara los nombres de los campos, lo guardado en teléfonos con la
+# versión 1.0 no se podría leer. Por eso se conservan todas las clases de la app.
+-keep class com.example.crisalida.** { *; }
+
+# Atributos que Gson y Retrofit leen mientras la app corre
+-keepattributes Signature
+-keepattributes *Annotation*
+-keepattributes InnerClasses
+-keepattributes EnclosingMethod
+
+# Retrofit con funciones suspend de Kotlin (modo completo de R8)
+-keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
+-keep,allowobfuscation,allowshrinking interface retrofit2.Call
+-keep,allowobfuscation,allowshrinking class retrofit2.Response
+
+# Gson con tipos genéricos
+-keep,allowobfuscation,allowshrinking class com.google.gson.reflect.TypeToken
+-keep,allowobfuscation,allowshrinking class * extends com.google.gson.reflect.TypeToken
