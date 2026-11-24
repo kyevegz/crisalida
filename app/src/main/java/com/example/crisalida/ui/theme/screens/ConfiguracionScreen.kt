@@ -84,8 +84,8 @@ private val MkSubtitulo: Color get() = Paleta.textoGris
 private val MkFondoItem: Color get() = Paleta.fondoItem
 private val MkExito: Color get() = Paleta.exito
 
-// ⚠️ Correo de contacto y ayuda: cámbialo por el correo real del equipo antes de publicar la app.
-private const val CORREO_AYUDA = "ayuda@crisalida.example"
+// Correo de contacto y ayuda: bandeja real del equipo (Configuración → Ayuda → Contacto).
+private const val CORREO_AYUDA = "crisalida.app@gmail.com"
 
 // Configuración: se abre desde el engrane del Perfil. Las secciones Seguridad, Privacidad, Datos y
 // almacenamiento y Cuenta se irán llenando en sus propios issues; Apariencia ya tiene el tamaño de

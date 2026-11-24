@@ -1,12 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Lo guardado cifrado en el teléfono NO se copia a la nube ni a otro teléfono: la clave vive en el Keystore -->
+<!--
+  Con allowBackup="false" no hay copia en la nube. En algunos fabricantes la transferencia directa entre
+  teléfonos puede seguir activa, así que también se excluye aquí todo lo que la app guarda en el teléfono:
+  sesión cifrada, borradores, cola de envíos pendientes y ajustes (la clave vive en el Keystore).
+-->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="sharedpref" path="crisalida_local_cifrado.xml"/>
         <exclude domain="sharedpref" path="crisalida_borradores.xml"/>
+        <exclude domain="sharedpref" path="crisalida_ajustes.xml"/>
+        <exclude domain="file" path="cola_envios"/>
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="crisalida_local_cifrado.xml"/>
         <exclude domain="sharedpref" path="crisalida_borradores.xml"/>
+        <exclude domain="sharedpref" path="crisalida_ajustes.xml"/>
+        <exclude domain="file" path="cola_envios"/>
     </device-transfer>
 </data-extraction-rules>
