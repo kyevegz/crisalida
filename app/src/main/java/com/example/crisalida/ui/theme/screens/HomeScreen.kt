@@ -264,11 +264,11 @@ fun HomeScreen(
                                         )
                                         Row(
                                             modifier = Modifier
-                                                .align(Alignment.BottomStart)
-                                                .offset(x = 29.dp)
+                                                .align(Alignment.BottomCenter)
+                                                .wrapContentWidth(unbounded = true)
                                                 .clip(CircleShape)
                                                 .background(MkVerdeChip)
-                                                .padding(horizontal = 2.dp),
+                                                .padding(horizontal = 4.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Icon(
@@ -284,6 +284,8 @@ fun HomeScreen(
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 12.sp,
                                                 lineHeight = 17.sp,
+                                                maxLines = 1,
+                                                softWrap = false,
                                                 color = Paleta.blanco
                                             )
                                         }
