@@ -14,6 +14,7 @@ import com.example.crisalida.data.FormulariosAbiertos
 import com.example.crisalida.data.ColaEnvios
 import com.example.crisalida.data.FotoRemota
 import com.example.crisalida.data.FotosCamara
+import com.example.crisalida.data.Haptica
 import com.example.crisalida.data.MarketplaceRepositorio
 import androidx.compose.ui.platform.LocalContext
 import com.example.crisalida.data.MiniaturaLocal
@@ -335,6 +336,7 @@ fun PublicarProductoScreen(
                             if (subida !is ResultadoApi.Exito) fallidas++
                         }
                         publicacionCreada = true
+                        Haptica.exito()
                         mensajePublicar = buildString {
                             append("¡Cambios guardados!")
                             if (r.datos.reenviadaARevision) append("\n\nComo cambiaste los detalles, tu publicación vuelve a revisión y reaparecerá en el marketplace cuando se apruebe.")
@@ -356,6 +358,7 @@ fun PublicarProductoScreen(
                 is ResultadoApi.Exito -> if (r.datos.estado == ColaEnvios.ESTADO_EN_COLA) {
                     // sin conexión: NO está publicada todavía y no se muestran flores hasta que el servidor confirme
                     publicacionCreada = true
+                    Haptica.exito()
                     borradorId?.let { Borradores.eliminar(contexto, it) }
                     mensajePublicar = "Sin conexión: tu publicación quedó guardada en tu teléfono y se enviará sola cuando vuelva el internet. " +
                             "Puedes cancelarla desde tu Perfil. Las flores se sumarán cuando el servidor la confirme."
@@ -367,6 +370,7 @@ fun PublicarProductoScreen(
                         if (subida !is ResultadoApi.Exito) fallidas++
                     }
                     publicacionCreada = true
+                    Haptica.exito()
                     borradorId?.let { Borradores.eliminar(contexto, it) }
                     mensajePublicar = buildString {
                         append(if (r.datos.estado == "activo") "¡Tu publicación ya está visible en el marketplace!"

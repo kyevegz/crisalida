@@ -40,6 +40,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.crisalida.data.Haptica
 import com.example.crisalida.data.MarketplaceRepositorio
 import com.example.crisalida.data.MiniaturaLocal
 import com.example.crisalida.data.prepararFoto
@@ -182,6 +183,7 @@ fun PublicarRetoScreen(
                 is ResultadoApi.Exito -> {
                     resultado = r.datos
                     retoIdEnviado = r.datos.retoId
+                    Haptica.exito()
                     val bytes = fotoBytes
                     if (bytes != null) subirFoto(r.datos.retoId, bytes)
                 }

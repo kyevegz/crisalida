@@ -61,6 +61,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.data.AhorroDatos
+import com.example.crisalida.data.Haptica
 import com.example.crisalida.data.AlmacenamientoLocal
 import com.example.crisalida.data.BienestarRepositorio
 import com.example.crisalida.data.Borradores
@@ -169,6 +170,17 @@ private fun ContenidoConfiguracion(
 
             SeccionConfiguracion("Cuenta") {
                 OpcionesCuenta(onCuentaBorrada, onAbrirRadar)
+            }
+
+            SeccionConfiguracion("Sonidos y vibración") {
+                Haptica.cargar(contexto)
+                FilaInterruptor(
+                    titulo = "Vibración",
+                    descripcion = "El teléfono vibra suave al confirmar algo (publicar, entregar, validar) y distinto si hay un error. " +
+                            "Nunca vibra en modo camuflaje. Se conserva aunque cierres la app.",
+                    activado = Haptica.activa,
+                    onCambio = { Haptica.cambiar(contexto, it) }
+                )
             }
 
             SeccionConfiguracion("Apariencia") {
