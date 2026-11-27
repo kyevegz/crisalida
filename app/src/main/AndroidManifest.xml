@@ -5,10 +5,20 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- vibración corta como respuesta (permiso normal: no pide ningún diálogo) -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- dictado por voz: el permiso se pide solo al tocar el micrófono, con una explicación antes -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- el micrófono es opcional: sin él la app se instala y se usa el teclado -->
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <!-- solo se pide cuando la usuaria toca «Tomar foto» al publicar -->
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- la cámara es opcional: sin ella la app se instala y se usa la galería -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- desde Android 11 hay que declarar que la app consulta el servicio de reconocimiento de voz -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
     <application
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"

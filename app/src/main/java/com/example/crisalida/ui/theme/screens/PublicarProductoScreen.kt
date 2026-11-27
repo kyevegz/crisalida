@@ -15,6 +15,7 @@ import com.example.crisalida.data.ColaEnvios
 import com.example.crisalida.data.FotoRemota
 import com.example.crisalida.data.FotosCamara
 import com.example.crisalida.data.Haptica
+import com.example.crisalida.data.unirDictado
 import com.example.crisalida.data.MarketplaceRepositorio
 import androidx.compose.ui.platform.LocalContext
 import com.example.crisalida.data.MiniaturaLocal
@@ -667,6 +668,8 @@ fun PublicarProductoScreen(
                             colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Paleta.tarjeta, unfocusedContainerColor = Paleta.tarjeta, focusedBorderColor = MkTitulo, unfocusedBorderColor = ColorCamposFondo),
                             textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
                         )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        BotonDictado(alDictar = { descripcion = unirDictado(descripcion, it) })
                     }
                 }
 
