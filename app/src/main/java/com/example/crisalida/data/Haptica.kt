@@ -52,8 +52,8 @@ object Haptica {
         if (activada) exito()   // al encender, una muestra para que sepa cómo se siente
     }
 
-    fun exito() = vibrar(longArrayOf(0, 300, 150, 300), 255)
-    fun error() = vibrar(longArrayOf(0, 500), 255)
+    fun exito() = vibrar(longArrayOf(0, 40, 80, 40), 255)
+    fun error() = vibrar(longArrayOf(0, 90), 255)
     fun aviso() = vibrar(longArrayOf(0, 400), 255)
     fun tic() = vibrar(longArrayOf(0, 12), 80)
 
@@ -94,7 +94,7 @@ object Haptica {
                 }
                 if (Build.VERSION.SDK_INT >= 33) {
                     // Android 13: se declara explícitamente como respuesta al tacto (sigue «Vibración al tocar» del sistema)
-                    v.vibrate(efecto, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM))
+                    v.vibrate(efecto, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_TOUCH))
                 } else {
                     @Suppress("DEPRECATION")
                     v.vibrate(efecto, atributos)                            // Android 8 a 12

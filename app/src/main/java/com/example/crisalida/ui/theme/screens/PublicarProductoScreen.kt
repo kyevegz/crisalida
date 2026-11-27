@@ -303,9 +303,9 @@ fun PublicarProductoScreen(
         if (publicando) return
         val categoria = categoriaSeleccionada
         val precio = precioFinal.replace(",", ".").toDoubleOrNull()
-        if (categoria == null) { mensajePublicar = "Elige una categoría para tu publicación."; return }
-        if (tituloDescriptivo.trim().length < 3) { mensajePublicar = "Escribe un título para tu publicación."; return }
-        if (precio == null || precio <= 0.0) { mensajePublicar = "Escribe un precio mayor a cero."; return }
+        if (categoria == null) { mensajePublicar = "Elige una categoría para tu publicación."; Haptica.error(); return }
+        if (tituloDescriptivo.trim().length < 3) { mensajePublicar = "Escribe un título para tu publicación."; Haptica.error(); return }
+        if (precio == null || precio <= 0.0) { mensajePublicar = "Escribe un precio mayor a cero."; Haptica.error(); return }
         val esProducto = tipoPublicacion == 0
         val peticion = PublicacionRequest(
             tipo = if (esProducto) "producto" else "servicio",
@@ -327,7 +327,7 @@ fun PublicarProductoScreen(
             publicando = true
             scope.launch {
                 when (val r = PublicacionesRepositorio.editar(publicacionId, peticion)) {
-                    is ResultadoApi.Error -> mensajePublicar = r.mensaje
+                    is ResultadoApi.Error -> { mensajePublicar = r.mensaje; Haptica.error() }
                     is ResultadoApi.Exito -> {
                         var fallidas = 0
                         for (uri in imagenesSeleccionadas.toList()) {
@@ -354,7 +354,7 @@ fun PublicarProductoScreen(
             val preparadas = withContext(Dispatchers.IO) { imagenesSeleccionadas.toList().map { prepararFoto(contexto, it) } }
             val fotos = preparadas.filterNotNull()
             when (val r = PublicacionesRepositorio.publicar(peticion, fotos)) {
-                is ResultadoApi.Error -> mensajePublicar = r.mensaje
+                is ResultadoApi.Error -> { mensajePublicar = r.mensaje; Haptica.error() }
                 is ResultadoApi.Exito -> if (r.datos.estado == ColaEnvios.ESTADO_EN_COLA) {
                     // sin conexión: NO está publicada todavía y no se muestran flores hasta que el servidor confirme
                     publicacionCreada = true
