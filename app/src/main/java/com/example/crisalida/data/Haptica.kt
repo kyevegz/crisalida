@@ -3,9 +3,11 @@ package com.example.crisalida.data
 import android.content.Context
 import android.media.AudioAttributes
 import android.os.Build
+import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -50,8 +52,8 @@ object Haptica {
         if (activada) exito()   // al encender, una muestra para que sepa cómo se siente
     }
 
-    fun exito() = vibrar(longArrayOf(0, 40, 80, 40), 255)
-    fun error() = vibrar(longArrayOf(0, 90), 255)
+    fun exito() = vibrar(longArrayOf(0, 300, 150, 300), 255)
+    fun error() = vibrar(longArrayOf(0, 500), 255)
     fun aviso() = vibrar(longArrayOf(0, 400), 255)
     fun tic() = vibrar(longArrayOf(0, 12), 80)
 
@@ -72,27 +74,38 @@ object Haptica {
             val contexto = contextoApp ?: return
             val v = motor(contexto)
             val enCamuflaje = Paleta.enCamuflaje || SesionActual.esCamuflaje
-            if (!debeVibrar(activa, enCamuflaje, v?.hasVibrator() == true)) return
-            // Se declara que es una respuesta al tacto: sin esto, Xiaomi/Android 13 pueden descartar la vibración
+            val tieneMotor = v?.hasVibrator() == true
+            if (!debeVibrar(activa, enCamuflaje, tieneMotor)) {
+                Log.d("Haptica", "no vibra: ajuste=$activa camuflaje=$enCamuflaje motor=$tieneMotor")
+                return
+            }
+            @Suppress("DEPRECATION")
             val atributos = AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .build()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // sin control de fuerza (motores sencillos de gama baja y media) basta la lista de tiempos
                 val efecto = if (v!!.hasAmplitudeControl()) {
                     val fuerzas = IntArray(patron.size) { i -> if (i % 2 == 0) 0 else fuerza }
                     VibrationEffect.createWaveform(patron, fuerzas, -1)
                 } else {
                     VibrationEffect.createWaveform(patron, -1)
                 }
-                @Suppress("DEPRECATION")
-                v.vibrate(efecto, atributos)                                // Android 8 o más
+                if (Build.VERSION.SDK_INT >= 33) {
+                    // Android 13: se declara explícitamente como respuesta al tacto (sigue «Vibración al tocar» del sistema)
+                    v.vibrate(efecto, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM))
+                } else {
+                    @Suppress("DEPRECATION")
+                    v.vibrate(efecto, atributos)                            // Android 8 a 12
+                }
             } else {
                 @Suppress("DEPRECATION")
                 v!!.vibrate(patron, -1, atributos)                          // Android 7: método antiguo con lista de tiempos
             }
+            Log.d("Haptica", "vibrar enviado: ${patron.toList()}")
         } catch (e: Exception) {
-            // la vibración nunca debe romper la app
+            Log.d("Haptica", "falló la vibración: $e")   // la vibración nunca debe romper la app
         }
     }
 }
