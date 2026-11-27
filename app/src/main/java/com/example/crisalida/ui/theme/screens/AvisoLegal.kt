@@ -57,6 +57,9 @@ Para qué los usamos
 • Para que puedas recuperar tu información si cambias de teléfono.
 • Para mantener un espacio seguro: revisar publicaciones y atender reportes.
 
+Dictado por voz
+Si usas el micrófono para dictar, Crisálida no graba ni guarda tu voz: solo recibe el texto. El reconocimiento lo hace el servicio de voz de tu teléfono (por ejemplo, el de Google). Según tu teléfono y tu conexión, puede hacerse dentro del propio teléfono o enviar el audio a ese servicio, que se rige por su propio aviso de privacidad. El texto dictado pasa por las mismas revisiones de seguridad que lo que escribes. Solo guardamos el texto que tú decides publicar o guardar.
+
 Con quién los compartimos
 No vendemos tus datos ni los compartimos con terceros. Lo que tú publicas (productos, servicios y sus fotos) lo ven otras usuarias, pero tu identidad real nunca se muestra. Podemos entregar información solo si una autoridad competente nos lo exige por ley.
 

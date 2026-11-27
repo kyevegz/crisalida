@@ -41,6 +41,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.data.Haptica
+import com.example.crisalida.data.unirDictado
 import com.example.crisalida.data.MarketplaceRepositorio
 import com.example.crisalida.data.MiniaturaLocal
 import com.example.crisalida.data.prepararFoto
@@ -361,6 +362,7 @@ fun PublicarRetoScreen(
                                 capitalizacion = KeyboardCapitalization.Sentences,
                                 lineasMin = 4
                             )
+                            BotonDictado(alDictar = { descripcion = unirDictado(descripcion, it, MAX_DESCRIPCION); quitarError("descripcion") })
 
                             // ---- recompensa
                             Etiqueta("Recompensa")

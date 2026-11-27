@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.ui.theme.*
+import com.example.crisalida.data.unirDictado
 import com.example.crisalida.data.BienestarRepositorio
 import com.example.crisalida.data.FloresResponse
 import com.example.crisalida.data.ProgresoRepositorio
@@ -413,6 +414,8 @@ fun BienestarScreen(
                                         ),
                                         textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 14.sp, color = ColorTextoPrincipal)
                                     )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    BotonDictado(alDictar = { respuestasPreguntas[index] = unirDictado(respuestasPreguntas[index] ?: "", it) })
                                 }
                             }
                         }
@@ -488,6 +491,8 @@ fun BienestarScreen(
                                 ),
                                 textStyle = TextStyle(fontFamily = JakartaSansFont, fontSize = 15.sp, color = ColorTextoPrincipal)
                             )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            BotonDictado(alDictar = { textoBitacora = unirDictado(textoBitacora, it) })
 
                             Spacer(modifier = Modifier.height(14.dp))
 
