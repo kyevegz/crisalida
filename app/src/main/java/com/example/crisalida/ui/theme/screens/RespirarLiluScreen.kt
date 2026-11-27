@@ -103,12 +103,12 @@ fun RespirarLiluScreen(
             while (true) {
                 fase = "Inhala"
                 if (hablar) lector.leer(listOf("Inhala"))
-                Haptica.inhalar(INHALA_MS)
                 escalaGuia.animateTo(1.03f, tween(INHALA_MS, easing = FastOutSlowInEasing))
+                Haptica.finDeInhalar()   // se acabó el turno de inhalar: un toque
                 fase = "Exhala"
                 if (hablar) lector.leer(listOf("Exhala"))
-                Haptica.exhalar(EXHALA_MS)
                 escalaGuia.animateTo(0.97f, tween(EXHALA_MS, easing = FastOutSlowInEasing))
+                Haptica.finDeExhalar()   // se acabó el turno de exhalar: dos toques
             }
         } finally {
             // Pausar, salir de la pantalla o segundo plano: se corta la vibración y la voz de inmediato
@@ -315,7 +315,7 @@ private fun GuiaDeRespiracion(
                 color = MkTitulo
             )
             Text(
-                text = "Sigue a Lilu con los ojos cerrados: el teléfono vibra al inhalar (4 s) y al exhalar (6 s).",
+                text = "Sigue a Lilu con los ojos cerrados: inhala 4 s y exhala 6 s. Un toque suave avisa cuando termina el turno de inhalar y dos cuando termina el de exhalar.",
                 fontFamily = JakartaSansFont,
                 fontSize = 13.sp,
                 lineHeight = 18.sp,

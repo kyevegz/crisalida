@@ -24,70 +24,12 @@ fun debeVibrar(ajusteActivo: Boolean, enCamuflaje: Boolean, tieneMotor: Boolean)
 fun debeHablar(vozActiva: Boolean, enCamuflaje: Boolean): Boolean = vozActiva && !enCamuflaje
 
 /**
- * Un patrón de vibración. [tiempos] = [espera, vibra, espera, vibra...] en milisegundos.
- * [fuerzas] (de 0 a 255, una por cada tiempo) solo existe si el teléfono controla la intensidad; si es null, el patrón
- * es de encendido y apagado.
- */
-class PatronVibracion(val tiempos: LongArray, val fuerzas: IntArray?)
-
-/**
- * Inhalar: pulsos suaves y separados que van CRECIENDO (uno cada ~0.7 s). Dura exactamente [duracionMs].
- * Con control de intensidad cada pulso es más fuerte que el anterior; sin él, cada pulso dura más que el anterior.
- */
-fun patronInhalar(duracionMs: Int, conFuerza: Boolean): PatronVibracion {
-    val pulsos = maxOf(3, duracionMs / 700)
-    val tramo = duracionMs / pulsos
-    val resto = duracionMs - tramo * pulsos
-    val tiempos = ArrayList<Long>()
-    val fuerzas = ArrayList<Int>()
-    tiempos.add(0); fuerzas.add(0)
-    for (i in 0 until pulsos) {
-        val avance = i.toFloat() / (pulsos - 1)                      // 0 en el primero, 1 en el último
-        val encendido = if (conFuerza) 120 else (20 + 200 * avance).toInt()   // 20 ms … 220 ms
-        val apagado = tramo - encendido + (if (i == pulsos - 1) resto else 0)
-        tiempos.add(encendido.toLong()); fuerzas.add((30 + 170 * avance).toInt())   // fuerza 30 … 200
-        tiempos.add(apagado.toLong()); fuerzas.add(0)
-    }
-    return PatronVibracion(tiempos.toLongArray(), if (conFuerza) fuerzas.toIntArray() else null)
-}
-
-/**
- * Exhalar: UNA vibración larga y suave que se va apagando durante todo [duracionMs]. Dura exactamente [duracionMs].
- * Con control de intensidad la fuerza baja poco a poco. Sin él se simula con ráfagas muy rápidas (50 ms) que
- * se sienten como una vibración continua más suave, y cada vez con más pausa entre ráfagas (se va apagando).
- */
-fun patronExhalar(duracionMs: Int, conFuerza: Boolean): PatronVibracion {
-    if (conFuerza) {
-        val pasos = 8
-        val tramo = duracionMs / pasos
-        val resto = duracionMs - tramo * pasos
-        val tiempos = LongArray(pasos + 1) { i -> if (i == 0) 0L else (tramo + (if (i == pasos) resto else 0)).toLong() }
-        val fuerzas = IntArray(pasos + 1) { i -> if (i == 0) 0 else 110 - (85 * (i - 1)) / (pasos - 1) }   // 110 … 25
-        return PatronVibracion(tiempos, fuerzas)
-    }
-    val ciclo = 50
-    val proporciones = floatArrayOf(0.8f, 0.55f, 0.35f, 0.2f)   // parte del ciclo con el motor encendido, por cuarto de tiempo
-    val tiempos = ArrayList<Long>()
-    tiempos.add(0)
-    var usado = 0
-    while (usado + ciclo <= duracionMs) {
-        val cuarto = minOf(3, usado * 4 / duracionMs)
-        val encendido = (ciclo * proporciones[cuarto]).toInt()
-        tiempos.add(encendido.toLong()); tiempos.add((ciclo - encendido).toLong())
-        usado += ciclo
-    }
-    if (tiempos.size == 1) return PatronVibracion(longArrayOf(0, duracionMs.toLong()), null)   // duración muy corta
-    if (usado < duracionMs) tiempos[tiempos.lastIndex] = tiempos.last() + (duracionMs - usado)
-    return PatronVibracion(tiempos.toLongArray(), null)
-}
-
-/**
  * Vibraciones de la app (issue 10.1). Cuatro patrones distinguibles al tacto:
  *  - exito(): dos toques cortos     (publicación, entrega o validación hecha)
  *  - error():  un golpe seco         (PIN incorrecto, publicación rechazada)
  *  - aviso():  un toque largo        (cuenta bloqueada 15 min)
  *  - tic():    un pulso muy ligero   (elegir una opción)
- * Y dos para la respiración guiada (issue 10.2): inhalar() y exhalar().
+ * Y dos avisos pequeños para la respiración guiada (issue 10.2): finDeInhalar() (un toque) y finDeExhalar() (dos toques).
  * Nunca es el único aviso: siempre hay también texto en pantalla. Si no hay motor o falla, no hace nada.
  */
 object Haptica {
@@ -121,11 +63,11 @@ object Haptica {
     fun aviso() = vibrar(longArrayOf(0, 400), 255)
     fun tic() = vibrar(longArrayOf(0, 12), 80)
 
-    /** Respiración guiada: pulsos que crecen durante [duracionMs]. */
-    fun inhalar(duracionMs: Int) = respirar(duracionMs, inhalando = true)
+    /** Respiración guiada: se acabó el turno de inhalar → un solo toque pequeño. */
+    fun finDeInhalar() = vibrar(longArrayOf(0, 60), 150)
 
-    /** Respiración guiada: una vibración larga y suave durante [duracionMs]. */
-    fun exhalar(duracionMs: Int) = respirar(duracionMs, inhalando = false)
+    /** Respiración guiada: se acabó el turno de exhalar → dos toques pequeños. */
+    fun finDeExhalar() = vibrar(longArrayOf(0, 40, 70, 40), 150)
 
     /** Corta cualquier vibración en curso (Pausar, salir de la pantalla, segundo plano). */
     fun cancelar() {
@@ -146,18 +88,6 @@ object Haptica {
         }
     } catch (e: Exception) {
         null
-    }
-
-    private fun respirar(duracionMs: Int, inhalando: Boolean) {
-        try {
-            val contexto = contextoApp ?: return
-            val v = motor(contexto) ?: return
-            val conFuerza = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && v.hasAmplitudeControl()
-            val patron = if (inhalando) patronInhalar(duracionMs, conFuerza) else patronExhalar(duracionMs, conFuerza)
-            emitir(v, patron.tiempos, patron.fuerzas)
-        } catch (e: Exception) {
-            Log.d("Haptica", "falló la vibración: $e")
-        }
     }
 
     // patron = [espera, vibra, espera, vibra...] en milisegundos; fuerza de 1 a 255
