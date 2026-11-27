@@ -65,3 +65,15 @@ Interpretación:
 - Servidor: el servidor estaba despierto así que no tomó en cuenta el arranque en frío de Render.
 
 **App:** abre la carpeta en Android Studio, en `Apicrisalida.kt` pon `[BASE_URL](https://crisalidabackend.onrender.com/)` con la dirección del servidor (terminada en `/`) y ejecuta **Build → Build APK(s)**.
+
+## Sonidos
+| Archivo | Uso | Duración | Tamaño |
+|---|---|---|---|
+| sfx_flor.ogg | Flor ganada | 0.55 s | ~6.5 KB |
+| sfx_nivel.ogg | Nivel subido | 0.85 s | ~7.3 KB |
+| sfx_envio.ogg | Envío exitoso | 0.35 s | ~4.8 KB |
+| sfx_error.ogg | Error | 0.40 s | ~4.8 KB |
+| sfx_calma_inhala.ogg | Respirar con Lilu: fin de inhalar | 1.6 s | ~8 KB |
+| sfx_calma_exhala.ogg | Respirar con Lilu: fin de exhalar | 2.0 s | ~10 KB |
+
+**Origen:** sonidos propios del proyecto, generados por síntesis (ondas senoidales) con el script `tools/gen_sounds.py` (Python + NumPy/SciPy) y codificados a OGG Vorbis mono 44.1 kHz con ffmpeg (`-q:a 3`). No usan muestras ni material de terceros, por lo que no tienen restricciones de licencia y se distribuyen bajo la misma licencia que el resto del proyecto.
