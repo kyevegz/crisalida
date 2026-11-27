@@ -50,6 +50,7 @@ import com.example.crisalida.ui.theme.screens.GaleriaMariposasScreen
 import com.example.crisalida.ui.theme.screens.pantallasPrincipales
 import kotlinx.coroutines.launch
 import com.example.crisalida.data.Haptica
+import com.example.crisalida.data.Sonidos
 import com.example.crisalida.data.InactividadSesion
 import com.example.crisalida.data.ProteccionPantalla
 import com.example.crisalida.ui.theme.screens.VigilantePantalla
@@ -82,6 +83,7 @@ class MainActivity : ComponentActivity() {
         Paleta.cargar(applicationContext)         // modo claro u oscuro elegido, guardado en el teléfono
         InactividadSesion.cargar(applicationContext)   // minutos de inactividad elegidos, guardados en el teléfono
         Haptica.cargar(applicationContext)              // si la vibración está activada, guardado en el teléfono
+        Sonidos.cargar(applicationContext)              // si los sonidos están activados, guardado en el teléfono
         ProteccionPantalla.cargar(applicationContext)   // si se bloquean las capturas, guardado en el teléfono
         CacheLocal.iniciar(applicationContext)          // última versión de mascota, portafolio y bitácora (para verlos sin conexión)
         ColaEnvios.iniciar(applicationContext)          // cola de envíos pendientes (se envían al volver el internet)
