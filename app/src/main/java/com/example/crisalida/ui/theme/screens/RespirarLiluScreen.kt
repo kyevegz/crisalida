@@ -1,6 +1,16 @@
 package com.example.crisalida.ui.theme.screens
 
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import com.example.crisalida.data.GuiaRespiracion
+import com.example.crisalida.data.Haptica
+import com.example.crisalida.data.debeHablar
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.core.*
@@ -40,6 +50,11 @@ private val MkFondoBotonVolver: Color get() = Paleta.fondoBotonVolver
 private val MkFondoTarjetaAyuda: Color get() = Paleta.fondoAyuda
 private val MkTextoAyudaGris: Color get() = Paleta.textoAyuda
 
+// Tiempos de la respiración (milisegundos). La animación de Lilu, la vibración y la voz usan ESTOS mismos valores,
+// así van siempre a la par.
+private const val INHALA_MS = 2000
+private const val EXHALA_MS = 2000
+
 @Composable
 fun RespirarLiluScreen(
     onNavigate: (String) -> Unit
@@ -53,11 +68,50 @@ fun RespirarLiluScreen(
         initialValue = 0.97f,
         targetValue = 1.03f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = FastOutSlowInEasing),
+            animation = tween(INHALA_MS, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "escala_lilu"
     )
+
+    // ── Respiración guiada (10.2): vibración + voz al ritmo de la animación ──
+    GuiaRespiracion.cargar(context)
+    Haptica.cargar(context)
+    var guiando by remember { mutableStateOf(false) }
+    var fase by remember { mutableStateOf<String?>(null) }   // «Inhala» o «Exhala» mientras se guía
+    val escalaGuia = remember { Animatable(0.97f) }
+    val lector = rememberLectorVoz()   // se detiene solo al salir de la pantalla y al pasar a segundo plano
+    val hablar by rememberUpdatedState(debeHablar(GuiaRespiracion.voz, Haptica.enCamuflaje))   // se lee al instante si cambia el interruptor
+
+    // al pasar la app a segundo plano (botón de inicio, pantalla apagada) se pausa todo
+    val ciclo = (LocalActivity.current as? ComponentActivity)?.lifecycle
+    DisposableEffect(ciclo) {
+        val observador = LifecycleEventObserver { _, evento -> if (evento == Lifecycle.Event.ON_STOP) guiando = false }
+        ciclo?.addObserver(observador)
+        onDispose { ciclo?.removeObserver(observador) }
+    }
+
+    LaunchedEffect(guiando) {
+        if (!guiando) return@LaunchedEffect
+        try {
+            escalaGuia.snapTo(0.97f)
+            while (true) {
+                fase = "Inhala"
+                if (hablar) lector.leer(listOf("Inhala"))
+                Haptica.inhalar(INHALA_MS)
+                escalaGuia.animateTo(1.03f, tween(INHALA_MS, easing = FastOutSlowInEasing))
+                fase = "Exhala"
+                if (hablar) lector.leer(listOf("Exhala"))
+                Haptica.exhalar(EXHALA_MS)
+                escalaGuia.animateTo(0.97f, tween(EXHALA_MS, easing = FastOutSlowInEasing))
+            }
+        } finally {
+            // Pausar, salir de la pantalla o segundo plano: se corta la vibración y la voz de inmediato
+            Haptica.cancelar()
+            lector.detener()
+            fase = null
+        }
+    }
 
     //animación flotante suave para las frases de apoyo
     val floatAnim by infiniteTransition.animateFloat(
@@ -136,8 +190,8 @@ fun RespirarLiluScreen(
                     modifier = Modifier
                         .size(if (compacto) 150.dp else 240.dp)
                         .graphicsLayer(
-                            scaleX = scaleAnim,
-                            scaleY = scaleAnim
+                            scaleX = if (guiando) escalaGuia.value else scaleAnim,
+                            scaleY = if (guiando) escalaGuia.value else scaleAnim
                         ),
                     contentAlignment = Alignment.Center
                 ) {
@@ -159,6 +213,18 @@ fun RespirarLiluScreen(
                     textAlign = TextAlign.Center,
                     color = MkTitulo,
                     modifier = Modifier.padding(horizontal = 8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                GuiaDeRespiracion(
+                    guiando = guiando,
+                    fase = fase,
+                    vozActiva = GuiaRespiracion.voz,
+                    vozNoDisponible = GuiaRespiracion.voz && lector.estado == EstadoVoz.NO_DISPONIBLE,
+                    vibracionApagada = !Haptica.activa,
+                    onAlternar = { guiando = !guiando },
+                    onCambioVoz = { GuiaRespiracion.cambiarVoz(context, it) }
                 )
 
                 Spacer(modifier = Modifier.height(28.dp))
@@ -214,6 +280,101 @@ fun RespirarLiluScreen(
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
+            }
+        }
+    }
+}
+
+// Tarjeta de la respiración guiada: botón Empezar/Pausar, interruptor de voz y la fase actual
+@Composable
+private fun GuiaDeRespiracion(
+    guiando: Boolean,
+    fase: String?,
+    vozActiva: Boolean,
+    vozNoDisponible: Boolean,
+    vibracionApagada: Boolean,
+    onAlternar: () -> Unit,
+    onCambioVoz: (Boolean) -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MkFondoTarjetaAyuda),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "Respiración guiada",
+                fontFamily = OutfitFont,
+                fontWeight = FontWeight.Bold,
+                fontSize = 17.sp,
+                color = MkTitulo
+            )
+            Text(
+                text = "Sigue a Lilu con los ojos cerrados: el teléfono vibra al inhalar y al exhalar.",
+                fontFamily = JakartaSansFont,
+                fontSize = 13.sp,
+                lineHeight = 18.sp,
+                textAlign = TextAlign.Center,
+                color = MkTextoAyudaGris,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+            // Qué toca ahora (sin anuncio automático de TalkBack: ya habla la voz opcional)
+            Text(
+                text = fase ?: " ",
+                fontFamily = OutfitFont,
+                fontWeight = FontWeight.Bold,
+                fontSize = 26.sp,
+                color = MkTitulo,
+                modifier = Modifier.padding(vertical = 10.dp)
+            )
+            Button(
+                onClick = onAlternar,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+                shape = RoundedCornerShape(26.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MkTitulo)
+            ) {
+                Text(
+                    text = if (guiando) "Pausar" else "Empezar",
+                    fontFamily = JakartaSansFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = Paleta.blanco
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp)
+                    .toggleable(value = vozActiva, onValueChange = onCambioVoz, role = Role.Switch),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Guía por voz",
+                    fontFamily = OutfitFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = Paleta.textoNegro,
+                    modifier = Modifier.weight(1f)
+                )
+                Switch(
+                    checked = vozActiva,
+                    onCheckedChange = null,   // el cambio lo maneja toda la fila
+                    colors = SwitchDefaults.colors(checkedTrackColor = MkTitulo)
+                )
+            }
+            if (vozNoDisponible) {
+                Text(
+                    text = "Tu teléfono no tiene una voz en español: seguirás con la animación y la vibración.",
+                    fontFamily = JakartaSansFont, fontSize = 12.sp, lineHeight = 17.sp, color = MkTextoAyudaGris
+                )
+            }
+            if (vibracionApagada) {
+                Text(
+                    text = "La vibración está apagada. Puedes activarla en Configuración → Sonidos y vibración.",
+                    fontFamily = JakartaSansFont, fontSize = 12.sp, lineHeight = 17.sp, color = MkTextoAyudaGris,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
             }
         }
     }
