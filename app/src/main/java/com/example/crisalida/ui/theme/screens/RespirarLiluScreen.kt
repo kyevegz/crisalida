@@ -50,10 +50,10 @@ private val MkFondoBotonVolver: Color get() = Paleta.fondoBotonVolver
 private val MkFondoTarjetaAyuda: Color get() = Paleta.fondoAyuda
 private val MkTextoAyudaGris: Color get() = Paleta.textoAyuda
 
-// Tiempos de la respiración (milisegundos). La animación de Lilu, la vibración y la voz usan ESTOS mismos valores,
-// así van siempre a la par.
-private const val INHALA_MS = 2000
-private const val EXHALA_MS = 2000
+// Tiempos de la respiración (milisegundos): inhalar 4 s y exhalar 6 s (la exhalación más larga relaja).
+// La animación de Lilu, la vibración y la voz usan ESTOS mismos valores, así van siempre a la par.
+private const val INHALA_MS = 4000
+private const val EXHALA_MS = 6000
 
 @Composable
 fun RespirarLiluScreen(
@@ -66,10 +66,15 @@ fun RespirarLiluScreen(
     val infiniteTransition = rememberInfiniteTransition(label = "lilu_anim")
     val scaleAnim by infiniteTransition.animateFloat(
         initialValue = 0.97f,
-        targetValue = 1.03f,
+        targetValue = 0.97f,
         animationSpec = infiniteRepeatable(
-            animation = tween(INHALA_MS, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
+            // un ciclo completo: sube en INHALA_MS y baja en EXHALA_MS
+            animation = keyframes {
+                durationMillis = INHALA_MS + EXHALA_MS
+                1.03f at INHALA_MS using FastOutSlowInEasing
+                0.97f at INHALA_MS + EXHALA_MS using FastOutSlowInEasing
+            },
+            repeatMode = RepeatMode.Restart
         ),
         label = "escala_lilu"
     )
@@ -310,7 +315,7 @@ private fun GuiaDeRespiracion(
                 color = MkTitulo
             )
             Text(
-                text = "Sigue a Lilu con los ojos cerrados: el teléfono vibra al inhalar y al exhalar.",
+                text = "Sigue a Lilu con los ojos cerrados: el teléfono vibra al inhalar (4 s) y al exhalar (6 s).",
                 fontFamily = JakartaSansFont,
                 fontSize = 13.sp,
                 lineHeight = 18.sp,
