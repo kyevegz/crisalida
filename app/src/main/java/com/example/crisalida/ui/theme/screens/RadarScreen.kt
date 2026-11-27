@@ -278,6 +278,25 @@ fun RadarScreen(
         }
     }
 
+    // ¿Se puede avanzar con «Siguiente»? Las mismas condiciones del botón (el control por voz no se salta ninguna)
+    fun puedeSiguiente(): Boolean {
+        if (ocupado || bloque1 == null || enResultado) return false
+        val ultimaB1 = esBloque1 && paso == nB1 - 1
+        val respondida = preguntaActual?.let { p ->
+            when (p.id) {
+                "actividades" -> actividadesElegidas.isNotEmpty()
+                "tiempo" -> tiempoElegido != null
+                "gusta", "sabe" -> textos[p.id].orEmpty().trim().length >= MIN_ABIERTA
+                else -> true
+            }
+        } ?: true
+        return when {
+            ultimaB1 -> respondida && puedeAnalizar
+            esBloque1 -> respondida
+            else -> true
+        }
+    }
+
     // Omitir una dinámica: se descarta lo que hubiera marcado en ella y se sigue
     fun omitir() {
         val p = preguntaActual ?: return
@@ -480,6 +499,25 @@ fun RadarScreen(
                     .padding(start = 17.dp, end = 16.dp, top = 20.dp)
             ) {
                 BotonEscuchar(lineasVoz)
+                // Control por voz (10.4): solo «omitir», «siguiente» y «atrás»; nunca aceptar el resultado
+                if (ControlPorVoz.disponible) {
+                    val control = rememberControlVoz { orden ->
+                        when (orden) {
+                            OrdenVoz.OMITIR ->
+                                if (esDinamica && !ocupado && !enResultado) { omitir(); null } else "Esta pregunta no se puede omitir."
+                            OrdenVoz.SIGUIENTE -> when {
+                                enResultado -> "Para aceptar tu resultado, toca el botón Aceptar."
+                                puedeSiguiente() -> { siguiente(); null }
+                                else -> "Primero responde esta pregunta."
+                            }
+                            OrdenVoz.ATRAS, OrdenVoz.VOLVER ->
+                                if (paso > 0 && !ocupado) { atras(); null } else "Ya estás en la primera pregunta."
+                            else -> "En el radar solo puedes decir: omitir, siguiente o atrás."
+                        }
+                    }
+                    BotonControlVozTexto(control)
+                    FranjaControlVoz(control)
+                }
                 // título muy grande: crece poco para que "talentos" no se parta en pantallas chicas
                 ConEscalaLimitada(tope = 1.3f) {
                     Text(

@@ -1,6 +1,7 @@
 package com.example.crisalida.ui.theme.screens
 
 import android.app.Activity
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,6 +35,9 @@ import com.example.crisalida.R
 import com.example.crisalida.ui.theme.*
 import com.example.crisalida.data.AlmacenamientoCifrado
 import com.example.crisalida.data.BorradoLocal
+import com.example.crisalida.data.ControlPorVoz
+import com.example.crisalida.data.LecturaPantalla
+import com.example.crisalida.data.OrdenVoz
 import com.example.crisalida.data.SesionActual
 import com.example.crisalida.ui.theme.screens.PreviewResponsivo
 import com.example.crisalida.ui.theme.Paleta
@@ -65,6 +69,42 @@ fun CrisalidaScaffold(
     val compacto = LocalConfiguration.current.screenHeightDp < 480
     val altoBarraSuperior = if (compacto) 56.dp else 64.dp
     val altoBarraInferior = if (compacto) 62.dp else 84.dp
+
+    // ---- Control por voz (10.4): solo con el ajuste activado, con sesión y fuera de camuflaje
+    ControlPorVoz.cargar(context)
+    val vozDisponible = ControlPorVoz.disponible
+    val retroceso = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    val lector = if (vozDisponible) rememberLectorVoz() else null
+    val control = if (vozDisponible) rememberControlVoz { orden ->
+        when (orden) {
+            OrdenVoz.RETOS -> { onNavigate("retos"); null }
+            OrdenVoz.MARKETPLACE -> { onNavigate("marketplace"); null }
+            OrdenVoz.INICIO -> { onNavigate("home"); null }
+            OrdenVoz.PERFIL -> { onNavigate("perfil"); null }
+            OrdenVoz.CONFIGURACION -> { onNavigate("configuracion"); null }
+            OrdenVoz.BIENESTAR, OrdenVoz.MASCOTA ->
+                if (esCompradora) "Esa sección no está disponible para tu cuenta."
+                else { onNavigate(if (orden == OrdenVoz.BIENESTAR) "bienestar" else "mascota"); null }
+            OrdenVoz.RESPIRAR, OrdenVoz.BORRADORES, OrdenVoz.PUBLICAR_PRODUCTO ->
+                if (esCompradora) "Esa sección no está disponible para tu cuenta."
+                else {
+                    // solo se ABRE la pantalla: publicar de verdad sigue siendo con el botón de la pantalla
+                    onNavigate(when (orden) {
+                        OrdenVoz.RESPIRAR -> "respirar_lilu"
+                        OrdenVoz.BORRADORES -> "mis_borradores"
+                        else -> "publicar_producto"
+                    })
+                    null
+                }
+            OrdenVoz.VOLVER, OrdenVoz.ATRAS ->
+                if (retroceso?.hasEnabledCallbacks() == true) { retroceso.onBackPressed(); null }
+                else "Ya estás en la primera pantalla."
+            OrdenVoz.LEER_PANTALLA ->
+                if (lector?.estado == EstadoVoz.LISTA) { lector.leer(listOf("Estás en $currentTitle.") + LecturaPantalla.lineas); null }
+                else "La lectura en voz alta no está disponible en tu teléfono (falta una voz en español)."
+            OrdenVoz.OMITIR, OrdenVoz.SIGUIENTE -> "Ese comando solo funciona en el radar de talentos."
+        }
+    } else null
 
     Scaffold(
         containerColor = ColorFondoApp,
@@ -116,6 +156,11 @@ fun CrisalidaScaffold(
                         }
 
                         Spacer(modifier = Modifier.width(8.dp))
+
+                        if (control != null) {
+                            BotonControlVozIcono(control)
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
 
                         // Botón de Salida de Emergencia (RF-10): mide hasta 200 dp; si no cabe, el texto baja a dos líneas
                         Row(
@@ -187,7 +232,11 @@ fun CrisalidaScaffold(
             }
         }
     ) { innerPadding ->
-        content(innerPadding)
+        Box(modifier = Modifier.fillMaxSize()) {
+            content(innerPadding)
+            // indicador visible: «Escuchando…» y después el resultado de la orden
+            if (control != null) FranjaControlVoz(control, Modifier.padding(innerPadding).align(Alignment.TopCenter))
+        }
     }
 }
 
