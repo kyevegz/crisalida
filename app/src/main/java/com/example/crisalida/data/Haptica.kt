@@ -20,12 +20,16 @@ import com.example.crisalida.ui.theme.Paleta
 fun debeVibrar(ajusteActivo: Boolean, enCamuflaje: Boolean, tieneMotor: Boolean): Boolean =
     ajusteActivo && !enCamuflaje && tieneMotor
 
+/** Regla de «¿debe hablar?» (guía por voz): solo si la usuaria la activó y NO está en camuflaje. */
+fun debeHablar(vozActiva: Boolean, enCamuflaje: Boolean): Boolean = vozActiva && !enCamuflaje
+
 /**
  * Vibraciones de la app (issue 10.1). Cuatro patrones distinguibles al tacto:
  *  - exito(): dos toques cortos     (publicación, entrega o validación hecha)
- *  - error():  un golpe seco         (PIN incorrecto)
+ *  - error():  un golpe seco         (PIN incorrecto, publicación rechazada)
  *  - aviso():  un toque largo        (cuenta bloqueada 15 min)
  *  - tic():    un pulso muy ligero   (elegir una opción)
+ * Y dos avisos pequeños para la respiración guiada (issue 10.2): finDeInhalar() (un toque) y finDeExhalar() (dos toques).
  * Nunca es el único aviso: siempre hay también texto en pantalla. Si no hay motor o falla, no hace nada.
  */
 object Haptica {
@@ -36,6 +40,8 @@ object Haptica {
 
     var activa by mutableStateOf(false)
         private set
+
+    val enCamuflaje: Boolean get() = Paleta.enCamuflaje || SesionActual.esCamuflaje
 
     fun cargar(context: Context) {
         contextoApp = context.applicationContext
@@ -57,6 +63,22 @@ object Haptica {
     fun aviso() = vibrar(longArrayOf(0, 400), 255)
     fun tic() = vibrar(longArrayOf(0, 12), 80)
 
+    /** Respiración guiada: se acabó el turno de inhalar → un solo toque pequeño. */
+    fun finDeInhalar() = vibrar(longArrayOf(0, 60), 150)
+
+    /** Respiración guiada: se acabó el turno de exhalar → dos toques pequeños. */
+    fun finDeExhalar() = vibrar(longArrayOf(0, 40, 70, 40), 150)
+
+    /** Corta cualquier vibración en curso (Pausar, salir de la pantalla, segundo plano). */
+    fun cancelar() {
+        try {
+            val contexto = contextoApp ?: return
+            motor(contexto)?.cancel()
+        } catch (e: Exception) {
+            Log.d("Haptica", "falló cancelar: $e")
+        }
+    }
+
     private fun motor(context: Context): Vibrator? = try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
@@ -73,39 +95,43 @@ object Haptica {
         try {
             val contexto = contextoApp ?: return
             val v = motor(contexto)
-            val enCamuflaje = Paleta.enCamuflaje || SesionActual.esCamuflaje
-            val tieneMotor = v?.hasVibrator() == true
-            if (!debeVibrar(activa, enCamuflaje, tieneMotor)) {
-                Log.d("Haptica", "no vibra: ajuste=$activa camuflaje=$enCamuflaje motor=$tieneMotor")
-                return
-            }
-            @Suppress("DEPRECATION")
-            val atributos = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                // sin control de fuerza (motores sencillos de gama baja y media) basta la lista de tiempos
-                val efecto = if (v!!.hasAmplitudeControl()) {
-                    val fuerzas = IntArray(patron.size) { i -> if (i % 2 == 0) 0 else fuerza }
-                    VibrationEffect.createWaveform(patron, fuerzas, -1)
-                } else {
-                    VibrationEffect.createWaveform(patron, -1)
-                }
-                if (Build.VERSION.SDK_INT >= 33) {
-                    // Android 13: se declara explícitamente como respuesta al tacto (sigue «Vibración al tocar» del sistema)
-                    v.vibrate(efecto, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_TOUCH))
-                } else {
-                    @Suppress("DEPRECATION")
-                    v.vibrate(efecto, atributos)                            // Android 8 a 12
-                }
-            } else {
-                @Suppress("DEPRECATION")
-                v!!.vibrate(patron, -1, atributos)                          // Android 7: método antiguo con lista de tiempos
-            }
-            Log.d("Haptica", "vibrar enviado: ${patron.toList()}")
+            val fuerzas = IntArray(patron.size) { i -> if (i % 2 == 0) 0 else fuerza }
+            emitir(v, patron, fuerzas)
         } catch (e: Exception) {
             Log.d("Haptica", "falló la vibración: $e")   // la vibración nunca debe romper la app
         }
+    }
+
+    // Aquí se aplica la regla: ajuste activado, fuera de camuflaje y con motor
+    private fun emitir(v: Vibrator?, patron: LongArray, fuerzas: IntArray?) {
+        val tieneMotor = v?.hasVibrator() == true
+        if (!debeVibrar(activa, enCamuflaje, tieneMotor)) {
+            Log.d("Haptica", "no vibra: ajuste=$activa camuflaje=$enCamuflaje motor=$tieneMotor")
+            return
+        }
+        @Suppress("DEPRECATION")
+        val atributos = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // sin control de fuerza (motores sencillos de gama baja y media) basta la lista de tiempos
+            val efecto = if (fuerzas != null && v!!.hasAmplitudeControl()) {
+                VibrationEffect.createWaveform(patron, fuerzas, -1)
+            } else {
+                VibrationEffect.createWaveform(patron, -1)
+            }
+            if (Build.VERSION.SDK_INT >= 33) {
+                // Android 13: se declara explícitamente como respuesta al tacto (sigue «Vibración al tocar» del sistema)
+                v!!.vibrate(efecto, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_TOUCH))
+            } else {
+                @Suppress("DEPRECATION")
+                v!!.vibrate(efecto, atributos)                            // Android 8 a 12
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            v!!.vibrate(patron, -1, atributos)                            // Android 7: método antiguo con lista de tiempos
+        }
+        Log.d("Haptica", "vibrar enviado: ${patron.toList()}")
     }
 }

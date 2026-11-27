@@ -111,7 +111,7 @@ class LectorVoz(contexto: Context) {
 }
 
 @Composable
-private fun rememberLectorVoz(): LectorVoz {
+fun rememberLectorVoz(): LectorVoz {
     val contexto = LocalContext.current
     val lector = remember { LectorVoz(contexto) }
     val ciclo = (LocalActivity.current as? ComponentActivity)?.lifecycle
