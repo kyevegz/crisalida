@@ -344,6 +344,7 @@ object SesionActual {
         avatar = "🐱"
         modo = "normal"
         rol = ROL_VENDEDORA
+        ProgresoRepositorio.olvidarLogros()
         ProgresoRepositorio.avisarCambio()   // que ninguna pantalla conserve datos de la sesión anterior
     }
 }

@@ -255,7 +255,31 @@ object ProgresoRepositorio {
 
     fun avisarCambio() { version++ }
 
-    suspend fun yo(): ResultadoApi<ProgresoResponse> = llamarApi { RetrofitCliente.api.progresoYo() }
+    suspend fun yo(): ResultadoApi<ProgresoResponse> =
+        llamarApi { RetrofitCliente.api.progresoYo() }.also { if (it is ResultadoApi.Exito) detectarLogros(it.datos) }
+
+    // Sonidos (10.5): el de la flor suena EN EL MOMENTO de ganarla (ver BienestarRepositorio y publicar), no al abrir una
+    // pantalla. El de subir de nivel suena cuando el progreso se refresca poco después de ganar flores y el nivel sí subió.
+    private var ultimoProgreso: Pair<String, Int>? = null   // usuaria, nivel
+    private var logroEsperadoHasta = 0L
+
+    /** Se llama justo después de ganar flores: el siguiente refresco del progreso puede traer un nivel nuevo. */
+    fun esperarLogro() { logroEsperadoHasta = android.os.SystemClock.elapsedRealtime() + 30_000L }
+
+    private fun detectarLogros(p: ProgresoResponse) {
+        val usuaria = SesionActual.usuariaId
+        val previo = ultimoProgreso
+        ultimoProgreso = usuaria to p.nivel.nivel
+        if (previo == null || previo.first != usuaria) return
+        val esperado = android.os.SystemClock.elapsedRealtime() < logroEsperadoHasta
+        if (esperado && p.nivel.nivel > previo.second) {
+            logroEsperadoHasta = 0L
+            Sonidos.reproducir(Sonido.NIVEL)
+        }
+    }
+
+    /** Al cerrar sesión se olvida lo anterior: la siguiente usuaria no «sube de nivel» por comparar con otra cuenta. */
+    fun olvidarLogros() { ultimoProgreso = null; logroEsperadoHasta = 0L }
 
     suspend fun habilidades(): ResultadoApi<ResultadoRadarResponse> = llamarApi { RetrofitCliente.api.radarResultado() }
 
@@ -336,7 +360,11 @@ object PublicacionesRepositorio {
 
 object BienestarRepositorio {
     private fun <T> ResultadoApi<T>.avisandoFlores(): ResultadoApi<T> {
-        if (this is ResultadoApi.Exito && ((datos as? FloresResponse)?.floresGanadas ?: 0) > 0) ProgresoRepositorio.avisarCambio()
+        if (this is ResultadoApi.Exito && ((datos as? FloresResponse)?.floresGanadas ?: 0) > 0) {
+            Sonidos.reproducir(Sonido.FLOR)        // suena al registrar algo que da flores (bitácora, reflexión, monitoreo...)
+            ProgresoRepositorio.esperarLogro()
+            ProgresoRepositorio.avisarCambio()
+        }
         return this
     }
 

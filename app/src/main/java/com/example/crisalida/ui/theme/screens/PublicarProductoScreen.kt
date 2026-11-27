@@ -15,6 +15,8 @@ import com.example.crisalida.data.ColaEnvios
 import com.example.crisalida.data.FotoRemota
 import com.example.crisalida.data.FotosCamara
 import com.example.crisalida.data.Haptica
+import com.example.crisalida.data.ProgresoRepositorio
+import com.example.crisalida.data.Sonido
 import com.example.crisalida.data.unirDictado
 import com.example.crisalida.data.MarketplaceRepositorio
 import androidx.compose.ui.platform.LocalContext
@@ -371,7 +373,8 @@ fun PublicarProductoScreen(
                         if (subida !is ResultadoApi.Exito) fallidas++
                     }
                     publicacionCreada = true
-                    Haptica.exito()
+                    Haptica.exito(if (r.datos.floresGanadas > 0) Sonido.FLOR else Sonido.ENVIO)   // con flores, suena la flor
+                    if (r.datos.floresGanadas > 0) ProgresoRepositorio.esperarLogro()
                     borradorId?.let { Borradores.eliminar(contexto, it) }
                     mensajePublicar = buildString {
                         append(if (r.datos.estado == "activo") "¡Tu publicación ya está visible en el marketplace!"

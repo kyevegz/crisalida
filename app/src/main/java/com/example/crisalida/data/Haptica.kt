@@ -55,19 +55,20 @@ object Haptica {
         cargado = true
         activa = activada
         context.applicationContext.getSharedPreferences(ARCHIVO, Context.MODE_PRIVATE).edit().putBoolean(CLAVE, activada).apply()
-        if (activada) exito()   // al encender, una muestra para que sepa cómo se siente
+        if (activada) vibrar(longArrayOf(0, 40, 80, 40), 255)   // al encender, una muestra para que sepa cómo se siente
     }
 
-    fun exito() = vibrar(longArrayOf(0, 40, 80, 40), 255)
-    fun error() = vibrar(longArrayOf(0, 90), 255)
+    // exito() y error() además hacen sonar el sonido de envío / de error (issue 10.5), que tiene su propio ajuste
+    fun exito(sonido: Sonido = Sonido.ENVIO) { vibrar(longArrayOf(0, 40, 80, 40), 255); Sonidos.reproducir(sonido) }
+    fun error() { vibrar(longArrayOf(0, 90), 255); Sonidos.reproducir(Sonido.ERROR) }
     fun aviso() = vibrar(longArrayOf(0, 400), 255)
     fun tic() = vibrar(longArrayOf(0, 12), 80)
 
     /** Respiración guiada: se acabó el turno de inhalar → un solo toque pequeño. */
-    fun finDeInhalar() = vibrar(longArrayOf(0, 60), 150)
+    fun finDeInhalar() { vibrar(longArrayOf(0, 60), 150); Sonidos.reproducir(Sonido.CALMA_INHALA) }
 
     /** Respiración guiada: se acabó el turno de exhalar → dos toques pequeños. */
-    fun finDeExhalar() = vibrar(longArrayOf(0, 40, 70, 40), 150)
+    fun finDeExhalar() { vibrar(longArrayOf(0, 40, 70, 40), 150); Sonidos.reproducir(Sonido.CALMA_EXHALA) }
 
     /** Corta cualquier vibración en curso (Pausar, salir de la pantalla, segundo plano). */
     fun cancelar() {
