@@ -48,14 +48,14 @@ import com.example.crisalida.ui.theme.JakartaSansFont
 import com.example.crisalida.ui.theme.Paleta
 
 /**
- * Dictado por voz (issue 10.3) co  n el SpeechRecognizer de Android.
+ * Dictado por voz (issue 10.3) con el SpeechRecognizer de Android.
  *
  * - Español de México y preferencia por reconocer SIN internet. En Android 12 o más usa el reconocedor del propio
  *   teléfono cuando existe.
  * - NO guarda el audio: la app solo recibe el texto. Según el teléfono, el servicio de voz puede usar internet.
  * - Solo se usa en textos largos (descripciones y bienestar). Nunca en PIN, correo, código de recuperación ni seudónimo.
  */
-class Dictador(private val contexto: Context) {
+class Dictador(private val contexto: Context, private val mensajeNoEntendido: String? = null) {
     var escuchando by mutableStateOf(false)
         private set
     var mensaje by mutableStateOf<String?>(null)
@@ -79,7 +79,7 @@ class Dictador(private val contexto: Context) {
             val frase = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty()
             val entregar = alTexto
             terminar()
-            if (frase.isBlank()) mensaje = mensajeDeErrorDictado(SpeechRecognizer.ERROR_NO_MATCH)
+            if (frase.isBlank()) mensaje = mensajeNoEntendido ?: mensajeDeErrorDictado(SpeechRecognizer.ERROR_NO_MATCH)
             else entregar?.invoke(frase)   // el texto se agrega al final de lo escrito (lo decide quien llama)
         }
 
@@ -88,7 +88,9 @@ class Dictador(private val contexto: Context) {
             val volver = alTexto
             // Si falló el reconocedor del propio teléfono (suele faltarle el paquete de español), se prueba una vez con el
             // servicio de voz normal, sin exigir que sea sin internet
-            if (usaReconocedorDelTelefono && !reintentado && volver != null && error != 5 && error != 8 && error != 9) {
+            // 12 y 13: falta el paquete de español SIN internet (lo pedimos «sin conexión» de preferencia): se reintenta con internet
+            val faltaIdioma = error == 12 || error == 13
+            if (!reintentado && volver != null && ((usaReconocedorDelTelefono && error != 5 && error != 8 && error != 9) || faltaIdioma)) {
                 reintentado = true
                 terminar()
                 arrancar(volver, enElTelefono = false)
@@ -96,7 +98,8 @@ class Dictador(private val contexto: Context) {
             }
             terminar()
             // el código se muestra para poder diagnosticar en teléfonos raros
-            mensajeDeErrorDictado(error)?.let { mensaje = "$it (código $error)" }
+            if ((error == 6 || error == 7) && mensajeNoEntendido != null) mensaje = mensajeNoEntendido
+            else mensajeDeErrorDictado(error)?.let { mensaje = "$it (código $error)" }
         }
     }
 

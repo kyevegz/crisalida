@@ -61,6 +61,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.data.AhorroDatos
+import com.example.crisalida.data.ControlPorVoz
 import com.example.crisalida.data.Haptica
 import com.example.crisalida.data.AlmacenamientoLocal
 import com.example.crisalida.data.BienestarRepositorio
@@ -181,6 +182,18 @@ private fun ContenidoConfiguracion(
                     activado = Haptica.activa,
                     onCambio = { Haptica.cambiar(contexto, it) }
                 )
+                if (!SesionActual.esCamuflaje) {
+                    ControlPorVoz.cargar(contexto)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    FilaInterruptor(
+                        titulo = "Control por voz",
+                        descripcion = "Aparece un micrófono arriba para moverte por la app diciendo una palabra: retos, marketplace, inicio, " +
+                                "bienestar, mascota, perfil, configuración, volver o leer pantalla. Nunca borra ni publica nada. " +
+                                "Se conserva aunque cierres la app.",
+                        activado = ControlPorVoz.activo,
+                        onCambio = { ControlPorVoz.cambiar(contexto, it) }
+                    )
+                }
             }
 
             SeccionConfiguracion("Apariencia") {

@@ -135,6 +135,11 @@ fun BotonEscuchar(lineas: List<String>, modifier: Modifier = Modifier) {
     if (lineas.isEmpty()) return
     val lector = rememberLectorVoz()
     LaunchedEffect(lineas) { lector.detener() }
+    // «leer pantalla» (control por voz, 10.4) lee estas mismas líneas mientras esta pantalla está abierta
+    DisposableEffect(lineas) {
+        com.example.crisalida.data.LecturaPantalla.lineas = lineas
+        onDispose { if (com.example.crisalida.data.LecturaPantalla.lineas === lineas) com.example.crisalida.data.LecturaPantalla.lineas = emptyList() }
+    }
 
     Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
         when (lector.estado) {
