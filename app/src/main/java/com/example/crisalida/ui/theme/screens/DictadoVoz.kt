@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -47,7 +48,7 @@ import com.example.crisalida.ui.theme.JakartaSansFont
 import com.example.crisalida.ui.theme.Paleta
 
 /**
- * Dictado por voz (issue 10.3) con el SpeechRecognizer de Android.
+ * Dictado por voz (issue 10.3) co  n el SpeechRecognizer de Android.
  *
  * - Español de México y preferencia por reconocer SIN internet. En Android 12 o más usa el reconocedor del propio
  *   teléfono cuando existe.
@@ -62,6 +63,8 @@ class Dictador(private val contexto: Context) {
 
     private var reconocedor: SpeechRecognizer? = null
     private var alTexto: ((String) -> Unit)? = null
+    private var usaReconocedorDelTelefono = false
+    private var reintentado = false
 
     private val oyente = object : RecognitionListener {
         override fun onReadyForSpeech(params: Bundle?) {}
@@ -81,33 +84,54 @@ class Dictador(private val contexto: Context) {
         }
 
         override fun onError(error: Int) {
+            Log.d("Dictado", "error $error (reconocedor del teléfono: $usaReconocedorDelTelefono)")
+            val volver = alTexto
+            // Si falló el reconocedor del propio teléfono (suele faltarle el paquete de español), se prueba una vez con el
+            // servicio de voz normal, sin exigir que sea sin internet
+            if (usaReconocedorDelTelefono && !reintentado && volver != null && error != 5 && error != 8 && error != 9) {
+                reintentado = true
+                terminar()
+                arrancar(volver, enElTelefono = false)
+                return
+            }
             terminar()
-            mensaje = mensajeDeErrorDictado(error)
+            // el código se muestra para poder diagnosticar en teléfonos raros
+            mensajeDeErrorDictado(error)?.let { mensaje = "$it (código $error)" }
         }
     }
 
     fun iniciar(alTexto: (String) -> Unit) {
         if (escuchando) return
         mensaje = null
+        reintentado = false
         val app = contexto.applicationContext
         val enElTelefono = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && SpeechRecognizer.isOnDeviceRecognitionAvailable(app)
+        arrancar(alTexto, enElTelefono)
+    }
+
+    private fun arrancar(alTexto: (String) -> Unit, enElTelefono: Boolean) {
+        val app = contexto.applicationContext
         if (!enElTelefono && !SpeechRecognizer.isRecognitionAvailable(app)) {
             mensaje = DICTADO_SIN_SERVICIO
             return
         }
         try {
+            usaReconocedorDelTelefono = enElTelefono
             val r = if (enElTelefono) SpeechRecognizer.createOnDeviceSpeechRecognizer(app) else SpeechRecognizer.createSpeechRecognizer(app)
             r.setRecognitionListener(oyente)
             reconocedor = r
             this.alTexto = alTexto
             escuchando = true
+            Log.d("Dictado", "escuchando (reconocedor del teléfono: $enElTelefono)")
             r.startListening(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-MX")
-                putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "es-MX")
+                if (!reintentado) putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)   // en el reintento ya no se exige sin internet
                 putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
             })
         } catch (e: Exception) {
+            Log.d("Dictado", "falló al iniciar: $e")
             terminar()
             mensaje = DICTADO_SIN_SERVICIO
         }
