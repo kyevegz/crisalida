@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.example.crisalida.data.ColaEnvios
 import com.example.crisalida.data.EstadoResponse
 import com.example.crisalida.data.FotoRemota
+import com.example.crisalida.data.Haptica
 import com.example.crisalida.data.ProgresoRepositorio
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.SesionActual
@@ -55,13 +56,15 @@ fun RetoDetalleScreen(
     var aviso by remember { mutableStateOf<String?>(null) }
     var ocupado by remember { mutableStateOf(false) }
 
-    fun ejecutar(accion: suspend () -> ResultadoApi<*>, exito: String) {
+    fun ejecutar(accion: suspend () -> ResultadoApi<*>, exito: String, vibrar: Boolean = false) {
         if (ocupado) return
         ocupado = true
         scope.launch {
             aviso = when (val r = accion()) {
-                is ResultadoApi.Exito ->
+                is ResultadoApi.Exito -> {
+                    if (vibrar) Haptica.exito()
                     if ((r.datos as? EstadoResponse)?.estado == ColaEnvios.ESTADO_EN_COLA) "Sin conexión: tu entrega quedó guardada en tu teléfono y se enviará sola cuando vuelva el internet. Se marcará como entregada cuando el servidor lo confirme." else exito
+                }
                 is ResultadoApi.Error -> r.mensaje
             }
             ocupado = false
@@ -90,7 +93,7 @@ fun RetoDetalleScreen(
                                     "¡Reto aceptado! Lo encuentras en «Mis retos». Cuando termines, márcalo como entregado.")
                             }, onEntregar = {
                                 ejecutar({ RetosRepositorio.entregar(reto.aceptacionId.orEmpty()) },
-                                    "¡Entregado! Cuando quien publicó el reto lo valide, recibirás tus flores.")
+                                    "¡Entregado! Cuando quien publicó el reto lo valide, recibirás tus flores.", vibrar = true)
                             }, onSoltar = {
                                 ejecutar({ RetosRepositorio.abandonar(reto.aceptacionId.orEmpty()) },
                                     "Soltaste el reto. Volvió al tablero para otra persona.")

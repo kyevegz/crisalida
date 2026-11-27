@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crisalida.data.AceptacionPublicadaDto
 import com.example.crisalida.data.FotoRemota
+import com.example.crisalida.data.Haptica
 import com.example.crisalida.data.ResultadoApi
 import com.example.crisalida.data.RetoPublicadoDto
 import com.example.crisalida.data.RetosPublicadosRepositorio
@@ -181,6 +182,7 @@ fun SeccionMisRetosPublicados() {
             onValidada = { flores ->
                 porValidar = null
                 aviso = null
+                Haptica.exito()
                 validada = ValidacionHecha(entrega.seudonimo, entrega.tituloReto, flores)
                 carga.recargar()
             }

@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- vibración corta como respuesta (permiso normal: no pide ningún diálogo) -->
+    <uses-permission android:name="android.permission.VIBRATE" />
     <!-- solo se pide cuando la usuaria toca «Tomar foto» al publicar -->
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- la cámara es opcional: sin ella la app se instala y se usa la galería -->

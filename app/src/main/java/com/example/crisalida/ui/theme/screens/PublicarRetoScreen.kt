@@ -40,6 +40,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.crisalida.data.Haptica
 import com.example.crisalida.data.MarketplaceRepositorio
 import com.example.crisalida.data.MiniaturaLocal
 import com.example.crisalida.data.prepararFoto
@@ -157,7 +158,7 @@ fun PublicarRetoScreen(
         errorEnvio = null
         val e = validar()
         errores = e
-        if (e.isNotEmpty()) return
+        if (e.isNotEmpty()) { Haptica.error(); return }
         val limite = combinarFechaYHora(fechaMillis!!, hora!!, minuto!!)
         val datos = RetoPublicarRequest(
             titulo = titulo.trim().replace(Regex("\\s+"), " "),
@@ -174,6 +175,7 @@ fun PublicarRetoScreen(
                 fotoBytes = withContext(Dispatchers.IO) { prepararFoto(contexto, uri) }
                 if (fotoBytes == null) {
                     errorEnvio = "No pudimos leer esa foto. Elige otra o quítala para publicar sin foto."
+                    Haptica.error()
                     enviando = false
                     return@launch
                 }
@@ -182,12 +184,15 @@ fun PublicarRetoScreen(
                 is ResultadoApi.Exito -> {
                     resultado = r.datos
                     retoIdEnviado = r.datos.retoId
+                    Haptica.exito()
                     val bytes = fotoBytes
                     if (bytes != null) subirFoto(r.datos.retoId, bytes)
                 }
-                is ResultadoApi.Error ->
+                is ResultadoApi.Error -> {
+                    Haptica.error()
                     if (r.codigoHttp == 403 && r.mensaje.contains("correo", ignoreCase = true)) pideCorreo = r.mensaje
                     else errorEnvio = r.mensaje   // filtros de seguridad (422), límites, sin conexión...
+                }
             }
             enviando = false
         }
